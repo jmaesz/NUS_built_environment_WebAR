@@ -1,0 +1,256 @@
+.home {
+  min-height: 100dvh;
+  background: #f5f4f0;
+  color: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header */
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #0a0a0a;
+}
+
+.home-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.home-header-logo {
+  height: 20px;
+  width: auto;
+  object-fit: contain;
+  object-position: left center;
+  margin: 0 0 0 0;
+  display: block;
+}
+
+/* Main */
+.home-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 0 32px;
+  position: relative;
+}
+
+.home-content {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+}
+
+/* Sparkles */
+.sparkle {
+  position: absolute;
+  font-size: 20px;
+  color: #0a0a0a;
+  pointer-events: none;
+  line-height: 1;
+}
+.top-left  { top: 8px;  left: 0; }
+.top-right { top: 8px;  right: 0; }
+.bottom-left { bottom: 80px; left: 0; }
+
+/* Hero */
+.home-hero {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.home-tagline {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1.6;
+  color: #555;
+  margin: 0;
+}
+
+.home-title {
+  font-size: clamp(72px, 22vw, 120px);
+  font-weight: 700;
+  line-height: 0.88;
+  letter-spacing: -0.03em;
+  margin: 12px 0 0;
+  max-width: min-content;
+}
+
+/* Title row with marquee */
+.home-title-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  overflow: hidden;
+}
+
+.marquee-wrapper {
+  flex: 1;
+  overflow: hidden;
+  border-radius: 4px;
+  cursor: grab;
+}
+
+.marquee-wrapper:active {
+  cursor: grabbing;
+}
+
+.marquee-track {
+  display: flex;
+  gap: 10px;
+  width: max-content;
+  will-change: transform;
+}
+
+.marquee-item {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.marquee-img {
+  height: 210px;
+  width: 210px;
+  object-fit: cover;
+  border-radius: 4px;
+  display: block;
+  transition: opacity 0.3s;
+  user-select: none;
+}
+
+.marquee-img--dim {
+  opacity: 0.2;
+}
+
+.marquee-overlay {
+  position: absolute;
+  inset: 0;
+  border-radius: 4px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.marquee-bname {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #0a0a0a;
+  margin: 0;
+}
+
+.marquee-bdesc {
+  font-size: 10px;
+  line-height: 1.55;
+  color: #1a1a1a;
+  margin: 0;
+}
+
+
+/* About */
+.home-about {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-left: 2px solid #0a0a0a;
+  padding-left: 14px;
+}
+
+.home-about-heading {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: #888;
+  margin: 0;
+}
+
+.home-description {
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.75;
+  color: #333;
+  margin: 0;
+  text-align: justify;
+}
+
+.home-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0a0a0a;
+  color: #f5f4f0;
+  border: none;
+  padding: 18px 24px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, letter-spacing 0.2s;
+}
+
+.home-cta:hover {
+  background: #2a2a2a;
+  letter-spacing: 0.18em;
+}
+
+.home-cta:active {
+  background: #444;
+}
+
+.cta-arrow {
+  font-size: 18px;
+  font-weight: 300;
+}
+
+/* Footer */
+.home-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  border-top: 1px solid #0a0a0a;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: #555;
+}
+
+.footer-line {
+  flex: 1;
+  height: 1px;
+  background: #ccc;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .home-title {
+    font-size: clamp(36px, 11vw, 80px);
+    max-width: none;
+  }
+
+  .home-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .marquee-wrapper {
+    width: 100%;
+  }
+}
