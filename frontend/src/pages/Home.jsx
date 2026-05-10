@@ -27,9 +27,12 @@ export default function Home() {
   const didDrag = useRef(false)
 
   useEffect(() => {
-    if (trackRef.current) {
+    if (!trackRef.current) return
+    const observer = new ResizeObserver(() => {
       halfRef.current = trackRef.current.scrollWidth / 2
-    }
+    })
+    observer.observe(trackRef.current)
+    return () => observer.disconnect()
   }, [])
 
   const tick = useCallback(() => {
