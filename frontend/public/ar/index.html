@@ -4,20 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Campus AR</title>
-
-  <!-- A-Frame must load before xrextras so AFRAME is defined when xrextras registers components -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <!-- xrextras: A-Frame components for 8th Wall (named-image-target, loading UI, etc.) -->
-  <script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras/dist/xrextras.js"></script>
-  <!-- 8th Wall open source engine binary — no app key needed. slam chunk required for image targets -->
-  <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async data-preload-chunks="slam"></script>
-  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; background: #000; }
-    canvas { position: absolute; top: 0; left: 0; }
+    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
 
     #back-btn {
       position: fixed;
@@ -52,6 +45,52 @@
       white-space: nowrap;
     }
 
+    /* ── Building recognition frame ── */
+    #building-frame {
+      position: fixed;
+      top: 42%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 260px;
+      height: 200px;
+      z-index: 500;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.35s ease;
+    }
+    #building-frame.active { opacity: 1; animation: frame-pulse 2s ease-in-out infinite; }
+
+    @keyframes frame-pulse {
+      0%, 100% { filter: drop-shadow(0 0 6px rgba(74,222,128,0.5)); }
+      50%       { filter: drop-shadow(0 0 14px rgba(74,222,128,0.9)); }
+    }
+
+    .corner {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: #4ade80;
+      border-style: solid;
+    }
+    .corner.tl { top: 0; left: 0;  border-width: 3px 0 0 3px; border-radius: 3px 0 0 0; }
+    .corner.tr { top: 0; right: 0; border-width: 3px 3px 0 0; border-radius: 0 3px 0 0; }
+    .corner.bl { bottom: 0; left: 0;  border-width: 0 0 3px 3px; border-radius: 0 0 0 3px; }
+    .corner.br { bottom: 0; right: 0; border-width: 0 3px 3px 0; border-radius: 0 0 3px 0; }
+
+    #frame-label {
+      position: absolute;
+      bottom: -28px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #4ade80;
+      white-space: nowrap;
+    }
+
+    /* ── Chart panel ── */
     #chart-panel {
       position: fixed;
       top: 12px;
@@ -104,6 +143,7 @@
     #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #888; }
     #total-value { font-size: 11px; font-weight: 700; color: #111; }
 
+    /* ── Bottom panel ── */
     #bottom-panel {
       position: fixed;
       bottom: 0;
@@ -184,6 +224,15 @@
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
+  <!-- 2D recognition frame — no 3D positioning needed -->
+  <div id="building-frame">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div id="frame-label"></div>
+  </div>
+
   <div id="chart-panel">
     <div id="chart-building-name"></div>
     <div id="chart-subtitle">Energy Use Intensity</div>
@@ -211,116 +260,15 @@
     </div>
   </div>
 
-  <script>
-    const KNOWN_IDS = new Set(['back-btn', 'scan-hint', 'chart-panel', 'bottom-panel']);
-
-    // Force-dismiss xrextras loading overlay once camera pipeline starts
-    const dismissLoaderModule = {
-      name: 'dismiss-loader',
-      onStart: () => {
-        requestAnimationFrame(() => {
-          document.querySelectorAll('body > *').forEach(el => {
-            const tag = el.tagName.toLowerCase();
-            if (tag === 'a-scene' || tag === 'script' || tag === 'style' || KNOWN_IDS.has(el.id)) return;
-            el.style.cssText += '; display: none !important;';
-          });
-        });
-      }
-    };
-
-    const setupXR = () => {
-      // Must configure before XR8.run() is called by xrconfig
-      XR8.XrController.configure({
-        imageTargetData: [{
-          imagePath: '/ar/image-targets/sde4_luminance.png',
-          name: 'sde4',
-          type: 'PLANAR',
-          properties: { left: 0, top: 478, width: 660, height: 880, isRotated: true, originalWidth: 660, originalHeight: 1836 },
-          resources: { originalImage: '/ar/image-targets/sde4_original.png', croppedImage: '/ar/image-targets/sde4_cropped.png', thumbnailImage: '/ar/image-targets/sde4_thumbnail.png', luminanceImage: '/ar/image-targets/sde4_luminance.png' },
-          created: 1778615992973,
-          updated: 1778615992973
-        }]
-      });
-      XR8.addCameraPipelineModules([dismissLoaderModule]);
-    };
-    window.XR8 ? setupXR() : window.addEventListener('xrloaded', setupXR);
-
-    // Highlight component: applies green material to all meshes in the GLB
-    AFRAME.registerComponent('highlight-building', {
-      schema: {
-        active:     { type: 'boolean', default: false },
-        r: { type: 'number', default: 0.2 },
-        g: { type: 'number', default: 0.9 },
-        b: { type: 'number', default: 0.5 },
-      },
-      init() {
-        this._cached   = false;
-        this._meshes   = [];
-        this._origMats = new Map();
-        this._hlMat    = null;
-        this._lastActive = null;
-        this.el.addEventListener('model-loaded', () => this._buildCache());
-      },
-      _buildCache() {
-        const root = this.el.getObject3D('mesh');
-        if (!root) return false;
-        this._meshes = [];
-        this._origMats = new Map();
-        root.traverse(obj => {
-          if (!obj.isMesh) return;
-          this._origMats.set(obj, obj.material);
-          this._meshes.push(obj);
-        });
-        const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
-        this._hlMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: 0.65, depthTest: false });
-        this._cached = true;
-        return true;
-      },
-      tick() {
-        const active = this.data.active;
-        if (active === this._lastActive) return;
-        if (!this._cached && !this._buildCache()) return;
-        this._lastActive = active;
-        this._meshes.forEach(obj => {
-          obj.renderOrder = active ? 999 : 0;
-          obj.material    = active ? this._hlMat : this._origMats.get(obj);
-        });
-      },
-      remove() {
-        this._meshes.forEach(obj => {
-          obj.renderOrder = 0;
-          if (this._origMats.has(obj)) obj.material = this._origMats.get(obj);
-        });
-      }
-    });
-  </script>
-
   <a-scene
-    xrconfig="disableWorldTracking: true"
-    xrextras-loading
-    xrextras-runtime-error
+    mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.001; filterBeta: 0.01;"
     color-space="sRGB"
-    renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
+    renderer="colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
-    <a-assets>
-      <a-asset-item id="sde4-model" src="/models/sde4.glb"></a-asset-item>
-    </a-assets>
-    <a-camera id="camera" position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-light type="ambient" color="#ffffff" intensity="1.2"></a-light>
-    <a-light type="directional" color="#ffffff" intensity="0.8" position="1 2 1"></a-light>
-
-    <xrextras-named-image-target name="sde4" id="target-sde4">
-      <a-entity
-        gltf-model="#sde4-model"
-        scale="0.01 0.01 0.01"
-        position="0 0 0"
-        rotation="-90 0 0"
-        id="model-sde4"
-        highlight-building="r: 0.2; g: 0.9; b: 0.5"
-      ></a-entity>
-    </xrextras-named-image-target>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity id="target-sde4" mindar-image-target="targetIndex: 0"></a-entity>
   </a-scene>
 
   <script>
@@ -339,12 +287,13 @@
       }
     };
 
-    const chartPanel  = document.getElementById('chart-panel');
-    const bottomPanel = document.getElementById('bottom-panel');
-    const scanHint    = document.getElementById('scan-hint');
-    const expandedEl  = document.getElementById('bottom-expanded');
-    let chartInstance = null;
-    let detailsOpen   = false;
+    const buildingFrame = document.getElementById('building-frame');
+    const chartPanel    = document.getElementById('chart-panel');
+    const bottomPanel   = document.getElementById('bottom-panel');
+    const scanHint      = document.getElementById('scan-hint');
+    const expandedEl    = document.getElementById('bottom-expanded');
+    let chartInstance   = null;
+    let detailsOpen     = false;
 
     function toggleDetails() {
       detailsOpen = !detailsOpen;
@@ -389,7 +338,9 @@
       });
     }
 
-    function showPanels(building) {
+    function showBuilding(building) {
+      document.getElementById('frame-label').textContent = building.name + ' — RECOGNISED';
+      buildingFrame.classList.add('active');
       renderChart(building);
       renderBottom(building);
       chartPanel.classList.add('visible');
@@ -397,7 +348,8 @@
       scanHint.style.opacity = '0';
     }
 
-    function hidePanels() {
+    function hideBuilding() {
+      buildingFrame.classList.remove('active');
       chartPanel.classList.remove('visible');
       bottomPanel.classList.remove('visible');
       scanHint.style.opacity = '1';
@@ -406,20 +358,10 @@
       document.getElementById('details-btn').textContent = 'SEE DETAILS ↑';
     }
 
-    // Wire up image target events once the scene is loaded
     document.querySelector('a-scene').addEventListener('loaded', () => {
-      const targetEl = document.getElementById('target-sde4');
-      const modelEl  = document.getElementById('model-sde4');
-      const building = buildings['sde4'];
-
-      targetEl.addEventListener('xrextrasfound', () => {
-        showPanels(building);
-        modelEl.setAttribute('highlight-building', 'active', true);
-      });
-      targetEl.addEventListener('xrextraslost', () => {
-        hidePanels();
-        modelEl.setAttribute('highlight-building', 'active', false);
-      });
+      const target = document.getElementById('target-sde4');
+      target.addEventListener('targetFound', () => showBuilding(buildings['sde4']));
+      target.addEventListener('targetLost',  () => hideBuilding());
     });
   </script>
 </body>
