@@ -271,8 +271,8 @@
         const root = this.el.getObject3D('mesh');
         if (!root) return;
 
-        // Build A-Frame highlight entity once, positioned at SDE4's centre
-        if (!this._ready) {
+        // Build A-Frame highlight entity once — only when active so matrices are valid
+        if (!this._ready && this.data.active) {
           const targetName = this.data.targetName;
           let targetObj = null;
           root.traverse(obj => {
