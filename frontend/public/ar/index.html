@@ -45,68 +45,23 @@
       white-space: nowrap;
     }
 
-    /* ── Building recognition frame ── */
-    #building-frame {
+    /* ── Building recognition glow ── */
+    #screen-glow {
       position: fixed;
-      top: 42%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 260px;
-      height: 200px;
-      z-index: 500;
+      inset: 0;
+      z-index: 400;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.35s ease;
+      background: radial-gradient(ellipse 65% 75% at 50% 45%,
+        rgba(34,197,94,0.28) 0%,
+        rgba(34,197,94,0.10) 45%,
+        rgba(34,197,94,0) 100%);
     }
-    #building-frame.active { opacity: 1; }
+    #screen-glow.active { animation: glow-pulse 2s ease-in-out infinite; }
 
-    .corner {
-      position: absolute;
-      width: 32px;
-      height: 32px;
-      border-color: #4ade80;
-      border-style: solid;
-      animation: none;
-    }
-    #building-frame.active .corner { animation: corner-pulse 1.8s ease-in-out infinite; }
-
-    .corner.tl { top: 0; left: 0;  border-width: 4px 0 0 4px; border-radius: 3px 0 0 0; }
-    .corner.tr { top: 0; right: 0; border-width: 4px 4px 0 0; border-radius: 0 3px 0 0; }
-    .corner.bl { bottom: 0; left: 0;  border-width: 0 0 4px 4px; border-radius: 0 0 0 3px; }
-    .corner.br { bottom: 0; right: 0; border-width: 0 4px 4px 0; border-radius: 0 0 3px 0; }
-
-    @keyframes corner-pulse {
-      0%, 100% { border-color: #4ade80; box-shadow: 0 0 8px #4ade80; }
-      50%       { border-color: #86efac; box-shadow: 0 0 20px #4ade80, 0 0 40px rgba(74,222,128,0.4); }
-    }
-
-    /* Soft green fill behind the frame when active */
-    #building-frame::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: rgba(74,222,128,0.06);
-      animation: none;
-    }
-    #building-frame.active::before { animation: fill-pulse 1.8s ease-in-out infinite; }
-
-    @keyframes fill-pulse {
-      0%, 100% { background: rgba(74,222,128,0.04); }
-      50%       { background: rgba(74,222,128,0.12); }
-    }
-
-    #frame-label {
-      position: absolute;
-      bottom: -30px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: #4ade80;
-      white-space: nowrap;
-      text-shadow: 0 0 10px rgba(74,222,128,0.8);
+    @keyframes glow-pulse {
+      0%, 100% { opacity: 0.55; }
+      50%       { opacity: 1; }
     }
 
     /* ── Chart panel ── */
@@ -243,14 +198,8 @@
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
-  <!-- 2D recognition frame — no 3D positioning needed -->
-  <div id="building-frame">
-    <div class="corner tl"></div>
-    <div class="corner tr"></div>
-    <div class="corner bl"></div>
-    <div class="corner br"></div>
-    <div id="frame-label"></div>
-  </div>
+  <!-- radial glow emanating from where the building sits in frame -->
+  <div id="screen-glow"></div>
 
   <div id="chart-panel">
     <div id="chart-building-name"></div>
@@ -306,8 +255,8 @@
       }
     };
 
-    const buildingFrame = document.getElementById('building-frame');
-    const chartPanel    = document.getElementById('chart-panel');
+    const screenGlow = document.getElementById('screen-glow');
+    const chartPanel = document.getElementById('chart-panel');
     const bottomPanel   = document.getElementById('bottom-panel');
     const scanHint      = document.getElementById('scan-hint');
     const expandedEl    = document.getElementById('bottom-expanded');
@@ -358,8 +307,7 @@
     }
 
     function showBuilding(building) {
-      document.getElementById('frame-label').textContent = building.name + ' — RECOGNISED';
-      buildingFrame.classList.add('active');
+      screenGlow.classList.add('active');
       renderChart(building);
       renderBottom(building);
       chartPanel.classList.add('visible');
@@ -368,7 +316,7 @@
     }
 
     function hideBuilding() {
-      buildingFrame.classList.remove('active');
+      screenGlow.classList.remove('active');
       chartPanel.classList.remove('visible');
       bottomPanel.classList.remove('visible');
       scanHint.style.opacity = '1';
