@@ -217,9 +217,6 @@
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
-  <div id="debug" style="position:fixed;top:60px;left:8px;z-index:9999;background:rgba(0,0,0,0.75);color:#0f0;font-size:9px;padding:6px;max-width:200px;word-break:break-all;border-radius:4px;"></div>
-
-
   <!-- Top-right chart panel -->
   <div id="chart-panel">
     <div id="chart-building-name"></div>
@@ -289,7 +286,6 @@
         this._hlMeshMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: 0.65, depthTest: false });
         this._hlLineMat = new THREE.LineBasicMaterial({ color: c });
         this._cached = true;
-        document.getElementById('debug').textContent = `cached: ${this._targetObjs.length} target, ${this._otherObjs.length} other`;
         return true;
       },
       tick() {
@@ -495,7 +491,6 @@ function showPanels(building) {
       targetEl.addEventListener('targetLost', () => {
         hidePanels();
         modelEl.setAttribute('highlight-building', 'active', false);
-        document.getElementById('debug').textContent = 'target lost';
       });
     });
   </script>
