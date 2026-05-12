@@ -259,72 +259,66 @@
         b: { type: 'number', default: 0.5 },
       },
       init() {
-        this._hlEl = null;
-        this._ready = false;
+        this._cached     = false;
+        this._targetObjs = [];
+        this._otherObjs  = [];
+        this._origMats   = new Map();
+        this._hlMeshMat  = null;
+        this._hlLineMat  = null;
+        this._lastActive = null;
+        this.el.addEventListener('model-loaded', () => this._buildCache());
       },
-      remove() {
-        if (this._hlEl && this._hlEl.parentNode) this._hlEl.parentNode.removeChild(this._hlEl);
-        this._hlEl = null;
-        this._ready = false;
+      _buildCache() {
+        const root = this.el.getObject3D('mesh');
+        if (!root) return false;
+        this._targetObjs = [];
+        this._otherObjs  = [];
+        this._origMats   = new Map();
+        const name = this.data.targetName;
+        root.traverse(obj => {
+          if (!obj.isMesh && !obj.isLine) return;
+          this._origMats.set(obj, obj.material);
+          let hit = false;
+          for (let cur = obj; cur; cur = cur.parent) {
+            if (cur.name === name) { hit = true; break; }
+          }
+          (hit ? this._targetObjs : this._otherObjs).push(obj);
+        });
+        const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
+        this._hlMeshMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: 0.65, depthTest: false });
+        this._hlLineMat = new THREE.LineBasicMaterial({ color: c });
+        this._cached = true;
+        document.getElementById('debug').textContent = `cached: ${this._targetObjs.length} target, ${this._otherObjs.length} other`;
+        return true;
       },
       tick() {
-        const root = this.el.getObject3D('mesh');
-        if (!root) return;
-
-        // Build A-Frame highlight entity once — only when active so matrices are valid
-        if (!this._ready && this.data.active) {
-          const targetName = this.data.targetName;
-          let targetObj = null;
-          root.traverse(obj => {
-            if (targetObj || !obj.isMesh) return;
-            let cur = obj, found = false;
-            while (cur) { if (cur.name === targetName) { found = true; break; } cur = cur.parent; }
-            if (found) targetObj = obj;
+        const active = this.data.active;
+        if (active === this._lastActive) return;
+        if (!this._cached && !this._buildCache()) return;
+        this._lastActive = active;
+        if (active) {
+          this._targetObjs.forEach(obj => {
+            obj.visible = true;
+            obj.renderOrder = 999;
+            obj.material = obj.isLine ? this._hlLineMat : this._hlMeshMat;
           });
-
-          if (targetObj) {
-            this.el.sceneEl.object3D.updateMatrixWorld(true);
-
-            const geo = targetObj.geometry;
-            if (!geo.boundingBox) geo.computeBoundingBox();
-
-            // Bounding box center in geometry-local space (includes survey coord offset)
-            const geoCenter = new THREE.Vector3();
-            geo.boundingBox.getCenter(geoCenter);
-
-            // Transform through the full chain (mesh → model scale 0.005 → target entity)
-            const worldCenter = geoCenter.clone().applyMatrix4(targetObj.matrixWorld);
-
-            // Convert world → target entity local space
-            const invTarget = new THREE.Matrix4().copy(this.el.parentEl.object3D.matrixWorld).invert();
-            const localCenter = worldCenter.clone().applyMatrix4(invTarget);
-
-            // Size: hardcode model scale 0.005 (worldScale is unreliable here)
-            const s = 0.005;
-            const boxSize = new THREE.Vector3();
-            geo.boundingBox.getSize(boxSize);
-            const w = boxSize.x * s;
-            const h = boxSize.z * s;
-            const d = boxSize.y * s;
-
-            const el = document.createElement('a-entity');
-            el.setAttribute('geometry', `primitive:box; width:${w}; height:${h}; depth:${d}`);
-            el.setAttribute('material', 'color:#00ff88; opacity:0.5; side:double; transparent:true; depthTest:false; shader:flat');
-            el.setAttribute('position', `${localCenter.x} ${localCenter.y} ${localCenter.z}`);
-            el.setAttribute('visible', 'false');
-            this.el.parentEl.appendChild(el);
-            this._hlEl = el;
-            this._ready = true;
-
-            const gc = geoCenter;
-            document.getElementById('debug').textContent =
-              `gc:${gc.x.toFixed(1)},${gc.y.toFixed(1)},${gc.z.toFixed(1)} | l:${localCenter.x.toFixed(3)},${localCenter.y.toFixed(3)},${localCenter.z.toFixed(3)} | ${w.toFixed(3)}x${h.toFixed(3)}x${d.toFixed(3)}`;
+          this._otherObjs.forEach(obj => { obj.visible = false; });
+        } else {
+          [...this._targetObjs, ...this._otherObjs].forEach(obj => {
+            obj.visible = true;
+            obj.renderOrder = 0;
+            obj.material = this._origMats.get(obj);
+          });
+        }
+      },
+      remove() {
+        [...this._targetObjs, ...this._otherObjs].forEach(obj => {
+          if (obj) {
+            obj.visible = true;
+            obj.renderOrder = 0;
+            if (this._origMats.has(obj)) obj.material = this._origMats.get(obj);
           }
-        }
-
-        if (this._hlEl) {
-          this._hlEl.setAttribute('visible', this.data.active ? 'true' : 'false');
-        }
+        });
       }
     });
   </script>
@@ -351,7 +345,6 @@
         position="-173.729 -0.18 6.615"
         rotation="-90 0 0"
         id="model-sde4"
-        visible="false"
         highlight-building="targetName: SDE4; r: 0.2; g: 0.9; b: 0.5"
       ></a-entity>
     </a-entity>
