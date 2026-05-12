@@ -45,41 +45,6 @@
       white-space: nowrap;
     }
 
-    /* ── Building recognition glow ── */
-    /* SDE4 front face: 85.16 wide × 25.15 tall → ratio 3.386:1 */
-    #screen-glow {
-      position: fixed;
-      top: 44%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 84vw;
-      height: calc(84vw / 3.386);   /* ≈ 24.8vw */
-      z-index: 400;
-      pointer-events: none;
-      opacity: 0;
-      background: rgba(34,197,94,0.06);
-      border: 1.5px solid rgba(34,197,94,0.35);
-      box-shadow:
-        0 0 30px 8px  rgba(34,197,94,0.20),
-        0 0 80px 20px rgba(34,197,94,0.08),
-        inset 0 0 30px rgba(34,197,94,0.10);
-    }
-    #screen-glow.active { animation: glow-pulse 2s ease-in-out infinite; }
-
-    @keyframes glow-pulse {
-      0%, 100% {
-        opacity: 0.6;
-        box-shadow: 0 0 25px 6px  rgba(34,197,94,0.18),
-                    0 0 60px 16px rgba(34,197,94,0.07),
-                    inset 0 0 25px rgba(34,197,94,0.08);
-      }
-      50% {
-        opacity: 1;
-        box-shadow: 0 0 45px 14px rgba(34,197,94,0.35),
-                    0 0 100px 30px rgba(34,197,94,0.12),
-                    inset 0 0 50px rgba(34,197,94,0.18);
-      }
-    }
 
     /* ── Chart panel ── */
     #chart-panel {
@@ -215,8 +180,6 @@
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
-  <!-- radial glow emanating from where the building sits in frame -->
-  <div id="screen-glow"></div>
 
   <div id="chart-panel">
     <div id="chart-building-name"></div>
@@ -245,6 +208,43 @@
     </div>
   </div>
 
+  <script>
+    AFRAME.registerComponent('highlight-building', {
+      schema: {
+        active:  { type: 'boolean', default: false },
+        r:       { type: 'number',  default: 0.13 },
+        g:       { type: 'number',  default: 0.77 },
+        b:       { type: 'number',  default: 0.37 },
+        opacity: { type: 'number',  default: 0.55 },
+      },
+      init() {
+        this._cached = false; this._meshes = []; this._origMats = new Map(); this._hlMat = null;
+        this.el.addEventListener('model-loaded', () => this._apply());
+      },
+      _apply() {
+        const root = this.el.getObject3D('mesh');
+        if (!root) return;
+        this._meshes = []; this._origMats = new Map();
+        root.traverse(obj => {
+          if (!obj.isMesh) return;
+          this._origMats.set(obj, obj.material);
+          this._meshes.push(obj);
+        });
+        const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
+        this._hlMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: this.data.opacity, depthTest: false });
+        this._cached = true;
+        if (this.data.active) this._show();
+      },
+      update() {
+        if (!this._cached) return;
+        this.data.active ? this._show() : this._hide();
+      },
+      _show() { this._meshes.forEach(obj => { obj.renderOrder = 999; obj.material = this._hlMat; }); },
+      _hide() { this._meshes.forEach(obj => { obj.renderOrder = 0;   obj.material = this._origMats.get(obj); }); },
+      remove() { this._hide(); }
+    });
+  </script>
+
   <a-scene
     mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.001; filterBeta: 0.01;"
     color-space="sRGB"
@@ -252,8 +252,21 @@
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
+    <a-assets>
+      <a-asset-item id="sde4-model" src="/models/sde4.glb"></a-asset-item>
+    </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-entity id="target-sde4" mindar-image-target="targetIndex: 0"></a-entity>
+
+    <a-entity id="target-sde4" mindar-image-target="targetIndex: 0">
+      <a-entity
+        id="model-sde4"
+        gltf-model="#sde4-model"
+        scale="0.01 0.01 0.01"
+        position="0 0 0"
+        rotation="-90 0 0"
+        highlight-building="active: true; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55"
+      ></a-entity>
+    </a-entity>
   </a-scene>
 
   <script>
@@ -272,7 +285,6 @@
       }
     };
 
-    const screenGlow = document.getElementById('screen-glow');
     const chartPanel = document.getElementById('chart-panel');
     const bottomPanel   = document.getElementById('bottom-panel');
     const scanHint      = document.getElementById('scan-hint');
@@ -324,7 +336,6 @@
     }
 
     function showBuilding(building) {
-      screenGlow.classList.add('active');
       renderChart(building);
       renderBottom(building);
       chartPanel.classList.add('visible');
@@ -333,7 +344,6 @@
     }
 
     function hideBuilding() {
-      screenGlow.classList.remove('active');
       chartPanel.classList.remove('visible');
       bottomPanel.classList.remove('visible');
       scanHint.style.opacity = '1';
