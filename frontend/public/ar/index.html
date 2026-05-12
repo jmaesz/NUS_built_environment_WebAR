@@ -248,6 +248,51 @@
     </div>
   </div>
 
+  <script>
+    // MUST be registered before <a-scene> so A-Frame picks it up on entity init
+    AFRAME.registerComponent('highlight-building', {
+      schema: {
+        active:     { type: 'boolean', default: false },
+        targetName: { type: 'string',  default: '' },
+        r: { type: 'number', default: 0.2 },
+        g: { type: 'number', default: 0.9 },
+        b: { type: 'number', default: 0.5 },
+      },
+      init() {
+        this._mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(this.data.r, this.data.g, this.data.b) });
+      },
+      update() {
+        if (!this._mat) this._mat = new THREE.MeshBasicMaterial({});
+        this._mat.color.setRGB(this.data.r, this.data.g, this.data.b);
+      },
+      tick() {
+        if (!this.data.active) return;
+        const root = this.el.getObject3D('mesh');
+        if (!root) return;
+        const targetName = this.data.targetName;
+        const mat = this._mat;
+        let found = 0;
+        root.traverse(obj => {
+          if (!obj.isMesh) return;
+          let cur = obj, isTarget = false;
+          while (cur) {
+            if (cur.name === targetName) { isTarget = true; break; }
+            cur = cur.parent;
+          }
+          obj.visible = isTarget;
+          if (isTarget) { obj.material = mat; found++; }
+        });
+        // Throttled debug: update once per second
+        const now = Date.now();
+        if (!this._dbgT || now - this._dbgT > 1000) {
+          this._dbgT = now;
+          const dbg = document.getElementById('debug');
+          if (dbg) dbg.textContent = `highlight: ${found} meshes green`;
+        }
+      }
+    });
+  </script>
+
   <a-scene
     mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes;"
     color-space="sRGB"
@@ -274,41 +319,6 @@
   </a-scene>
 
   <script>
-    // Runs every frame so A-Frame's own render loop can never reset the highlight
-    AFRAME.registerComponent('highlight-building', {
-      schema: {
-        active:     { type: 'boolean', default: false },
-        targetName: { type: 'string',  default: '' },
-        r: { type: 'number', default: 0.2 },
-        g: { type: 'number', default: 0.9 },
-        b: { type: 'number', default: 0.5 },
-      },
-      init() {
-        this._mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(this.data.r, this.data.g, this.data.b) });
-      },
-      update() {
-        if (!this._mat) this._mat = new THREE.MeshBasicMaterial({});
-        this._mat.color.setRGB(this.data.r, this.data.g, this.data.b);
-      },
-      tick() {
-        if (!this.data.active) return;
-        const root = this.el.getObject3D('mesh');
-        if (!root) return;
-        const targetName = this.data.targetName;
-        const mat = this._mat;
-        root.traverse(obj => {
-          if (!obj.isMesh) return;
-          let cur = obj, isTarget = false;
-          while (cur) {
-            if (cur.name === targetName) { isTarget = true; break; }
-            cur = cur.parent;
-          }
-          obj.visible = isTarget;
-          if (isTarget) obj.material = mat;
-        });
-      }
-    });
-
     const buildings = {
       'target-sde4': {
         name: 'SDE4',
