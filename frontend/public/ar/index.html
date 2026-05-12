@@ -285,25 +285,33 @@
           });
 
           if (targetObj) {
-            const color = new THREE.Color(this.data.r, this.data.g, this.data.b);
-            // New mesh using same geometry, our own material — parented to SDE4 so position is automatic
             const mat = new THREE.MeshBasicMaterial({
-              color,
+              color: 0x00ff88,
               side: THREE.DoubleSide,
-              depthTest: false,   // always draw on top — nothing can hide it
+              depthTest: false,
+              depthWrite: false,
             });
             this._overlay = new THREE.Mesh(targetObj.geometry, mat);
-            this._overlay.scale.set(1.02, 1.02, 1.02); // slightly larger to avoid z-fighting
+            this._overlay.scale.set(1.02, 1.02, 1.02);
             this._overlay.renderOrder = 999;
-            targetObj.add(this._overlay); // child of SDE4 — perfect position always
+            this._overlay.frustumCulled = false; // always render, never skip
+            this._overlay.visible = false;
+            targetObj.add(this._overlay);
             this._ready = true;
-            document.getElementById('debug').textContent = 'highlight ready: ' + targetObj.name;
           }
         }
 
         // Show/hide based on active state
         if (this._overlay) {
           this._overlay.visible = this.data.active;
+        }
+
+        // Live debug every second
+        const now = Date.now();
+        if (!this._dbgT || now - this._dbgT > 1000) {
+          this._dbgT = now;
+          const dbg = document.getElementById('debug');
+          if (dbg) dbg.textContent = `ready:${this._ready} active:${this.data.active} vis:${this._overlay ? this._overlay.visible : 'no'}`;
         }
       }
     });
