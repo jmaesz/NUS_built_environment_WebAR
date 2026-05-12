@@ -259,47 +259,84 @@
         b: { type: 'number', default: 0.5 },
       },
       init() {
-        const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
-        // DoubleSide so the face renders from both inside and outside the building
-        this._hlMat  = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide });
-        this._dimMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.55, 0.55, 0.55), side: THREE.DoubleSide, transparent: true, opacity: 0.35 });
+        this._box = null;      // BoxHelper — a NEW Three.js object we fully own
+        this._solidMesh = null; // cloned solid mesh we own
       },
-      update() {
-        const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
-        if (this._hlMat) this._hlMat.color.copy(c);
-        else this._hlMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide });
+      remove() {
+        if (this._box) { this.el.sceneEl.object3D.remove(this._box); this._box = null; }
+        if (this._solidMesh) { this.el.object3D.remove(this._solidMesh); this._solidMesh = null; }
       },
       tick() {
-        if (!this.data.active) return;
         const root = this.el.getObject3D('mesh');
         if (!root) return;
+
+        if (!this.data.active) {
+          if (this._box) this._box.visible = false;
+          if (this._solidMesh) this._solidMesh.visible = false;
+          return;
+        }
+
         const targetName = this.data.targetName;
-        const hlMat  = this._hlMat;
-        const dimMat = this._dimMat;
-        let found = 0;
-        root.traverse(obj => {
-          if (!obj.isMesh && !obj.isLine) return;
-          let cur = obj, isTarget = false;
-          while (cur) {
-            if (cur.name === targetName) { isTarget = true; break; }
-            cur = cur.parent;
+        const color = new THREE.Color(this.data.r, this.data.g, this.data.b);
+
+        // Find the target mesh once, then create our own objects
+        if (!this._box) {
+          let targetObj = null;
+          root.traverse(obj => {
+            if (targetObj) return;
+            if (!obj.isMesh && !obj.isLine) return;
+            let cur = obj, found = false;
+            while (cur) { if (cur.name === targetName) { found = true; break; } cur = cur.parent; }
+            if (found) targetObj = obj;
+          });
+
+          if (targetObj) {
+            // 1. BoxHelper: green outline box around SDE4 — a new Three.js object, not GLB material
+            this._box = new THREE.BoxHelper(targetObj, color);
+            this.el.sceneEl.object3D.add(this._box);
+
+            // 2. Cloned solid mesh with our own material — separate from the GLB's managed mesh
+            const geo = targetObj.geometry;
+            const mat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.55 });
+            this._solidMesh = new THREE.Mesh(geo, mat);
+            // Copy world transform so it overlaps SDE4 exactly
+            targetObj.updateWorldMatrix(true, false);
+            this._solidMesh.applyMatrix4(targetObj.matrixWorld);
+            this.el.sceneEl.object3D.add(this._solidMesh);
+
+            document.getElementById('debug').textContent = 'highlight ready: ' + targetObj.name;
           }
-          if (isTarget) {
-            obj.visible = true;
-            obj.material = hlMat;
-            found++;
-          } else {
-            // Dim other buildings instead of hiding — avoids visibility-reset issue
-            obj.visible = true;
-            obj.material = dimMat;
+        }
+
+        // Keep visible and update position every frame (MindAR moves the target)
+        if (this._box) {
+          this._box.visible = true;
+          const root2 = this.el.getObject3D('mesh');
+          if (root2) {
+            root2.traverse(obj => {
+              if (obj === this._box._object || (!obj.isMesh && !obj.isLine)) return;
+              let cur = obj, found = false;
+              while (cur) { if (cur.name === targetName) { found = true; break; } cur = cur.parent; }
+              if (found) this._box.update();
+            });
           }
-        });
-        // Throttled debug
-        const now = Date.now();
-        if (!this._dbgT || now - this._dbgT > 1000) {
-          this._dbgT = now;
-          const dbg = document.getElementById('debug');
-          if (dbg) dbg.textContent = `highlight: ${found} objs`;
+        }
+        if (this._solidMesh) {
+          this._solidMesh.visible = true;
+          // Re-sync world transform each frame
+          let targetObj = null;
+          root.traverse(obj => {
+            if (targetObj) return;
+            if (!obj.isMesh && !obj.isLine) return;
+            let cur = obj, found = false;
+            while (cur) { if (cur.name === targetName) { found = true; break; } cur = cur.parent; }
+            if (found) targetObj = obj;
+          });
+          if (targetObj) {
+            targetObj.updateWorldMatrix(true, false);
+            this._solidMesh.matrix.copy(targetObj.matrixWorld);
+            this._solidMesh.matrixWorldNeedsUpdate = true;
+          }
         }
       }
     });
