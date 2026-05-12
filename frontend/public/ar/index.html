@@ -449,19 +449,18 @@
         const dbg = document.getElementById('debug');
 
         setTimeout(() => {
-          // Use the live rendered object, not the cached e.detail.model
           const live = modelEl.getObject3D('mesh');
           if (!live) { dbg.textContent = 'no live mesh'; return; }
 
-          let meshCount = 0, directMatch = false;
+          // TEST: paint ALL meshes bright red to confirm material changes work
+          let count = 0;
           live.traverse(obj => {
             if (!obj.isMesh) return;
-            meshCount++;
-            if (obj.name === building.nodeName) directMatch = true;
+            obj.material = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: new THREE.Color(1,0,0), emissiveIntensity: 1 });
+            obj.visible = true;
+            count++;
           });
-          dbg.textContent = `live | meshes:${meshCount} | direct:${directMatch}`;
-
-          highlightModel(live, building.nodeName, building.highlightColor);
+          dbg.textContent = `painted red: ${count} meshes`;
         }, 300);
       });
 
