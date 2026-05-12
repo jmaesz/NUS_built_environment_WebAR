@@ -387,34 +387,34 @@
     }
 
     function highlightModel(modelEl, targetNodeName, highlightColor) {
-      const mesh = modelEl.getObject3D('mesh');
-      if (!mesh) return;
-      mesh.traverse(obj => {
-        if (!obj.isMesh) return;
-        if (obj.name === targetNodeName) {
+      const root = modelEl.getObject3D('mesh') || modelEl.object3D;
+      if (!root) return;
+
+      // Hide all meshes first
+      root.traverse(obj => { if (obj.isMesh) obj.visible = false; });
+
+      // Find target node (may be a Group or Mesh)
+      const targetNode = root.getObjectByName(targetNodeName);
+      if (targetNode) {
+        targetNode.traverse(obj => {
+          if (!obj.isMesh) return;
           obj.visible = true;
-          if (obj.material) {
-            obj.material = obj.material.clone();
-            obj.material.emissive.setRGB(highlightColor.r, highlightColor.g, highlightColor.b);
-            obj.material.emissiveIntensity = 0.6;
-          }
-        } else {
-          obj.visible = (obj.name === '');
-        }
-      });
+          // Replace material with bright highlight
+          obj.material = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(highlightColor.r, highlightColor.g, highlightColor.b),
+            emissive: new THREE.Color(highlightColor.r * 0.4, highlightColor.g * 0.4, highlightColor.b * 0.4),
+            emissiveIntensity: 1,
+            roughness: 0.4,
+            metalness: 0.1,
+          });
+        });
+      }
     }
 
     function resetModel(modelEl) {
-      const mesh = modelEl.getObject3D('mesh');
-      if (!mesh) return;
-      mesh.traverse(obj => {
-        if (!obj.isMesh) return;
-        if (obj.material && obj.material.emissive) {
-          obj.material.emissive.setRGB(0, 0, 0);
-          obj.material.emissiveIntensity = 0;
-        }
-        obj.visible = (obj.name === '');
-      });
+      const root = modelEl.getObject3D('mesh') || modelEl.object3D;
+      if (!root) return;
+      root.traverse(obj => { if (obj.isMesh) obj.visible = false; });
     }
 
     function showPanels(building) {
