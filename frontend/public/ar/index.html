@@ -268,11 +268,47 @@
         position="0 0 0"
         rotation="0 0 0"
         id="model-sde4"
+        highlight-building="targetName: SDE4; r: 0.2; g: 0.9; b: 0.5"
       ></a-entity>
     </a-entity>
   </a-scene>
 
   <script>
+    // Runs every frame so A-Frame's own render loop can never reset the highlight
+    AFRAME.registerComponent('highlight-building', {
+      schema: {
+        active:     { type: 'boolean', default: false },
+        targetName: { type: 'string',  default: '' },
+        r: { type: 'number', default: 0.2 },
+        g: { type: 'number', default: 0.9 },
+        b: { type: 'number', default: 0.5 },
+      },
+      init() {
+        this._mat = new THREE.MeshBasicMaterial({ color: new THREE.Color(this.data.r, this.data.g, this.data.b) });
+      },
+      update() {
+        if (!this._mat) this._mat = new THREE.MeshBasicMaterial({});
+        this._mat.color.setRGB(this.data.r, this.data.g, this.data.b);
+      },
+      tick() {
+        if (!this.data.active) return;
+        const root = this.el.getObject3D('mesh');
+        if (!root) return;
+        const targetName = this.data.targetName;
+        const mat = this._mat;
+        root.traverse(obj => {
+          if (!obj.isMesh) return;
+          let cur = obj, isTarget = false;
+          while (cur) {
+            if (cur.name === targetName) { isTarget = true; break; }
+            cur = cur.parent;
+          }
+          obj.visible = isTarget;
+          if (isTarget) obj.material = mat;
+        });
+      }
+    });
+
     const buildings = {
       'target-sde4': {
         name: 'SDE4',
@@ -311,7 +347,6 @@
     const expandedEl   = document.getElementById('bottom-expanded');
     let chartInstance  = null;
     let detailsOpen    = false;
-    const loadedModels = {}; // store Three.js model per target
 
     function toggleDetails() {
       detailsOpen = !detailsOpen;
@@ -388,34 +423,7 @@
       });
     }
 
-    function highlightModel(model, targetNodeName, highlightColor) {
-      if (!model) return;
-      const mat = new THREE.MeshStandardMaterial({
-        color: new THREE.Color(highlightColor.r, highlightColor.g, highlightColor.b),
-        emissive: new THREE.Color(highlightColor.r * 0.4, highlightColor.g * 0.4, highlightColor.b * 0.4),
-        emissiveIntensity: 1.0,
-        roughness: 0.3,
-        metalness: 0.1,
-      });
-      model.traverse(obj => {
-        if (!obj.isMesh) return;
-        // Walk up parent chain to check if this mesh belongs to the target node
-        let cur = obj, isTarget = false;
-        while (cur) {
-          if (cur.name === targetNodeName) { isTarget = true; break; }
-          cur = cur.parent;
-        }
-        obj.visible = isTarget;
-        if (isTarget) obj.material = mat.clone();
-      });
-    }
-
-    function resetModel(model) {
-      if (!model) return;
-      model.traverse(obj => { if (obj.isMesh) obj.visible = false; });
-    }
-
-    function showPanels(building) {
+function showPanels(building) {
       renderChart(building);
       renderBottom(building);
       chartPanel.classList.add('visible');
@@ -436,37 +444,16 @@
       const targetEl = document.getElementById(targetId);
       const modelEl  = document.getElementById('model-' + targetId.replace('target-', ''));
 
-      modelEl.addEventListener('model-loaded', (e) => {
-        loadedModels[targetId] = e.detail.model;
-        // Debug: list all named objects
-        const names = [];
-        e.detail.model.traverse(obj => { if (obj.name) names.push(obj.name + (obj.isMesh ? '[M]' : '[G]')); });
-        document.getElementById('debug').textContent = 'Nodes: ' + names.slice(0,10).join(', ');
-      });
-
       targetEl.addEventListener('targetFound', () => {
         showPanels(building);
-        const dbg = document.getElementById('debug');
-
-        setTimeout(() => {
-          const live = modelEl.getObject3D('mesh');
-          if (!live) { dbg.textContent = 'no live mesh'; return; }
-
-          // TEST: paint ALL meshes bright red to confirm material changes work
-          let count = 0;
-          live.traverse(obj => {
-            if (!obj.isMesh) return;
-            obj.material = new THREE.MeshStandardMaterial({ color: 0xff0000, emissive: new THREE.Color(1,0,0), emissiveIntensity: 1 });
-            obj.visible = true;
-            count++;
-          });
-          dbg.textContent = `painted red: ${count} meshes`;
-        }, 300);
+        modelEl.setAttribute('highlight-building', 'active', true);
+        document.getElementById('debug').textContent = 'target found: ' + building.nodeName;
       });
 
       targetEl.addEventListener('targetLost', () => {
         hidePanels();
-        resetModel(modelEl.getObject3D('mesh'));
+        modelEl.setAttribute('highlight-building', 'active', false);
+        document.getElementById('debug').textContent = 'target lost';
       });
     });
   </script>
