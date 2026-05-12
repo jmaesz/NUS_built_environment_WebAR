@@ -217,6 +217,7 @@
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
+  <div id="debug" style="position:fixed;top:60px;left:8px;z-index:9999;background:rgba(0,0,0,0.75);color:#0f0;font-size:9px;padding:6px;max-width:200px;word-break:break-all;border-radius:4px;"></div>
 
   <!-- Top-right chart panel -->
   <div id="chart-panel">
@@ -438,6 +439,11 @@
       modelEl.addEventListener('model-loaded', (e) => {
         loadedModels[targetId] = e.detail.model;
         resetModel(loadedModels[targetId]);
+
+        // Debug: list all named objects
+        const names = [];
+        e.detail.model.traverse(obj => { if (obj.name) names.push(obj.name + (obj.isMesh ? '[M]' : '[G]')); });
+        document.getElementById('debug').textContent = 'Nodes: ' + names.slice(0,10).join(', ');
       });
 
       targetEl.addEventListener('targetFound', () => {
