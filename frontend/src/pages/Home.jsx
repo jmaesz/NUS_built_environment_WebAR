@@ -149,7 +149,7 @@ export default function Home() {
             </p>
           </div>
 
-          <button className="home-cta" onClick={() => navigate('/camera')}>
+          <button className="home-cta" onClick={() => window.location.href = '/ar/index.html'}>
             LAUNCH CAMERA
             <span className="cta-arrow">→</span>
           </button>

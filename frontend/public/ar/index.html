@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Campus AR</title>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/loaders/GLTFLoader.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 100vw; height: 100dvh; overflow: hidden; background: #000; font-family: sans-serif; }
+
+    #back-btn {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      z-index: 100;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 10px 16px;
+      font-size: 12px;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      border-radius: 2px;
+    }
+
+    #scan-hint {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      padding: 12px 20px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      border-radius: 2px;
+      text-align: center;
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+
+    #info-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(10,10,10,0.85);
+      color: #f5f4f0;
+      padding: 20px 24px 36px;
+      transform: translateY(100%);
+      transition: transform 0.4s ease;
+      border-top: 1px solid rgba(255,255,255,0.15);
+    }
+
+    #info-panel.visible {
+      transform: translateY(0);
+    }
+
+    #info-name {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+      color: #fff;
+    }
+
+    #info-desc {
+      font-size: 12px;
+      line-height: 1.7;
+      color: #ccc;
+    }
+
+    #mindar-container {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+  <button id="back-btn" onclick="window.location.href='/'">← BACK</button>
+  <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
+  <div id="info-panel">
+    <div id="info-name"></div>
+    <div id="info-desc"></div>
+  </div>
+  <div id="mindar-container"></div>
+
+  <script>
+    const buildings = {
+      'SDE4': "Singapore's first new-build net-zero energy building; features 1,200+ rooftop solar panels, a hybrid cooling system, and over 50% naturally ventilated space. Generates more energy than it consumes.",
+      'E7': "Built to the highest green building standards; vertical sun-shading fins around the façade and strategically placed courtyards and green pockets reduce heat gain.",
+      'The Frontier': "The first development in Singapore to demonstrate exemplary performance in climate resilience under the Green Mark 2021 scheme; largely naturally ventilated and integrated with surrounding greenery.",
+      'Ventus': "Green Mark Platinum certified with a passive wind scoop for natural ventilation and an award-winning green wall; achieved an EUI of just 49 kWh/m², versus the office average of 219.",
+      'E2A': "One of NUS' three Zero Energy Buildings; maximises natural ventilation and daylight through passive design, sun-shading devices, extensive greenery, and low-VOC materials.",
+      'Yusof Ishak House': "Heritage retrofit targeting net-zero energy; retains the original 1970s structure to keep embodied carbon to under a third of a new build, with a hybrid cooling system and a naturally ventilated atrium lung.",
+    };
+
+    // Map image target index → building name (matches order targets were compiled)
+    const targetMap = {
+      0: 'SDE4',
+    };
+
+    const infoPanel = document.getElementById('info-panel');
+    const infoName  = document.getElementById('info-name');
+    const infoDesc  = document.getElementById('info-desc');
+    const scanHint  = document.getElementById('scan-hint');
+
+    function showInfo(name) {
+      infoName.textContent = name;
+      infoDesc.textContent = buildings[name] || '';
+      infoPanel.classList.add('visible');
+      scanHint.style.opacity = '0';
+    }
+
+    function hideInfo() {
+      infoPanel.classList.remove('visible');
+      scanHint.style.opacity = '1';
+    }
+
+    async function start() {
+      const mindarThree = new window.MINDAR.IMAGE.MindARThree({
+        container: document.getElementById('mindar-container'),
+        imageTargetSrc: '/ar/targets.mind',
+        maxTrack: 1,
+      });
+
+      const { renderer, scene, camera } = mindarThree;
+
+      // Load the GLB model once
+      const loader = new THREE.GLTFLoader();
+      const gltf = await new Promise((res, rej) => loader.load('/scene.glb', res, undefined, rej));
+      const model = gltf.scene;
+
+      // Hide all meshes initially
+      model.traverse(obj => { if (obj.isMesh) obj.visible = false; });
+
+      // For each target, create an anchor and show the relevant named object
+      Object.entries(targetMap).forEach(([indexStr, buildingName]) => {
+        const index = parseInt(indexStr);
+        const anchor = mindarThree.addAnchor(index);
+
+        // Clone just the named node for this building
+        const targetNode = model.getObjectByName(buildingName);
+        if (targetNode) {
+          const clone = targetNode.clone();
+          clone.traverse(obj => { if (obj.isMesh) obj.visible = true; });
+          clone.scale.set(0.01, 0.01, 0.01); // adjust scale as needed
+          anchor.group.add(clone);
+        }
+
+        anchor.onTargetFound = () => showInfo(buildingName);
+        anchor.onTargetLost  = () => hideInfo();
+      });
+
+      await mindarThree.start();
+
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
+    }
+
+    start().catch(err => {
+      console.error(err);
+      document.getElementById('scan-hint').textContent = 'Error starting AR: ' + err.message;
+    });
+  </script>
+</body>
+</html>
