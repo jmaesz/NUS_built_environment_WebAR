@@ -211,12 +211,21 @@
   </div>
 
   <script>
-    // Configure 8th Wall image targets once the engine is ready
-    const configure8thWall = async () => {
-      const targetData = await fetch('/ar/image-targets/sde4.json').then(r => r.json())
-      XR8.XrController.configure({ imageTargetData: [targetData] })
-    }
-    window.XR8 ? configure8thWall() : window.addEventListener('xrloaded', configure8thWall)
+    // Configure image targets synchronously on xrloaded — avoids async fetch racing XR8.run()
+    const configure8thWall = () => {
+      XR8.XrController.configure({
+        imageTargetData: [{
+          imagePath: 'image-targets/sde4_luminance.png',
+          name: 'sde4',
+          type: 'PLANAR',
+          properties: { left: 0, top: 478, width: 660, height: 880, isRotated: true, originalWidth: 660, originalHeight: 1836 },
+          resources: { originalImage: 'sde4_original.png', croppedImage: 'sde4_cropped.png', thumbnailImage: 'sde4_thumbnail.png', luminanceImage: 'sde4_luminance.png' },
+          created: 1778615992973,
+          updated: 1778615992973
+        }]
+      });
+    };
+    window.XR8 ? configure8thWall() : window.addEventListener('xrloaded', configure8thWall);
 
     // Highlight component: applies green material to all meshes in the GLB
     AFRAME.registerComponent('highlight-building', {
