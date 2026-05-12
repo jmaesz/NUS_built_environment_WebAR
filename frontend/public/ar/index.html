@@ -259,84 +259,51 @@
         b: { type: 'number', default: 0.5 },
       },
       init() {
-        this._box = null;      // BoxHelper — a NEW Three.js object we fully own
-        this._solidMesh = null; // cloned solid mesh we own
+        this._overlay = null; // mesh we own, parented directly onto SDE4
+        this._ready = false;
       },
       remove() {
-        if (this._box) { this.el.sceneEl.object3D.remove(this._box); this._box = null; }
-        if (this._solidMesh) { this.el.object3D.remove(this._solidMesh); this._solidMesh = null; }
+        if (this._overlay && this._overlay.parent) {
+          this._overlay.parent.remove(this._overlay);
+        }
+        this._overlay = null;
+        this._ready = false;
       },
       tick() {
         const root = this.el.getObject3D('mesh');
         if (!root) return;
 
-        if (!this.data.active) {
-          if (this._box) this._box.visible = false;
-          if (this._solidMesh) this._solidMesh.visible = false;
-          return;
-        }
-
-        const targetName = this.data.targetName;
-        const color = new THREE.Color(this.data.r, this.data.g, this.data.b);
-
-        // Find the target mesh once, then create our own objects
-        if (!this._box) {
+        // Build overlay once when model is loaded
+        if (!this._ready) {
+          const targetName = this.data.targetName;
           let targetObj = null;
           root.traverse(obj => {
-            if (targetObj) return;
-            if (!obj.isMesh && !obj.isLine) return;
+            if (targetObj || !obj.isMesh) return;
             let cur = obj, found = false;
             while (cur) { if (cur.name === targetName) { found = true; break; } cur = cur.parent; }
             if (found) targetObj = obj;
           });
 
           if (targetObj) {
-            // 1. BoxHelper: green outline box around SDE4 — a new Three.js object, not GLB material
-            this._box = new THREE.BoxHelper(targetObj, color);
-            this.el.sceneEl.object3D.add(this._box);
-
-            // 2. Cloned solid mesh with our own material — separate from the GLB's managed mesh
-            const geo = targetObj.geometry;
-            const mat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.55 });
-            this._solidMesh = new THREE.Mesh(geo, mat);
-            // Copy world transform so it overlaps SDE4 exactly
-            targetObj.updateWorldMatrix(true, false);
-            this._solidMesh.applyMatrix4(targetObj.matrixWorld);
-            this.el.sceneEl.object3D.add(this._solidMesh);
-
+            const color = new THREE.Color(this.data.r, this.data.g, this.data.b);
+            // New mesh using same geometry, our own material — parented to SDE4 so position is automatic
+            const mat = new THREE.MeshBasicMaterial({
+              color,
+              side: THREE.DoubleSide,
+              depthTest: false,   // always draw on top — nothing can hide it
+            });
+            this._overlay = new THREE.Mesh(targetObj.geometry, mat);
+            this._overlay.scale.set(1.02, 1.02, 1.02); // slightly larger to avoid z-fighting
+            this._overlay.renderOrder = 999;
+            targetObj.add(this._overlay); // child of SDE4 — perfect position always
+            this._ready = true;
             document.getElementById('debug').textContent = 'highlight ready: ' + targetObj.name;
           }
         }
 
-        // Keep visible and update position every frame (MindAR moves the target)
-        if (this._box) {
-          this._box.visible = true;
-          const root2 = this.el.getObject3D('mesh');
-          if (root2) {
-            root2.traverse(obj => {
-              if (obj === this._box._object || (!obj.isMesh && !obj.isLine)) return;
-              let cur = obj, found = false;
-              while (cur) { if (cur.name === targetName) { found = true; break; } cur = cur.parent; }
-              if (found) this._box.update();
-            });
-          }
-        }
-        if (this._solidMesh) {
-          this._solidMesh.visible = true;
-          // Re-sync world transform each frame
-          let targetObj = null;
-          root.traverse(obj => {
-            if (targetObj) return;
-            if (!obj.isMesh && !obj.isLine) return;
-            let cur = obj, found = false;
-            while (cur) { if (cur.name === targetName) { found = true; break; } cur = cur.parent; }
-            if (found) targetObj = obj;
-          });
-          if (targetObj) {
-            targetObj.updateWorldMatrix(true, false);
-            this._solidMesh.matrix.copy(targetObj.matrixWorld);
-            this._solidMesh.matrixWorldNeedsUpdate = true;
-          }
+        // Show/hide based on active state
+        if (this._overlay) {
+          this._overlay.visible = this.data.active;
         }
       }
     });
