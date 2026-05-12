@@ -16,7 +16,7 @@
 
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
+    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; background: #000; }
     canvas { position: absolute; top: 0; left: 0; }
 
     #back-btn {
@@ -212,21 +212,38 @@
   </div>
 
   <script>
-    // Configure image targets synchronously on xrloaded — avoids async fetch racing XR8.run()
-    const configure8thWall = () => {
+    const KNOWN_IDS = new Set(['back-btn', 'scan-hint', 'chart-panel', 'bottom-panel']);
+
+    // Force-dismiss xrextras loading overlay once camera pipeline starts
+    const dismissLoaderModule = {
+      name: 'dismiss-loader',
+      onStart: () => {
+        requestAnimationFrame(() => {
+          document.querySelectorAll('body > *').forEach(el => {
+            const tag = el.tagName.toLowerCase();
+            if (tag === 'a-scene' || tag === 'script' || tag === 'style' || KNOWN_IDS.has(el.id)) return;
+            el.style.cssText += '; display: none !important;';
+          });
+        });
+      }
+    };
+
+    const setupXR = () => {
+      // Must configure before XR8.run() is called by xrconfig
       XR8.XrController.configure({
         imageTargetData: [{
-          imagePath: 'image-targets/sde4_luminance.png',
+          imagePath: '/ar/image-targets/sde4_luminance.png',
           name: 'sde4',
           type: 'PLANAR',
           properties: { left: 0, top: 478, width: 660, height: 880, isRotated: true, originalWidth: 660, originalHeight: 1836 },
-          resources: { originalImage: 'sde4_original.png', croppedImage: 'sde4_cropped.png', thumbnailImage: 'sde4_thumbnail.png', luminanceImage: 'sde4_luminance.png' },
+          resources: { originalImage: '/ar/image-targets/sde4_original.png', croppedImage: '/ar/image-targets/sde4_cropped.png', thumbnailImage: '/ar/image-targets/sde4_thumbnail.png', luminanceImage: '/ar/image-targets/sde4_luminance.png' },
           created: 1778615992973,
           updated: 1778615992973
         }]
       });
+      XR8.addCameraPipelineModules([dismissLoaderModule]);
     };
-    window.XR8 ? configure8thWall() : window.addEventListener('xrloaded', configure8thWall);
+    window.XR8 ? setupXR() : window.addEventListener('xrloaded', setupXR);
 
     // Highlight component: applies green material to all meshes in the GLB
     AFRAME.registerComponent('highlight-building', {
@@ -280,6 +297,8 @@
 
   <a-scene
     xrconfig="disableWorldTracking: true"
+    xrextras-loading
+    xrextras-runtime-error
     color-space="sRGB"
     renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
     vr-mode-ui="enabled: false"
