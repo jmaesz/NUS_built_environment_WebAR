@@ -283,38 +283,39 @@
           });
 
           if (targetObj) {
-            // Compute SDE4's bounding box in its own local space
+            // Force full matrix update so getWorldPosition is accurate
+            this.el.sceneEl.object3D.updateMatrixWorld(true);
+
+            // Get SDE4's true world-space position
+            const worldPos = new THREE.Vector3();
+            targetObj.getWorldPosition(worldPos);
+
+            // Get world-space scale of the model entity to compute real AR size
+            const worldScale = new THREE.Vector3();
+            this.el.object3D.getWorldScale(worldScale);
             const geo = targetObj.geometry;
             if (!geo.boundingBox) geo.computeBoundingBox();
-            const centre = new THREE.Vector3();
-            const size   = new THREE.Vector3();
-            geo.boundingBox.getCenter(centre);
+            const size = new THREE.Vector3();
             geo.boundingBox.getSize(size);
+            const w = size.x * worldScale.x;
+            const h = size.z * worldScale.z;
+            const d = size.y * worldScale.y;
 
-            // Transform centre from geometry local → gltfRoot space (via node matrix)
-            centre.applyMatrix4(targetObj.matrixWorld);
+            // Convert world position → target entity local space
+            const invTarget = new THREE.Matrix4().copy(this.el.parentEl.object3D.matrixWorld).invert();
+            const localPos = worldPos.clone().applyMatrix4(invTarget);
 
-            // The model entity has scale 0.005; transform into target-entity local space
-            // target entity is the parent of model entity
-            const targetEntityObj = this.el.parentEl.object3D;
-            const invParent = new THREE.Matrix4().copy(targetEntityObj.matrixWorld).invert();
-            centre.applyMatrix4(invParent);
-
-            const s = 0.005; // model scale
-            const w = size.x * s, h = size.z * s, d = size.y * s;
-
-            // Create a native A-Frame entity — same pipeline as the campus model
             const el = document.createElement('a-entity');
             el.setAttribute('geometry', `primitive:box; width:${w}; height:${h}; depth:${d}`);
-            el.setAttribute('material', 'color:#00ff88; opacity:0.55; side:double; transparent:true');
-            el.setAttribute('position', `${centre.x} ${centre.y} ${centre.z}`);
+            el.setAttribute('material', 'color:#00ff88; opacity:0.7; side:double; transparent:true');
+            el.setAttribute('position', `${localPos.x} ${localPos.y} ${localPos.z}`);
             el.setAttribute('visible', 'false');
-            this.el.parentEl.appendChild(el); // child of target entity
+            this.el.parentEl.appendChild(el);
             this._hlEl = el;
             this._ready = true;
 
             document.getElementById('debug').textContent =
-              `box @ ${centre.x.toFixed(2)} ${centre.y.toFixed(2)} ${centre.z.toFixed(2)} | ${w.toFixed(2)}x${h.toFixed(2)}x${d.toFixed(2)}`;
+              `w:${worldPos.x.toFixed(2)},${worldPos.y.toFixed(2)},${worldPos.z.toFixed(2)} | l:${localPos.x.toFixed(2)},${localPos.y.toFixed(2)},${localPos.z.toFixed(2)} | ${w.toFixed(3)}x${h.toFixed(3)}`;
           }
         }
 
