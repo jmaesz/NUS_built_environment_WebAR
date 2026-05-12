@@ -438,8 +438,6 @@
 
       modelEl.addEventListener('model-loaded', (e) => {
         loadedModels[targetId] = e.detail.model;
-        resetModel(loadedModels[targetId]);
-
         // Debug: list all named objects
         const names = [];
         e.detail.model.traverse(obj => { if (obj.name) names.push(obj.name + (obj.isMesh ? '[M]' : '[G]')); });
@@ -448,30 +446,28 @@
 
       targetEl.addEventListener('targetFound', () => {
         showPanels(building);
-        const model = loadedModels[targetId];
         const dbg = document.getElementById('debug');
 
-        if (!model) {
-          dbg.textContent = 'targetFound but NO MODEL yet';
-          return;
-        }
+        setTimeout(() => {
+          // Use the live rendered object, not the cached e.detail.model
+          const live = modelEl.getObject3D('mesh');
+          if (!live) { dbg.textContent = 'no live mesh'; return; }
 
-        // Count meshes and check if target name exists
-        let meshCount = 0, directMatch = false;
-        model.traverse(obj => {
-          if (!obj.isMesh) return;
-          meshCount++;
-          if (obj.name === building.nodeName) directMatch = true;
-        });
-        dbg.textContent = `targetFound | meshes:${meshCount} | direct:${directMatch}`;
+          let meshCount = 0, directMatch = false;
+          live.traverse(obj => {
+            if (!obj.isMesh) return;
+            meshCount++;
+            if (obj.name === building.nodeName) directMatch = true;
+          });
+          dbg.textContent = `live | meshes:${meshCount} | direct:${directMatch}`;
 
-        // Delay slightly to let A-Frame finish showing the entity
-        setTimeout(() => highlightModel(model, building.nodeName, building.highlightColor), 150);
+          highlightModel(live, building.nodeName, building.highlightColor);
+        }, 300);
       });
 
       targetEl.addEventListener('targetLost', () => {
         hidePanels();
-        resetModel(loadedModels[targetId]);
+        resetModel(modelEl.getObject3D('mesh'));
       });
     });
   </script>
