@@ -259,44 +259,47 @@
         b: { type: 'number', default: 0.5 },
       },
       init() {
-        this._meshMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(this.data.r, this.data.g, this.data.b) });
-        this._lineMat = new THREE.LineBasicMaterial({ color: new THREE.Color(this.data.r, this.data.g, this.data.b) });
+        const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
+        // DoubleSide so the face renders from both inside and outside the building
+        this._hlMat  = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide });
+        this._dimMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.55, 0.55, 0.55), side: THREE.DoubleSide, transparent: true, opacity: 0.35 });
       },
       update() {
         const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
-        if (this._meshMat) this._meshMat.color.copy(c);
-        else this._meshMat = new THREE.MeshBasicMaterial({ color: c });
-        if (this._lineMat) this._lineMat.color.copy(c);
-        else this._lineMat = new THREE.LineBasicMaterial({ color: c });
+        if (this._hlMat) this._hlMat.color.copy(c);
+        else this._hlMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide });
       },
       tick() {
         if (!this.data.active) return;
         const root = this.el.getObject3D('mesh');
         if (!root) return;
         const targetName = this.data.targetName;
-        const meshMat = this._meshMat;
-        const lineMat = this._lineMat;
+        const hlMat  = this._hlMat;
+        const dimMat = this._dimMat;
         let found = 0;
         root.traverse(obj => {
-          // Handle both solid mesh faces AND line/wireframe objects
           if (!obj.isMesh && !obj.isLine) return;
           let cur = obj, isTarget = false;
           while (cur) {
             if (cur.name === targetName) { isTarget = true; break; }
             cur = cur.parent;
           }
-          obj.visible = isTarget;
           if (isTarget) {
-            obj.material = obj.isLine ? lineMat : meshMat;
+            obj.visible = true;
+            obj.material = hlMat;
             found++;
+          } else {
+            // Dim other buildings instead of hiding — avoids visibility-reset issue
+            obj.visible = true;
+            obj.material = dimMat;
           }
         });
-        // Throttled debug: update once per second
+        // Throttled debug
         const now = Date.now();
         if (!this._dbgT || now - this._dbgT > 1000) {
           this._dbgT = now;
           const dbg = document.getElementById('debug');
-          if (dbg) dbg.textContent = `highlight: ${found} objs green`;
+          if (dbg) dbg.textContent = `highlight: ${found} objs`;
         }
       }
     });
