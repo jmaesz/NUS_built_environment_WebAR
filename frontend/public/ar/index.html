@@ -4,9 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Campus AR</title>
+
+  <!-- A-Frame must load before xrextras so AFRAME is defined when xrextras registers components -->
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  <!-- xrextras: A-Frame components for 8th Wall (named-image-target, loading UI, etc.) -->
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/xrextras/dist/xrextras.js"></script>
+  <!-- 8th Wall open source engine binary — no app key needed. slam chunk required for image targets -->
+  <script src="https://cdn.jsdelivr.net/npm/@8thwall/engine-binary@1/dist/xr.js" async data-preload-chunks="slam"></script>
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
@@ -44,7 +51,6 @@
       white-space: nowrap;
     }
 
-    /* ── Top-right chart panel ── */
     #chart-panel {
       position: fixed;
       top: 12px;
@@ -97,7 +103,6 @@
     #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #888; }
     #total-value { font-size: 11px; font-weight: 700; color: #111; }
 
-    /* ── Bottom panel ── */
     #bottom-panel {
       position: fixed;
       bottom: 0;
@@ -147,7 +152,6 @@
     }
     #details-btn:active { background: rgba(255,255,255,0.2); }
 
-    /* Expanded details */
     #bottom-expanded {
       max-height: 0;
       overflow: hidden;
@@ -164,60 +168,21 @@
       padding-top: 14px;
     }
 
-    .detail-item {
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-    }
-    .detail-color-bar {
-      width: 3px;
-      border-radius: 2px;
-      flex-shrink: 0;
-      align-self: stretch;
-      min-height: 40px;
-    }
+    .detail-item { display: flex; gap: 12px; align-items: flex-start; }
+    .detail-color-bar { width: 3px; border-radius: 2px; flex-shrink: 0; align-self: stretch; min-height: 40px; }
     .detail-content { flex: 1; }
-    .detail-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 4px;
-    }
-    .detail-name {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #fff;
-    }
-    .detail-val {
-      font-size: 11px;
-      font-weight: 600;
-      color: #fff;
-    }
-    .detail-desc {
-      font-size: 10px;
-      line-height: 1.6;
-      color: #999;
-    }
-    .detail-bar-bg {
-      height: 3px;
-      background: rgba(255,255,255,0.1);
-      border-radius: 2px;
-      margin-top: 6px;
-      overflow: hidden;
-    }
-    .detail-bar-fill {
-      height: 100%;
-      border-radius: 2px;
-      transition: width 0.6s ease;
-    }
+    .detail-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+    .detail-name { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; }
+    .detail-val { font-size: 11px; font-weight: 600; color: #fff; }
+    .detail-desc { font-size: 10px; line-height: 1.6; color: #999; }
+    .detail-bar-bg { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
+    .detail-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
-  <!-- Top-right chart panel -->
+
   <div id="chart-panel">
     <div id="chart-building-name"></div>
     <div id="chart-subtitle">Energy Use Intensity</div>
@@ -232,7 +197,6 @@
     </div>
   </div>
 
-  <!-- Bottom panel -->
   <div id="bottom-panel">
     <div id="bottom-collapsed">
       <div>
@@ -247,44 +211,41 @@
   </div>
 
   <script>
-    // MUST be registered before <a-scene> so A-Frame picks it up on entity init
+    // Configure 8th Wall image targets once the engine is ready
+    const configure8thWall = async () => {
+      const targetData = await fetch('/ar/image-targets/sde4.json').then(r => r.json())
+      XR8.XrController.configure({ imageTargetData: [targetData] })
+    }
+    window.XR8 ? configure8thWall() : window.addEventListener('xrloaded', configure8thWall)
+
+    // Highlight component: applies green material to all meshes in the GLB
     AFRAME.registerComponent('highlight-building', {
       schema: {
         active:     { type: 'boolean', default: false },
-        targetName: { type: 'string',  default: '' },
         r: { type: 'number', default: 0.2 },
         g: { type: 'number', default: 0.9 },
         b: { type: 'number', default: 0.5 },
       },
       init() {
-        this._cached     = false;
-        this._targetObjs = [];
-        this._otherObjs  = [];
-        this._origMats   = new Map();
-        this._hlMeshMat  = null;
-        this._hlLineMat  = null;
+        this._cached   = false;
+        this._meshes   = [];
+        this._origMats = new Map();
+        this._hlMat    = null;
         this._lastActive = null;
         this.el.addEventListener('model-loaded', () => this._buildCache());
       },
       _buildCache() {
         const root = this.el.getObject3D('mesh');
         if (!root) return false;
-        this._targetObjs = [];
-        this._otherObjs  = [];
-        this._origMats   = new Map();
-        const name = this.data.targetName;
+        this._meshes = [];
+        this._origMats = new Map();
         root.traverse(obj => {
-          if (!obj.isMesh && !obj.isLine) return;
+          if (!obj.isMesh) return;
           this._origMats.set(obj, obj.material);
-          let hit = false;
-          for (let cur = obj; cur; cur = cur.parent) {
-            if (cur.name === name) { hit = true; break; }
-          }
-          (hit ? this._targetObjs : this._otherObjs).push(obj);
+          this._meshes.push(obj);
         });
         const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
-        this._hlMeshMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: 0.65, depthTest: false });
-        this._hlLineMat = new THREE.LineBasicMaterial({ color: c });
+        this._hlMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: 0.65, depthTest: false });
         this._cached = true;
         return true;
       },
@@ -293,35 +254,22 @@
         if (active === this._lastActive) return;
         if (!this._cached && !this._buildCache()) return;
         this._lastActive = active;
-        if (active) {
-          this._targetObjs.forEach(obj => {
-            obj.visible = true;
-            obj.renderOrder = 999;
-            obj.material = obj.isLine ? this._hlLineMat : this._hlMeshMat;
-          });
-          this._otherObjs.forEach(obj => { obj.visible = false; });
-        } else {
-          [...this._targetObjs, ...this._otherObjs].forEach(obj => {
-            obj.visible = true;
-            obj.renderOrder = 0;
-            obj.material = this._origMats.get(obj);
-          });
-        }
+        this._meshes.forEach(obj => {
+          obj.renderOrder = active ? 999 : 0;
+          obj.material    = active ? this._hlMat : this._origMats.get(obj);
+        });
       },
       remove() {
-        [...this._targetObjs, ...this._otherObjs].forEach(obj => {
-          if (obj) {
-            obj.visible = true;
-            obj.renderOrder = 0;
-            if (this._origMats.has(obj)) obj.material = this._origMats.get(obj);
-          }
+        this._meshes.forEach(obj => {
+          obj.renderOrder = 0;
+          if (this._origMats.has(obj)) obj.material = this._origMats.get(obj);
         });
       }
     });
   </script>
 
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.001; filterBeta: 0.01;"
+    xrconfig="disableWorldTracking: true"
     color-space="sRGB"
     renderer="colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
@@ -330,62 +278,43 @@
     <a-assets>
       <a-asset-item id="sde4-model" src="/models/sde4.glb"></a-asset-item>
     </a-assets>
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     <a-light type="ambient" color="#ffffff" intensity="1.2"></a-light>
     <a-light type="directional" color="#ffffff" intensity="0.8" position="1 2 1"></a-light>
 
-    <!-- Target 0: SDE4 -->
-    <a-entity id="target-sde4" mindar-image-target="targetIndex: 0">
+    <xrextras-named-image-target name="sde4" id="target-sde4">
       <a-entity
         gltf-model="#sde4-model"
         scale="0.01 0.01 0.01"
         position="0 0 0"
         rotation="-90 0 0"
         id="model-sde4"
-        highlight-building="targetName: SDE4; r: 0.2; g: 0.9; b: 0.5"
+        highlight-building="r: 0.2; g: 0.9; b: 0.5"
       ></a-entity>
-    </a-entity>
+    </xrextras-named-image-target>
   </a-scene>
 
   <script>
     const buildings = {
-      'target-sde4': {
+      'sde4': {
         name: 'SDE4',
-        nodeName: 'SDE4',
         tagline: "Net-zero energy · NUS School of Design & Environment",
-        highlightColor: { r: 0.2, g: 0.9, b: 0.5 },
         energy: {
           total: 86,
           components: [
-            {
-              label: 'Cooling',
-              value: 37,
-              color: '#4A90D9',
-              desc: 'Hybrid cooling system combining chilled ceilings and natural ventilation reduces HVAC load by ~30% vs a conventional building. Over 50% of spaces are naturally ventilated.'
-            },
-            {
-              label: 'Equipment',
-              value: 32,
-              color: '#F5A623',
-              desc: 'Computers, monitors, lab equipment and studio devices. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices.'
-            },
-            {
-              label: 'Lighting',
-              value: 17,
-              color: '#7ED321',
-              desc: 'Full LED with daylight-linked dimming sensors. South-facing shading fins and deep overhangs maximise natural daylight, cutting artificial lighting hours significantly.'
-            },
+            { label: 'Cooling',   value: 37, color: '#4A90D9', desc: 'Hybrid cooling system combining chilled ceilings and natural ventilation reduces HVAC load by ~30% vs a conventional building. Over 50% of spaces are naturally ventilated.' },
+            { label: 'Equipment', value: 32, color: '#F5A623', desc: 'Computers, monitors, lab equipment and studio devices. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices.' },
+            { label: 'Lighting',  value: 17, color: '#7ED321', desc: 'Full LED with daylight-linked dimming sensors. South-facing shading fins and deep overhangs maximise natural daylight, cutting artificial lighting hours significantly.' },
           ]
         }
       }
     };
 
-    const chartPanel   = document.getElementById('chart-panel');
-    const bottomPanel  = document.getElementById('bottom-panel');
-    const scanHint     = document.getElementById('scan-hint');
-    const expandedEl   = document.getElementById('bottom-expanded');
-    let chartInstance  = null;
-    let detailsOpen    = false;
+    const chartPanel  = document.getElementById('chart-panel');
+    const bottomPanel = document.getElementById('bottom-panel');
+    const scanHint    = document.getElementById('scan-hint');
+    const expandedEl  = document.getElementById('bottom-expanded');
+    let chartInstance = null;
+    let detailsOpen   = false;
 
     function toggleDetails() {
       detailsOpen = !detailsOpen;
@@ -395,42 +324,24 @@
 
     function renderChart(building) {
       document.getElementById('chart-building-name').textContent = building.name;
-      const components = building.energy.components;
-      const total = building.energy.total;
+      const { components, total } = building.energy;
       document.getElementById('total-value').textContent = total + ' kWh/m²/yr';
-
       const legend = document.getElementById('legend');
       legend.innerHTML = '';
       components.forEach(c => {
-        legend.innerHTML += `
-          <div class="legend-item">
-            <div class="legend-dot" style="background:${c.color}"></div>
-            <span class="legend-label">${c.label}</span>
-            <span class="legend-value">${c.value}<span class="legend-pct"> kWh</span></span>
-          </div>`;
+        legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span class="legend-label">${c.label}</span><span class="legend-value">${c.value}<span class="legend-pct"> kWh</span></span></div>`;
       });
-
       if (chartInstance) chartInstance.destroy();
       const ctx = document.getElementById('energy-chart').getContext('2d');
       chartInstance = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: components.map(c => c.label),
-          datasets: [{
-            data: components.map(c => c.value),
-            backgroundColor: components.map(c => c.color),
-            borderWidth: 2,
-            borderColor: '#fff',
-          }]
+          datasets: [{ data: components.map(c => c.value), backgroundColor: components.map(c => c.color), borderWidth: 2, borderColor: '#fff' }]
         },
         options: {
           cutout: '60%',
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} kWh/m²/yr` }
-            }
-          },
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} kWh/m²/yr` } } },
           animation: { duration: 600 }
         }
       });
@@ -439,30 +350,16 @@
     function renderBottom(building) {
       document.getElementById('bottom-bname').textContent = building.name;
       document.getElementById('bottom-tagline').textContent = building.tagline;
-
       const inner = document.getElementById('bottom-expanded-inner');
-      const total = building.energy.total;
+      const { components, total } = building.energy;
       inner.innerHTML = '';
-      building.energy.components.forEach(c => {
+      components.forEach(c => {
         const pct = Math.round((c.value / total) * 100);
-        inner.innerHTML += `
-          <div class="detail-item">
-            <div class="detail-color-bar" style="background:${c.color}"></div>
-            <div class="detail-content">
-              <div class="detail-header">
-                <span class="detail-name">${c.label}</span>
-                <span class="detail-val">${c.value} kWh/m²/yr</span>
-              </div>
-              <div class="detail-desc">${c.desc}</div>
-              <div class="detail-bar-bg">
-                <div class="detail-bar-fill" style="width:${pct}%; background:${c.color}"></div>
-              </div>
-            </div>
-          </div>`;
+        inner.innerHTML += `<div class="detail-item"><div class="detail-color-bar" style="background:${c.color}"></div><div class="detail-content"><div class="detail-header"><span class="detail-name">${c.label}</span><span class="detail-val">${c.value} kWh/m²/yr</span></div><div class="detail-desc">${c.desc}</div><div class="detail-bar-bg"><div class="detail-bar-fill" style="width:${pct}%; background:${c.color}"></div></div></div></div>`;
       });
     }
 
-function showPanels(building) {
+    function showPanels(building) {
       renderChart(building);
       renderBottom(building);
       chartPanel.classList.add('visible');
@@ -479,16 +376,17 @@ function showPanels(building) {
       document.getElementById('details-btn').textContent = 'SEE DETAILS ↑';
     }
 
-    Object.entries(buildings).forEach(([targetId, building]) => {
-      const targetEl = document.getElementById(targetId);
-      const modelEl  = document.getElementById('model-' + targetId.replace('target-', ''));
+    // Wire up image target events once the scene is loaded
+    document.querySelector('a-scene').addEventListener('loaded', () => {
+      const targetEl = document.getElementById('target-sde4');
+      const modelEl  = document.getElementById('model-sde4');
+      const building = buildings['sde4'];
 
-      targetEl.addEventListener('targetFound', () => {
+      targetEl.addEventListener('xrextrasfound', () => {
         showPanels(building);
         modelEl.setAttribute('highlight-building', 'active', true);
       });
-
-      targetEl.addEventListener('targetLost', () => {
+      targetEl.addEventListener('xrextraslost', () => {
         hidePanels();
         modelEl.setAttribute('highlight-building', 'active', false);
       });
