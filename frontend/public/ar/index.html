@@ -310,6 +310,7 @@
     const expandedEl   = document.getElementById('bottom-expanded');
     let chartInstance  = null;
     let detailsOpen    = false;
+    const loadedModels = {}; // store Three.js model per target
 
     function toggleDetails() {
       detailsOpen = !detailsOpen;
@@ -386,35 +387,31 @@
       });
     }
 
-    function highlightModel(modelEl, targetNodeName, highlightColor) {
-      const root = modelEl.getObject3D('mesh') || modelEl.object3D;
-      if (!root) return;
-
-      // Hide all meshes first
-      root.traverse(obj => { if (obj.isMesh) obj.visible = false; });
-
-      // Find target node (may be a Group or Mesh)
-      const targetNode = root.getObjectByName(targetNodeName);
-      if (targetNode) {
-        targetNode.traverse(obj => {
-          if (!obj.isMesh) return;
-          obj.visible = true;
-          // Replace material with bright highlight
-          obj.material = new THREE.MeshStandardMaterial({
-            color: new THREE.Color(highlightColor.r, highlightColor.g, highlightColor.b),
-            emissive: new THREE.Color(highlightColor.r * 0.4, highlightColor.g * 0.4, highlightColor.b * 0.4),
-            emissiveIntensity: 1,
-            roughness: 0.4,
-            metalness: 0.1,
-          });
-        });
-      }
+    function highlightModel(model, targetNodeName, highlightColor) {
+      if (!model) return;
+      const mat = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(highlightColor.r, highlightColor.g, highlightColor.b),
+        emissive: new THREE.Color(highlightColor.r * 0.4, highlightColor.g * 0.4, highlightColor.b * 0.4),
+        emissiveIntensity: 1.0,
+        roughness: 0.3,
+        metalness: 0.1,
+      });
+      model.traverse(obj => {
+        if (!obj.isMesh) return;
+        // Walk up parent chain to check if this mesh belongs to the target node
+        let cur = obj, isTarget = false;
+        while (cur) {
+          if (cur.name === targetNodeName) { isTarget = true; break; }
+          cur = cur.parent;
+        }
+        obj.visible = isTarget;
+        if (isTarget) obj.material = mat.clone();
+      });
     }
 
-    function resetModel(modelEl) {
-      const root = modelEl.getObject3D('mesh') || modelEl.object3D;
-      if (!root) return;
-      root.traverse(obj => { if (obj.isMesh) obj.visible = false; });
+    function resetModel(model) {
+      if (!model) return;
+      model.traverse(obj => { if (obj.isMesh) obj.visible = false; });
     }
 
     function showPanels(building) {
@@ -438,18 +435,19 @@
       const targetEl = document.getElementById(targetId);
       const modelEl  = document.getElementById('model-' + targetId.replace('target-', ''));
 
+      modelEl.addEventListener('model-loaded', (e) => {
+        loadedModels[targetId] = e.detail.model;
+        resetModel(loadedModels[targetId]);
+      });
+
       targetEl.addEventListener('targetFound', () => {
         showPanels(building);
-        highlightModel(modelEl, building.nodeName, building.highlightColor);
+        highlightModel(loadedModels[targetId], building.nodeName, building.highlightColor);
       });
 
       targetEl.addEventListener('targetLost', () => {
         hidePanels();
-        resetModel(modelEl);
-      });
-
-      modelEl.addEventListener('model-loaded', () => {
-        resetModel(modelEl);
+        resetModel(loadedModels[targetId]);
       });
     });
   </script>
