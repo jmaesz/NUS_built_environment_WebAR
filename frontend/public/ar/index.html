@@ -6,81 +6,171 @@
   <title>Campus AR</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: sans-serif; }
+    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
 
     #back-btn {
       position: fixed;
       top: 16px;
       left: 16px;
       z-index: 999;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.55);
       color: #fff;
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 10px 16px;
-      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 9px 14px;
+      font-size: 11px;
       letter-spacing: 0.1em;
       cursor: pointer;
-      border-radius: 2px;
+      border-radius: 4px;
       text-decoration: none;
     }
 
     #scan-hint {
       position: fixed;
-      bottom: 40px;
+      bottom: 36px;
       left: 50%;
       transform: translateX(-50%);
       z-index: 999;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.55);
       color: #fff;
-      padding: 12px 20px;
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      border-radius: 2px;
-      text-align: center;
+      padding: 11px 18px;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      border-radius: 4px;
       pointer-events: none;
       transition: opacity 0.4s;
       white-space: nowrap;
     }
 
+    /* ── Info panel ── */
     #info-panel {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      top: 12px;
+      right: 12px;
       z-index: 999;
-      background: rgba(10,10,10,0.88);
-      color: #f5f4f0;
-      padding: 20px 24px 40px;
-      transform: translateY(100%);
-      transition: transform 0.4s ease;
-      border-top: 1px solid rgba(255,255,255,0.15);
+      width: 200px;
+      background: rgba(255,255,255,0.93);
+      border-radius: 10px;
+      padding: 14px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      opacity: 0;
+      transform: translateX(16px);
+      transition: opacity 0.35s ease, transform 0.35s ease;
+      pointer-events: none;
     }
 
-    #info-panel.visible { transform: translateY(0); }
+    #info-panel.visible {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
 
-    #info-name {
-      font-size: 14px;
+    #info-building-name {
+      font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.08em;
       text-transform: uppercase;
-      margin-bottom: 8px;
+      color: #111;
+      margin-bottom: 2px;
     }
 
-    #info-desc {
-      font-size: 12px;
-      line-height: 1.75;
-      color: #ccc;
+    #info-subtitle {
+      font-size: 9px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #888;
+      margin-bottom: 10px;
+    }
+
+    #chart-container {
+      position: relative;
+      width: 100%;
+      height: 130px;
+      margin-bottom: 10px;
+    }
+
+    .legend {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-label {
+      font-size: 10px;
+      color: #444;
+      flex: 1;
+    }
+
+    .legend-value {
+      font-size: 10px;
+      font-weight: 600;
+      color: #111;
+    }
+
+    .legend-pct {
+      font-size: 9px;
+      color: #888;
+      margin-left: 2px;
+    }
+
+    .divider {
+      height: 1px;
+      background: #eee;
+      margin: 10px 0;
+    }
+
+    #total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    #total-label {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #888;
+    }
+
+    #total-value {
+      font-size: 11px;
+      font-weight: 700;
+      color: #111;
     }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
+
+  <!-- Info panel (top-right, fixed) -->
   <div id="info-panel">
-    <div id="info-name"></div>
-    <div id="info-desc"></div>
+    <div id="info-building-name"></div>
+    <div id="info-subtitle">Energy Use Intensity</div>
+    <div id="chart-container">
+      <canvas id="energy-chart"></canvas>
+    </div>
+    <div class="legend" id="legend"></div>
+    <div class="divider"></div>
+    <div id="total-row">
+      <span id="total-label">Total EUI</span>
+      <span id="total-value"></span>
+    </div>
   </div>
 
   <a-scene
@@ -113,28 +203,78 @@
       'target-sde4': {
         name: 'SDE4',
         nodeName: 'SDE4',
-        desc: "Singapore's first new-build net-zero energy building; features 1,200+ rooftop solar panels, a hybrid cooling system, and over 50% naturally ventilated space. Generates more energy than it consumes."
+        energy: {
+          components: [
+            { label: 'Cooling',    value: 37, color: '#4A90D9' },
+            { label: 'Equipment',  value: 32, color: '#F5A623' },
+            { label: 'Lighting',   value: 17, color: '#7ED321' },
+          ]
+        }
       }
     };
 
-    const infoPanel = document.getElementById('info-panel');
-    const infoName  = document.getElementById('info-name');
-    const infoDesc  = document.getElementById('info-desc');
-    const scanHint  = document.getElementById('scan-hint');
+    const infoPanel  = document.getElementById('info-panel');
+    const scanHint   = document.getElementById('scan-hint');
+    let chartInstance = null;
 
-    function showInfo(building) {
-      infoName.textContent = building.name;
-      infoDesc.textContent = building.desc;
+    function renderPanel(building) {
+      document.getElementById('info-building-name').textContent = building.name;
+
+      const components = building.energy.components;
+      const total = components.reduce((s, c) => s + c.value, 0);
+
+      document.getElementById('total-value').textContent = total + ' kWh/m²/yr';
+
+      // Legend
+      const legend = document.getElementById('legend');
+      legend.innerHTML = '';
+      components.forEach(c => {
+        const pct = Math.round((c.value / total) * 100);
+        legend.innerHTML += `
+          <div class="legend-item">
+            <div class="legend-dot" style="background:${c.color}"></div>
+            <span class="legend-label">${c.label}</span>
+            <span class="legend-value">${c.value}<span class="legend-pct"> kWh</span></span>
+          </div>`;
+      });
+
+      // Pie chart
+      if (chartInstance) chartInstance.destroy();
+      const ctx = document.getElementById('energy-chart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: components.map(c => c.label),
+          datasets: [{
+            data: components.map(c => c.value),
+            backgroundColor: components.map(c => c.color),
+            borderWidth: 2,
+            borderColor: '#fff',
+          }]
+        },
+        options: {
+          cutout: '60%',
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.label}: ${ctx.raw} kWh/m²/yr`
+              }
+            }
+          },
+          animation: { duration: 600 }
+        }
+      });
+
       infoPanel.classList.add('visible');
       scanHint.style.opacity = '0';
     }
 
-    function hideInfo() {
+    function hidePanel() {
       infoPanel.classList.remove('visible');
       scanHint.style.opacity = '1';
     }
 
-    // Once model loads, hide all nodes except the relevant one per target
     function filterModel(modelEl, targetNodeName) {
       const mesh = modelEl.getObject3D('mesh');
       if (!mesh) return;
@@ -148,11 +288,11 @@
       const modelEl  = document.getElementById('model-' + targetId.replace('target-', ''));
 
       targetEl.addEventListener('targetFound', () => {
-        showInfo(building);
+        renderPanel(building);
         filterModel(modelEl, building.nodeName);
       });
 
-      targetEl.addEventListener('targetLost', () => hideInfo());
+      targetEl.addEventListener('targetLost', () => hidePanel());
 
       modelEl.addEventListener('model-loaded', () => {
         filterModel(modelEl, building.nodeName);
