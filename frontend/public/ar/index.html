@@ -44,8 +44,8 @@
       white-space: nowrap;
     }
 
-    /* ── Info panel ── */
-    #info-panel {
+    /* ── Top-right chart panel ── */
+    #chart-panel {
       position: fixed;
       top: 12px;
       right: 12px;
@@ -60,14 +60,12 @@
       transition: opacity 0.35s ease, transform 0.35s ease;
       pointer-events: none;
     }
-
-    #info-panel.visible {
+    #chart-panel.visible {
       opacity: 1;
       transform: translateX(0);
       pointer-events: auto;
     }
-
-    #info-building-name {
+    #chart-building-name {
       font-size: 13px;
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -75,82 +73,144 @@
       color: #111;
       margin-bottom: 2px;
     }
-
-    #info-subtitle {
+    #chart-subtitle {
       font-size: 9px;
       letter-spacing: 0.06em;
       text-transform: uppercase;
       color: #888;
       margin-bottom: 10px;
     }
-
     #chart-container {
       position: relative;
       width: 100%;
       height: 130px;
       margin-bottom: 10px;
     }
+    .legend { display: flex; flex-direction: column; gap: 6px; }
+    .legend-item { display: flex; align-items: center; gap: 7px; }
+    .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .legend-label { font-size: 10px; color: #444; flex: 1; }
+    .legend-value { font-size: 10px; font-weight: 600; color: #111; }
+    .legend-pct { font-size: 9px; color: #888; margin-left: 2px; }
+    .divider { height: 1px; background: #eee; margin: 10px 0; }
+    #total-row { display: flex; justify-content: space-between; align-items: center; }
+    #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #888; }
+    #total-value { font-size: 11px; font-weight: 700; color: #111; }
 
-    .legend {
+    /* ── Bottom panel ── */
+    #bottom-panel {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 999;
+      background: rgba(10,10,10,0.92);
+      border-top: 1px solid rgba(255,255,255,0.12);
+      transform: translateY(100%);
+      transition: transform 0.4s ease;
+    }
+    #bottom-panel.visible { transform: translateY(0); }
+
+    #bottom-collapsed {
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    #bottom-bname {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    #bottom-tagline {
+      font-size: 10px;
+      color: #aaa;
+      margin-top: 2px;
+      letter-spacing: 0.04em;
+    }
+    #details-btn {
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 8px 14px;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+      margin-left: 12px;
+      transition: background 0.2s;
+    }
+    #details-btn:active { background: rgba(255,255,255,0.2); }
+
+    /* Expanded details */
+    #bottom-expanded {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.4s ease;
+    }
+    #bottom-expanded.open { max-height: 400px; }
+
+    #bottom-expanded-inner {
+      padding: 0 20px 24px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 14px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 14px;
     }
 
-    .legend-item {
+    .detail-item {
       display: flex;
-      align-items: center;
-      gap: 7px;
+      gap: 12px;
+      align-items: flex-start;
     }
-
-    .legend-dot {
-      width: 9px;
-      height: 9px;
-      border-radius: 50%;
+    .detail-color-bar {
+      width: 3px;
+      border-radius: 2px;
       flex-shrink: 0;
+      align-self: stretch;
+      min-height: 40px;
     }
-
-    .legend-label {
-      font-size: 10px;
-      color: #444;
-      flex: 1;
-    }
-
-    .legend-value {
-      font-size: 10px;
-      font-weight: 600;
-      color: #111;
-    }
-
-    .legend-pct {
-      font-size: 9px;
-      color: #888;
-      margin-left: 2px;
-    }
-
-    .divider {
-      height: 1px;
-      background: #eee;
-      margin: 10px 0;
-    }
-
-    #total-row {
+    .detail-content { flex: 1; }
+    .detail-header {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: baseline;
+      margin-bottom: 4px;
     }
-
-    #total-label {
-      font-size: 9px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: #888;
-    }
-
-    #total-value {
+    .detail-name {
       font-size: 11px;
       font-weight: 700;
-      color: #111;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .detail-val {
+      font-size: 11px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .detail-desc {
+      font-size: 10px;
+      line-height: 1.6;
+      color: #999;
+    }
+    .detail-bar-bg {
+      height: 3px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 2px;
+      margin-top: 6px;
+      overflow: hidden;
+    }
+    .detail-bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s ease;
     }
   </style>
 </head>
@@ -158,10 +218,10 @@
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
-  <!-- Info panel (top-right, fixed) -->
-  <div id="info-panel">
-    <div id="info-building-name"></div>
-    <div id="info-subtitle">Energy Use Intensity</div>
+  <!-- Top-right chart panel -->
+  <div id="chart-panel">
+    <div id="chart-building-name"></div>
+    <div id="chart-subtitle">Energy Use Intensity</div>
     <div id="chart-container">
       <canvas id="energy-chart"></canvas>
     </div>
@@ -170,6 +230,20 @@
     <div id="total-row">
       <span id="total-label">Total EUI</span>
       <span id="total-value"></span>
+    </div>
+  </div>
+
+  <!-- Bottom panel -->
+  <div id="bottom-panel">
+    <div id="bottom-collapsed">
+      <div>
+        <div id="bottom-bname"></div>
+        <div id="bottom-tagline"></div>
+      </div>
+      <button id="details-btn" onclick="toggleDetails()">SEE DETAILS ↑</button>
+    </div>
+    <div id="bottom-expanded">
+      <div id="bottom-expanded-inner"></div>
     </div>
   </div>
 
@@ -183,7 +257,6 @@
     <a-assets>
       <a-asset-item id="campus-model" src="/scene.glb"></a-asset-item>
     </a-assets>
-
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
     <!-- Target 0: SDE4 -->
@@ -203,33 +276,56 @@
       'target-sde4': {
         name: 'SDE4',
         nodeName: 'SDE4',
+        tagline: "Net-zero energy · NUS School of Design & Environment",
+        highlightColor: { r: 0.2, g: 0.9, b: 0.5 },
         energy: {
+          total: 86,
           components: [
-            { label: 'Cooling',    value: 37, color: '#4A90D9' },
-            { label: 'Equipment',  value: 32, color: '#F5A623' },
-            { label: 'Lighting',   value: 17, color: '#7ED321' },
+            {
+              label: 'Cooling',
+              value: 37,
+              color: '#4A90D9',
+              desc: 'Hybrid cooling system combining chilled ceilings and natural ventilation reduces HVAC load by ~30% vs a conventional building. Over 50% of spaces are naturally ventilated.'
+            },
+            {
+              label: 'Equipment',
+              value: 32,
+              color: '#F5A623',
+              desc: 'Computers, monitors, lab equipment and studio devices. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices.'
+            },
+            {
+              label: 'Lighting',
+              value: 17,
+              color: '#7ED321',
+              desc: 'Full LED with daylight-linked dimming sensors. South-facing shading fins and deep overhangs maximise natural daylight, cutting artificial lighting hours significantly.'
+            },
           ]
         }
       }
     };
 
-    const infoPanel  = document.getElementById('info-panel');
-    const scanHint   = document.getElementById('scan-hint');
-    let chartInstance = null;
+    const chartPanel   = document.getElementById('chart-panel');
+    const bottomPanel  = document.getElementById('bottom-panel');
+    const scanHint     = document.getElementById('scan-hint');
+    const expandedEl   = document.getElementById('bottom-expanded');
+    let chartInstance  = null;
+    let detailsOpen    = false;
 
-    function renderPanel(building) {
-      document.getElementById('info-building-name').textContent = building.name;
+    function toggleDetails() {
+      detailsOpen = !detailsOpen;
+      expandedEl.classList.toggle('open', detailsOpen);
+      document.getElementById('details-btn').textContent = detailsOpen ? 'HIDE ↓' : 'SEE DETAILS ↑';
+    }
 
+    function renderChart(building) {
+      document.getElementById('chart-building-name').textContent = building.name;
       const components = building.energy.components;
-      const total = components.reduce((s, c) => s + c.value, 0);
-
+      const total = building.energy.total;
       document.getElementById('total-value').textContent = total + ' kWh/m²/yr';
 
-      // Legend
       const legend = document.getElementById('legend');
       legend.innerHTML = '';
       components.forEach(c => {
-        const pct = Math.round((c.value / total) * 100);
         legend.innerHTML += `
           <div class="legend-item">
             <div class="legend-dot" style="background:${c.color}"></div>
@@ -238,7 +334,6 @@
           </div>`;
       });
 
-      // Pie chart
       if (chartInstance) chartInstance.destroy();
       const ctx = document.getElementById('energy-chart').getContext('2d');
       chartInstance = new Chart(ctx, {
@@ -257,30 +352,86 @@
           plugins: {
             legend: { display: false },
             tooltip: {
-              callbacks: {
-                label: ctx => ` ${ctx.label}: ${ctx.raw} kWh/m²/yr`
-              }
+              callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} kWh/m²/yr` }
             }
           },
           animation: { duration: 600 }
         }
       });
-
-      infoPanel.classList.add('visible');
-      scanHint.style.opacity = '0';
     }
 
-    function hidePanel() {
-      infoPanel.classList.remove('visible');
-      scanHint.style.opacity = '1';
+    function renderBottom(building) {
+      document.getElementById('bottom-bname').textContent = building.name;
+      document.getElementById('bottom-tagline').textContent = building.tagline;
+
+      const inner = document.getElementById('bottom-expanded-inner');
+      const total = building.energy.total;
+      inner.innerHTML = '';
+      building.energy.components.forEach(c => {
+        const pct = Math.round((c.value / total) * 100);
+        inner.innerHTML += `
+          <div class="detail-item">
+            <div class="detail-color-bar" style="background:${c.color}"></div>
+            <div class="detail-content">
+              <div class="detail-header">
+                <span class="detail-name">${c.label}</span>
+                <span class="detail-val">${c.value} kWh/m²/yr</span>
+              </div>
+              <div class="detail-desc">${c.desc}</div>
+              <div class="detail-bar-bg">
+                <div class="detail-bar-fill" style="width:${pct}%; background:${c.color}"></div>
+              </div>
+            </div>
+          </div>`;
+      });
     }
 
-    function filterModel(modelEl, targetNodeName) {
+    function highlightModel(modelEl, targetNodeName, highlightColor) {
       const mesh = modelEl.getObject3D('mesh');
       if (!mesh) return;
       mesh.traverse(obj => {
-        obj.visible = (obj.name === targetNodeName || obj.name === '');
+        if (!obj.isMesh) return;
+        if (obj.name === targetNodeName) {
+          obj.visible = true;
+          if (obj.material) {
+            obj.material = obj.material.clone();
+            obj.material.emissive.setRGB(highlightColor.r, highlightColor.g, highlightColor.b);
+            obj.material.emissiveIntensity = 0.6;
+          }
+        } else {
+          obj.visible = (obj.name === '');
+        }
       });
+    }
+
+    function resetModel(modelEl) {
+      const mesh = modelEl.getObject3D('mesh');
+      if (!mesh) return;
+      mesh.traverse(obj => {
+        if (!obj.isMesh) return;
+        if (obj.material && obj.material.emissive) {
+          obj.material.emissive.setRGB(0, 0, 0);
+          obj.material.emissiveIntensity = 0;
+        }
+        obj.visible = (obj.name === '');
+      });
+    }
+
+    function showPanels(building) {
+      renderChart(building);
+      renderBottom(building);
+      chartPanel.classList.add('visible');
+      bottomPanel.classList.add('visible');
+      scanHint.style.opacity = '0';
+    }
+
+    function hidePanels() {
+      chartPanel.classList.remove('visible');
+      bottomPanel.classList.remove('visible');
+      scanHint.style.opacity = '1';
+      detailsOpen = false;
+      expandedEl.classList.remove('open');
+      document.getElementById('details-btn').textContent = 'SEE DETAILS ↑';
     }
 
     Object.entries(buildings).forEach(([targetId, building]) => {
@@ -288,14 +439,17 @@
       const modelEl  = document.getElementById('model-' + targetId.replace('target-', ''));
 
       targetEl.addEventListener('targetFound', () => {
-        renderPanel(building);
-        filterModel(modelEl, building.nodeName);
+        showPanels(building);
+        highlightModel(modelEl, building.nodeName, building.highlightColor);
       });
 
-      targetEl.addEventListener('targetLost', () => hidePanel());
+      targetEl.addEventListener('targetLost', () => {
+        hidePanels();
+        resetModel(modelEl);
+      });
 
       modelEl.addEventListener('model-loaded', () => {
-        filterModel(modelEl, building.nodeName);
+        resetModel(modelEl);
       });
     });
   </script>
