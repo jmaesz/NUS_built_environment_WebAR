@@ -309,7 +309,7 @@
 
             const el = document.createElement('a-entity');
             el.setAttribute('geometry', `primitive:box; width:${w}; height:${h}; depth:${d}`);
-            el.setAttribute('material', 'color:#00ff88; opacity:0.5; side:double; transparent:true');
+            el.setAttribute('material', 'color:#00ff88; opacity:0.5; side:double; transparent:true; depthTest:false; shader:flat');
             el.setAttribute('position', `${localCenter.x} ${localCenter.y} ${localCenter.z}`);
             el.setAttribute('visible', 'false');
             this.el.parentEl.appendChild(el);
