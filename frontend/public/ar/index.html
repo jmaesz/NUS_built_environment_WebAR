@@ -219,6 +219,32 @@
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
   <div id="debug" style="position:fixed;top:60px;left:8px;z-index:9999;background:rgba(0,0,0,0.75);color:#0f0;font-size:9px;padding:6px;max-width:200px;word-break:break-all;border-radius:4px;"></div>
 
+  <!-- Live tuning panel -->
+  <div id="tune" style="position:fixed;bottom:220px;left:8px;z-index:9999;background:rgba(0,0,0,0.85);color:#fff;font-size:12px;padding:10px 12px;border-radius:8px;font-family:monospace;line-height:2;">
+    <div style="font-size:10px;opacity:0.6;margin-bottom:4px;">TUNE (then tell me values)</div>
+    <div>X <button onclick="adj('x',-1)">◀</button> <span id="tv-x"></span> <button onclick="adj('x',1)">▶</button></div>
+    <div>Y <button onclick="adj('y',-0.5)">◀</button> <span id="tv-y"></span> <button onclick="adj('y',0.5)">▶</button></div>
+    <div>Z <button onclick="adj('z',-1)">◀</button> <span id="tv-z"></span> <button onclick="adj('z',1)">▶</button></div>
+    <div>S <button onclick="adj('s',-0.002)">◀</button> <span id="tv-s"></span> <button onclick="adj('s',0.002)">▶</button></div>
+  </div>
+  <script>
+    const T = { x: -694.916, y: -0.718, z: 26.458, s: 0.02 };
+    function adj(k, d) {
+      T[k] = Math.round((T[k] + d) * 1000) / 1000;
+      const m = document.getElementById('model-sde4');
+      m.setAttribute('position', T.x + ' ' + T.y + ' ' + T.z);
+      m.setAttribute('scale',    T.s + ' ' + T.s + ' ' + T.s);
+      render();
+    }
+    function render() {
+      document.getElementById('tv-x').textContent = T.x.toFixed(1);
+      document.getElementById('tv-y').textContent = T.y.toFixed(2);
+      document.getElementById('tv-z').textContent = T.z.toFixed(1);
+      document.getElementById('tv-s').textContent = T.s.toFixed(3);
+    }
+    render();
+  </script>
+
   <!-- Top-right chart panel -->
   <div id="chart-panel">
     <div id="chart-building-name"></div>
