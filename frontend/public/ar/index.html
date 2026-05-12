@@ -283,39 +283,42 @@
           });
 
           if (targetObj) {
-            // Force full matrix update so getWorldPosition is accurate
             this.el.sceneEl.object3D.updateMatrixWorld(true);
 
-            // Get SDE4's true world-space position
-            const worldPos = new THREE.Vector3();
-            targetObj.getWorldPosition(worldPos);
-
-            // Get world-space scale of the model entity to compute real AR size
-            const worldScale = new THREE.Vector3();
-            this.el.object3D.getWorldScale(worldScale);
             const geo = targetObj.geometry;
             if (!geo.boundingBox) geo.computeBoundingBox();
-            const size = new THREE.Vector3();
-            geo.boundingBox.getSize(size);
-            const w = size.x * worldScale.x;
-            const h = size.z * worldScale.z;
-            const d = size.y * worldScale.y;
 
-            // Convert world position → target entity local space
+            // Bounding box center in geometry-local space (includes survey coord offset)
+            const geoCenter = new THREE.Vector3();
+            geo.boundingBox.getCenter(geoCenter);
+
+            // Transform through the full chain (mesh → model scale 0.005 → target entity)
+            const worldCenter = geoCenter.clone().applyMatrix4(targetObj.matrixWorld);
+
+            // Convert world → target entity local space
             const invTarget = new THREE.Matrix4().copy(this.el.parentEl.object3D.matrixWorld).invert();
-            const localPos = worldPos.clone().applyMatrix4(invTarget);
+            const localCenter = worldCenter.clone().applyMatrix4(invTarget);
+
+            // Size: hardcode model scale 0.005 (worldScale is unreliable here)
+            const s = 0.005;
+            const boxSize = new THREE.Vector3();
+            geo.boundingBox.getSize(boxSize);
+            const w = boxSize.x * s;
+            const h = boxSize.z * s;
+            const d = boxSize.y * s;
 
             const el = document.createElement('a-entity');
             el.setAttribute('geometry', `primitive:box; width:${w}; height:${h}; depth:${d}`);
-            el.setAttribute('material', 'color:#00ff88; opacity:0.7; side:double; transparent:true');
-            el.setAttribute('position', `${localPos.x} ${localPos.y} ${localPos.z}`);
+            el.setAttribute('material', 'color:#00ff88; opacity:0.5; side:double; transparent:true');
+            el.setAttribute('position', `${localCenter.x} ${localCenter.y} ${localCenter.z}`);
             el.setAttribute('visible', 'false');
             this.el.parentEl.appendChild(el);
             this._hlEl = el;
             this._ready = true;
 
+            const gc = geoCenter;
             document.getElementById('debug').textContent =
-              `w:${worldPos.x.toFixed(2)},${worldPos.y.toFixed(2)},${worldPos.z.toFixed(2)} | l:${localPos.x.toFixed(2)},${localPos.y.toFixed(2)},${localPos.z.toFixed(2)} | ${w.toFixed(3)}x${h.toFixed(3)}`;
+              `gc:${gc.x.toFixed(1)},${gc.y.toFixed(1)},${gc.z.toFixed(1)} | l:${localCenter.x.toFixed(3)},${localCenter.y.toFixed(3)},${localCenter.z.toFixed(3)} | ${w.toFixed(3)}x${h.toFixed(3)}x${d.toFixed(3)}`;
           }
         }
 
@@ -490,7 +493,6 @@ function showPanels(building) {
       targetEl.addEventListener('targetFound', () => {
         showPanels(building);
         modelEl.setAttribute('highlight-building', 'active', true);
-        document.getElementById('debug').textContent = 'target found: ' + building.nodeName;
       });
 
       targetEl.addEventListener('targetLost', () => {
