@@ -328,7 +328,7 @@
     device-orientation-permission-ui="enabled: false"
   >
     <a-assets>
-      <a-asset-item id="campus-model" src="/scene.glb"></a-asset-item>
+      <a-asset-item id="sde4-model" src="/models/sde4.glb"></a-asset-item>
     </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
     <a-light type="ambient" color="#ffffff" intensity="1.2"></a-light>
@@ -337,10 +337,10 @@
     <!-- Target 0: SDE4 -->
     <a-entity id="target-sde4" mindar-image-target="targetIndex: 0">
       <a-entity
-        gltf-model="#campus-model"
+        gltf-model="#sde4-model"
         scale="0.01 0.01 0.01"
-        position="347.458 -0.359 -13.229"
-        rotation="-90 180 0"
+        position="0 0 0"
+        rotation="-90 0 0"
         id="model-sde4"
         highlight-building="targetName: SDE4; r: 0.2; g: 0.9; b: 0.5"
       ></a-entity>
