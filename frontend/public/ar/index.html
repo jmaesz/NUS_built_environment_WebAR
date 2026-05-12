@@ -17,6 +17,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
+    canvas { position: absolute; top: 0; left: 0; }
 
     #back-btn {
       position: fixed;
@@ -283,7 +284,7 @@
     xrextras-runtime-error
     xrextras-almost-there
     color-space="sRGB"
-    renderer="colorManagement: true; physicallyCorrectLights: true"
+    renderer="colorManagement: true; physicallyCorrectLights: true; alpha: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
