@@ -118,6 +118,13 @@
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT SDE4</div>
 
+  <!-- SVG overlay for annotation lines (anchor dot → top of label card) -->
+  <svg id="ar-lines" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:997;overflow:visible">
+    <line id="line-equipment" stroke="#000000" stroke-width="2" visibility="hidden"/>
+    <line id="line-cooling"   stroke="#000000" stroke-width="2" visibility="hidden"/>
+    <line id="line-lighting"  stroke="#000000" stroke-width="2" visibility="hidden"/>
+  </svg>
+
   <!-- HTML overlay labels — positioned via Three.js worldToScreen each frame -->
   <div class="ar-label" id="ar-label-equipment" onclick="showDetail('equipment')">
     <div class="ar-label-bar" style="background:#F5A623"></div>
@@ -206,9 +213,6 @@
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <!-- Diagonal annotation lines -->
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
       <!-- Invisible marker entities for HTML label anchoring -->
       <a-entity id="m-eq-0" position="-0.85 -0.55 0.02"></a-entity>
       <a-entity id="m-co-0" position="0.05 -0.65 0.02"></a-entity>
@@ -232,9 +236,6 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
       <a-entity id="m-eq-1" position="-0.85 -0.55 0.02"></a-entity>
       <a-entity id="m-co-1" position="0.05 -0.65 0.02"></a-entity>
       <a-entity id="m-li-1" position="0.85 -0.42 0.02"></a-entity>
@@ -257,9 +258,6 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
       <a-entity id="m-eq-2" position="-0.85 -0.55 0.02"></a-entity>
       <a-entity id="m-co-2" position="0.05 -0.65 0.02"></a-entity>
       <a-entity id="m-li-2" position="0.85 -0.42 0.02"></a-entity>
@@ -282,9 +280,6 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
       <a-entity id="m-eq-3" position="-0.85 -0.55 0.02"></a-entity>
       <a-entity id="m-co-3" position="0.05 -0.65 0.02"></a-entity>
       <a-entity id="m-li-3" position="0.85 -0.42 0.02"></a-entity>
@@ -307,9 +302,6 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
       <a-entity id="m-eq-4" position="-0.85 -0.55 0.02"></a-entity>
       <a-entity id="m-co-4" position="0.05 -0.65 0.02"></a-entity>
       <a-entity id="m-li-4" position="0.85 -0.42 0.02"></a-entity>
@@ -332,9 +324,6 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
       <a-entity id="m-eq-5" position="-0.85 -0.55 0.02"></a-entity>
       <a-entity id="m-co-5" position="0.05 -0.65 0.02"></a-entity>
       <a-entity id="m-li-5" position="0.85 -0.42 0.02"></a-entity>
@@ -417,12 +406,22 @@
       scanHint.style.opacity = '1';
       ['equipment','cooling','lighting'].forEach(t => {
         document.getElementById('ar-label-' + t).style.display = 'none';
+        const l = document.getElementById('line-' + t);
+        if (l) l.setAttribute('visibility', 'hidden');
       });
     }
 
     // ── HTML label overlay — projects 3D marker world pos → screen px ───
     const sceneEl = document.querySelector('a-scene');
-    const _tmpVec = new THREE.Vector3();
+    const _tmpVec  = new THREE.Vector3();
+    const _tmpVec2 = new THREE.Vector3();
+
+    // Local-space anchor positions (where the dot sits on the building surface)
+    const ANCHOR_LOCAL = {
+      equipment: [-0.22, -0.06, 0.013],
+      cooling:   [ 0.05, -0.09, 0.013],
+      lighting:  [ 0.26,  0.02, 0.013],
+    };
 
     function updateOverlays() {
       if (foundTargets.size === 0) return;
@@ -432,32 +431,54 @@
 
       const tIdx = [...foundTargets][0];
       const W = window.innerWidth, H = window.innerHeight;
-      const PAD = 10; // min gap from screen edge
+      const PAD = 10;
+      const targetEl = document.getElementById(`target-${tIdx}`);
 
       [['equipment','eq'],['cooling','co'],['lighting','li']].forEach(([type, sh]) => {
-        const marker = document.getElementById(`m-${sh}-${tIdx}`);
-        const label  = document.getElementById(`ar-label-${type}`);
+        const marker  = document.getElementById(`m-${sh}-${tIdx}`);
+        const label   = document.getElementById(`ar-label-${type}`);
+        const svgLine = document.getElementById(`line-${type}`);
         if (!marker || !label) return;
 
+        // Project the label marker → desired screen position
         marker.object3D.getWorldPosition(_tmpVec);
         _tmpVec.project(camera);
 
-        if (_tmpVec.z > 1) { label.style.display = 'none'; return; }
+        if (_tmpVec.z > 1) {
+          label.style.display = 'none';
+          if (svgLine) svgLine.setAttribute('visibility', 'hidden');
+          return;
+        }
 
         const sx = (_tmpVec.x + 1) / 2 * W;
         const sy = (-_tmpVec.y + 1) / 2 * H;
 
-        // Show first so offsetWidth/Height are accurate
+        // Show label so offsetWidth/Height are measurable
         label.style.display = 'flex';
         const hw = label.offsetWidth  / 2;
         const hh = label.offsetHeight / 2;
 
-        // Clamp center so label never clips off any edge
+        // Clamp so label never clips any edge
         const cx = Math.max(hw + PAD, Math.min(W - hw - PAD, sx));
         const cy = Math.max(hh + PAD, Math.min(H - hh - PAD, sy));
-
         label.style.left = cx + 'px';
         label.style.top  = cy + 'px';
+
+        // Draw SVG line: from building anchor dot → top-center of label
+        if (svgLine && targetEl) {
+          const [lx, ly, lz] = ANCHOR_LOCAL[type];
+          _tmpVec2.set(lx, ly, lz);
+          _tmpVec2.applyMatrix4(targetEl.object3D.matrixWorld);
+          _tmpVec2.project(camera);
+          const ax = (_tmpVec2.x + 1) / 2 * W;
+          const ay = (-_tmpVec2.y + 1) / 2 * H;
+          const rect = label.getBoundingClientRect();
+          svgLine.setAttribute('x1', ax.toFixed(1));
+          svgLine.setAttribute('y1', ay.toFixed(1));
+          svgLine.setAttribute('x2', (rect.left + rect.width / 2).toFixed(1));
+          svgLine.setAttribute('y2', rect.top.toFixed(1));
+          svgLine.setAttribute('visibility', 'visible');
+        }
       });
     }
 
