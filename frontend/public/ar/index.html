@@ -119,7 +119,11 @@
   <div id="scan-hint">POINT CAMERA AT SDE4</div>
 
   <!-- SVG overlay for annotation lines (anchor dot → top of label card) -->
-  <canvas id="ar-lines-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999"></canvas>
+  <svg id="ar-lines" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;overflow:visible">
+    <line id="line-equipment" style="stroke:#000000;stroke-width:2.5;stroke-linecap:round" display="none"/>
+    <line id="line-cooling"   style="stroke:#000000;stroke-width:2.5;stroke-linecap:round" display="none"/>
+    <line id="line-lighting"  style="stroke:#000000;stroke-width:2.5;stroke-linecap:round" display="none"/>
+  </svg>
 
   <!-- HTML overlay labels — positioned via Three.js worldToScreen each frame -->
   <div class="ar-label" id="ar-label-equipment" onclick="showDetail('equipment')">
@@ -406,20 +410,10 @@
       scanHint.style.opacity = '1';
       ['equipment','cooling','lighting'].forEach(t => {
         document.getElementById('ar-label-' + t).style.display = 'none';
+        const l = document.getElementById('line-' + t);
+        if (l) l.setAttribute('display', 'none');
       });
-      linesCtx.clearRect(0, 0, linesCanvas.width, linesCanvas.height);
     }
-
-    // ── Canvas overlay for annotation lines ────────────────────────────
-    const linesCanvas = document.getElementById('ar-lines-canvas');
-    const linesCtx    = linesCanvas.getContext('2d');
-
-    function resizeCanvas() {
-      linesCanvas.width  = window.innerWidth;
-      linesCanvas.height = window.innerHeight;
-    }
-    resizeCanvas();
-    window.addEventListener('resize', resizeCanvas);
 
     // ── HTML label overlay — projects 3D marker world pos → screen px ───
     const sceneEl = document.querySelector('a-scene');
@@ -427,9 +421,6 @@
     const _tmpVec2 = new THREE.Vector3();
 
     function updateOverlays() {
-      // Always clear canvas each frame
-      linesCtx.clearRect(0, 0, linesCanvas.width, linesCanvas.height);
-
       if (foundTargets.size === 0) return;
 
       const camera = sceneEl.camera;
@@ -441,47 +432,47 @@
       const targetEl = document.getElementById(`target-${tIdx}`);
       if (!targetEl) return;
 
-      linesCtx.strokeStyle = '#000000';
-      linesCtx.lineWidth   = 2.5;
-      linesCtx.lineCap     = 'round';
-
       [['equipment','eq'],['cooling','co'],['lighting','li']].forEach(([type, sh]) => {
         const marker   = document.getElementById(`m-${sh}-${tIdx}`);
         const anchorEl = targetEl.querySelector(`.m-anc-${sh}`);
         const label    = document.getElementById(`ar-label-${type}`);
+        const svgLine  = document.getElementById(`line-${type}`);
         if (!marker || !label) return;
 
-        // Project label marker → desired screen position
         marker.object3D.getWorldPosition(_tmpVec);
         _tmpVec.project(camera);
 
-        if (_tmpVec.z > 1) { label.style.display = 'none'; return; }
+        if (_tmpVec.z > 1) {
+          label.style.display = 'none';
+          if (svgLine) svgLine.setAttribute('display', 'none');
+          return;
+        }
 
         const sx = (_tmpVec.x + 1) / 2 * W;
         const sy = (-_tmpVec.y + 1) / 2 * H;
 
-        // Show label so offsetWidth/Height are measurable
         label.style.display = 'flex';
         const hw = label.offsetWidth  / 2;
         const hh = label.offsetHeight / 2;
 
-        // Clamp so label never clips any edge
         const cx = Math.max(hw + PAD, Math.min(W - hw - PAD, sx));
         const cy = Math.max(hh + PAD, Math.min(H - hh - PAD, sy));
         label.style.left = cx + 'px';
         label.style.top  = cy + 'px';
 
-        // Draw canvas line: building anchor dot → top-center of label card
-        if (anchorEl) {
+        if (svgLine && anchorEl) {
           anchorEl.object3D.getWorldPosition(_tmpVec2);
           _tmpVec2.project(camera);
           const ax = (_tmpVec2.x + 1) / 2 * W;
           const ay = (-_tmpVec2.y + 1) / 2 * H;
           const rect = label.getBoundingClientRect();
-          linesCtx.beginPath();
-          linesCtx.moveTo(ax, ay);
-          linesCtx.lineTo(rect.left + rect.width / 2, rect.top);
-          linesCtx.stroke();
+          svgLine.setAttribute('x1', ax.toFixed(1));
+          svgLine.setAttribute('y1', ay.toFixed(1));
+          svgLine.setAttribute('x2', (rect.left + rect.width / 2).toFixed(1));
+          svgLine.setAttribute('y2', rect.top.toFixed(1));
+          // Force stroke color each frame (belt-and-suspenders for Safari)
+          svgLine.style.stroke = '#000000';
+          svgLine.setAttribute('display', 'inline');
         }
       });
     }
