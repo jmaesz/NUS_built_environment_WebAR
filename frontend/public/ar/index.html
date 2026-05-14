@@ -81,11 +81,110 @@
     .detail-desc { font-size: 10px; line-height: 1.6; color: #999; }
     .detail-bar-bg { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
     .detail-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+
+    /* ── Calibration ── */
+    #cal-toggle {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 1001; background: rgba(0,0,0,0.6); color: #fff;
+      border: 1px solid rgba(255,255,255,0.25); padding: 8px 16px;
+      font-size: 10px; letter-spacing: 0.12em; border-radius: 4px; cursor: pointer;
+      white-space: nowrap;
+    }
+    #cal-toggle.active { background: rgba(220,100,0,0.8); border-color: #f80; }
+
+    #cal-panel {
+      display: none; position: fixed; left: 10px; top: 56px;
+      z-index: 1001; background: rgba(0,0,0,0.88);
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
+      padding: 12px; width: 230px; color: #fff; font-family: monospace; font-size: 11px;
+    }
+    #cal-panel.open { display: block; }
+
+    .cv { color: #4df; }
+    .cal-display { line-height: 2; margin-bottom: 10px; }
+    .cal-row { display: flex; align-items: center; gap: 4px; margin-bottom: 5px; }
+    .cal-lbl { width: 38px; color: #aaa; font-size: 10px; flex-shrink: 0; }
+    .cb {
+      flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+      color: #fff; padding: 5px 0; font-size: 10px; border-radius: 3px; cursor: pointer; text-align: center;
+    }
+    .cb:active { background: rgba(255,255,255,0.3); }
+    .cal-sens { display: flex; align-items: center; gap: 6px; margin: 8px 0 4px; font-size: 10px; color: #aaa; }
+    .cal-sens button {
+      flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: #aaa; padding: 4px; font-size: 9px; border-radius: 3px; cursor: pointer;
+    }
+    .cal-sens button.on { background: rgba(255,180,0,0.3); border-color: #fa0; color: #fa0; }
+    #cal-copy {
+      width: 100%; margin-top: 8px; background: rgba(0,150,80,0.3);
+      border: 1px solid rgba(0,255,140,0.35); color: #0f6; padding: 8px;
+      font-size: 10px; letter-spacing: 0.1em; border-radius: 4px; cursor: pointer;
+    }
+    #cal-reset {
+      width: 100%; margin-top: 5px; background: rgba(100,0,0,0.3);
+      border: 1px solid rgba(255,80,80,0.3); color: #f88; padding: 6px;
+      font-size: 10px; letter-spacing: 0.1em; border-radius: 4px; cursor: pointer;
+    }
+    #cal-help { font-size: 9px; color: #555; margin-top: 8px; line-height: 1.7; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
+  <button id="cal-toggle" onclick="toggleCal()">⚙ CALIBRATE</button>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
+
+  <div id="cal-panel">
+    <div class="cal-display">
+      POS&nbsp; <span class="cv" id="cv-px">0.000</span>&nbsp;
+               <span class="cv" id="cv-py">0.000</span>&nbsp;
+               <span class="cv" id="cv-pz">-0.426</span><br>
+      ROT&nbsp; <span class="cv" id="cv-rx">-90.0</span>&nbsp;
+               <span class="cv" id="cv-ry">0.0</span>&nbsp;
+               <span class="cv" id="cv-rz">-90.0</span><br>
+      SCL&nbsp; <span class="cv" id="cv-sc">0.0100</span>
+    </div>
+    <div class="cal-row">
+      <span class="cal-lbl">ROT X</span>
+      <button class="cb" onclick="adjRot('x',-90)">-90</button>
+      <button class="cb" onclick="adjRot('x',-15)">-15</button>
+      <button class="cb" onclick="adjRot('x',-5)">-5</button>
+      <button class="cb" onclick="adjRot('x',5)">+5</button>
+      <button class="cb" onclick="adjRot('x',15)">+15</button>
+      <button class="cb" onclick="adjRot('x',90)">+90</button>
+    </div>
+    <div class="cal-row">
+      <span class="cal-lbl">ROT Y</span>
+      <button class="cb" onclick="adjRot('y',-90)">-90</button>
+      <button class="cb" onclick="adjRot('y',-15)">-15</button>
+      <button class="cb" onclick="adjRot('y',-5)">-5</button>
+      <button class="cb" onclick="adjRot('y',5)">+5</button>
+      <button class="cb" onclick="adjRot('y',15)">+15</button>
+      <button class="cb" onclick="adjRot('y',90)">+90</button>
+    </div>
+    <div class="cal-row">
+      <span class="cal-lbl">ROT Z</span>
+      <button class="cb" onclick="adjRot('z',-90)">-90</button>
+      <button class="cb" onclick="adjRot('z',-15)">-15</button>
+      <button class="cb" onclick="adjRot('z',-5)">-5</button>
+      <button class="cb" onclick="adjRot('z',5)">+5</button>
+      <button class="cb" onclick="adjRot('z',15)">+15</button>
+      <button class="cb" onclick="adjRot('z',90)">+90</button>
+    </div>
+    <div class="cal-sens">
+      SENS
+      <button id="sens-slow" onclick="setSens(0.001)">SLOW</button>
+      <button id="sens-med"  onclick="setSens(0.003)" class="on">MED</button>
+      <button id="sens-fast" onclick="setSens(0.007)">FAST</button>
+    </div>
+    <button id="cal-copy"  onclick="copyVals()">COPY VALUES</button>
+    <button id="cal-reset" onclick="resetCal()">RESET</button>
+    <div id="cal-help">
+      1 finger → move X / Y<br>
+      2 finger slide → move Z (depth)<br>
+      2 finger pinch → scale<br>
+      2 finger twist → rotate Y
+    </div>
+  </div>
 
   <div id="chart-panel">
     <div id="chart-building-name"></div>
@@ -243,6 +342,108 @@
       expandedEl.classList.remove('open');
       document.getElementById('details-btn').textContent = 'SEE DETAILS ↑';
     }
+
+    // ── Calibration ────────────────────────────────────────────────────
+    const cal = {
+      pos: { x: 0, y: 0, z: -0.426 },
+      rot: { x: -90, y: 0, z: -90 },
+      scale: 0.01,
+      active: false,
+      sens: 0.003
+    };
+
+    function toggleCal() {
+      cal.active = !cal.active;
+      document.getElementById('cal-toggle').classList.toggle('active', cal.active);
+      document.getElementById('cal-panel').classList.toggle('open', cal.active);
+    }
+
+    function applyTransform() {
+      const el = document.getElementById('model-sde4');
+      el.setAttribute('position', `${cal.pos.x.toFixed(3)} ${cal.pos.y.toFixed(3)} ${cal.pos.z.toFixed(3)}`);
+      el.setAttribute('rotation', `${cal.rot.x.toFixed(1)} ${cal.rot.y.toFixed(1)} ${cal.rot.z.toFixed(1)}`);
+      const s = cal.scale.toFixed(4);
+      el.setAttribute('scale', `${s} ${s} ${s}`);
+      document.getElementById('cv-px').textContent = cal.pos.x.toFixed(3);
+      document.getElementById('cv-py').textContent = cal.pos.y.toFixed(3);
+      document.getElementById('cv-pz').textContent = cal.pos.z.toFixed(3);
+      document.getElementById('cv-rx').textContent = cal.rot.x.toFixed(1);
+      document.getElementById('cv-ry').textContent = cal.rot.y.toFixed(1);
+      document.getElementById('cv-rz').textContent = cal.rot.z.toFixed(1);
+      document.getElementById('cv-sc').textContent = cal.scale.toFixed(4);
+    }
+
+    function adjRot(axis, deg) { cal.rot[axis] = (cal.rot[axis] + deg + 360) % 360; if (cal.rot[axis] > 180) cal.rot[axis] -= 360; applyTransform(); }
+
+    function setSens(v) {
+      cal.sens = v;
+      ['slow','med','fast'].forEach(id => document.getElementById('sens-'+id).classList.remove('on'));
+      if (v === 0.001) document.getElementById('sens-slow').classList.add('on');
+      else if (v === 0.003) document.getElementById('sens-med').classList.add('on');
+      else document.getElementById('sens-fast').classList.add('on');
+    }
+
+    function resetCal() {
+      cal.pos = { x: 0, y: 0, z: -0.426 };
+      cal.rot = { x: -90, y: 0, z: -90 };
+      cal.scale = 0.01;
+      applyTransform();
+    }
+
+    function copyVals() {
+      const p = cal.pos, r = cal.rot, s = cal.scale.toFixed(4);
+      const txt = `position="${p.x.toFixed(3)} ${p.y.toFixed(3)} ${p.z.toFixed(3)}" rotation="${r.x.toFixed(1)} ${r.y.toFixed(1)} ${r.z.toFixed(1)}" scale="${s} ${s} ${s}"`;
+      navigator.clipboard.writeText(txt).then(() => {
+        const btn = document.getElementById('cal-copy');
+        const orig = btn.textContent;
+        btn.textContent = '✓ COPIED!';
+        setTimeout(() => btn.textContent = orig, 1500);
+      });
+    }
+
+    // ── Touch gesture handling ──────────────────────────────────────────
+    let lastGesture = null;
+
+    function readGesture(touches) {
+      if (!touches.length) return null;
+      if (touches.length === 1) return { n: 1, x: touches[0].clientX, y: touches[0].clientY };
+      const dx = touches[1].clientX - touches[0].clientX;
+      const dy = touches[1].clientY - touches[0].clientY;
+      return {
+        n: 2,
+        cx: (touches[0].clientX + touches[1].clientX) / 2,
+        cy: (touches[0].clientY + touches[1].clientY) / 2,
+        dist: Math.hypot(dx, dy),
+        angle: Math.atan2(dy, dx)
+      };
+    }
+
+    document.addEventListener('touchstart', e => {
+      if (!cal.active) return;
+      lastGesture = readGesture(Array.from(e.touches));
+    }, { passive: true });
+
+    document.addEventListener('touchmove', e => {
+      if (!cal.active) return;
+      e.preventDefault();
+      const cur = readGesture(Array.from(e.touches));
+      if (!lastGesture || cur.n !== lastGesture.n) { lastGesture = cur; return; }
+
+      if (cur.n === 1) {
+        cal.pos.x += (cur.x - lastGesture.x) * cal.sens;
+        cal.pos.y -= (cur.y - lastGesture.y) * cal.sens;
+      } else {
+        if (lastGesture.dist > 5) cal.scale *= cur.dist / lastGesture.dist;
+        const twist = (cur.angle - lastGesture.angle) * (180 / Math.PI);
+        cal.rot.y += twist;
+        cal.pos.z += (cur.cy - lastGesture.cy) * cal.sens;
+      }
+
+      lastGesture = cur;
+      applyTransform();
+    }, { passive: false });
+
+    document.addEventListener('touchend', () => { lastGesture = null; });
 
     // ── MindAR wiring ──────────────────────────────────────────────────
     document.querySelector('a-scene').addEventListener('loaded', () => {
