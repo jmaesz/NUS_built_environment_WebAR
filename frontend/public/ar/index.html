@@ -192,13 +192,13 @@
 
   <div id="cal-panel">
     <div class="cal-display">
-      POS&nbsp; <span class="cv" id="cv-px">0.000</span>&nbsp;
-               <span class="cv" id="cv-py">0.000</span>&nbsp;
-               <span class="cv" id="cv-pz">0.000</span><br>
-      ROT&nbsp; <span class="cv" id="cv-rx">-90.0</span>&nbsp;
-               <span class="cv" id="cv-ry">0.0</span>&nbsp;
-               <span class="cv" id="cv-rz">0.0</span><br>
-      SCL&nbsp; <span class="cv" id="cv-sc">0.0100</span>
+      POS&nbsp; <span class="cv" id="cv-px">0.101</span>&nbsp;
+               <span class="cv" id="cv-py">-0.087</span>&nbsp;
+               <span class="cv" id="cv-pz">0.266</span><br>
+      ROT&nbsp; <span class="cv" id="cv-rx">290.0</span>&nbsp;
+               <span class="cv" id="cv-ry">39.1</span>&nbsp;
+               <span class="cv" id="cv-rz">13.0</span><br>
+      SCL&nbsp; <span class="cv" id="cv-sc">0.0096</span>
     </div>
     <div class="cal-row">
       <span class="cal-lbl">ROT X</span>
@@ -314,8 +314,8 @@
       <a-entity
         id="model-sde4"
         gltf-model="#sde4-model"
-        scale="0.01 0.01 0.01"
-        position="0 0 0"
+        scale="0.0096 0.0096 0.0096"
+        position="0.101 -0.087 0.266"
         highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55"
       ></a-entity>
     </a-entity>
@@ -398,10 +398,11 @@
     }
 
     // ── Calibration ────────────────────────────────────────────────────
+    const CAL_DEFAULT = { pos: { x: 0.101, y: -0.087, z: 0.266 }, rot: { x: 290.0, y: 39.1, z: 13.0 }, scale: 0.0096 };
     const cal = {
-      pos: { x: 0, y: 0, z: 0 },
-      rot: { x: -90, y: 0, z: 0 },
-      scale: 0.01,
+      pos: { ...CAL_DEFAULT.pos },
+      rot: { ...CAL_DEFAULT.rot },
+      scale: CAL_DEFAULT.scale,
       active: false,
       sens: 0.003
     };
@@ -438,7 +439,7 @@
       document.getElementById('cv-sc').textContent = cal.scale.toFixed(4);
     }
 
-    function adjRot(axis, deg) { cal.rot[axis] = (cal.rot[axis] + deg + 360) % 360; if (cal.rot[axis] > 180) cal.rot[axis] -= 360; applyTransform(); }
+    function adjRot(axis, deg) { cal.rot[axis] += deg; applyTransform(); }
     function adjScale(factor) { cal.scale *= factor; applyTransform(); }
 
     function setSens(v) {
@@ -450,9 +451,9 @@
     }
 
     function resetCal() {
-      cal.pos = { x: 0, y: 0, z: 0 };
-      cal.rot = { x: -90, y: 0, z: 0 };
-      cal.scale = 0.01;
+      cal.pos = { ...CAL_DEFAULT.pos };
+      cal.rot = { ...CAL_DEFAULT.rot };
+      cal.scale = CAL_DEFAULT.scale;
       applyTransform();
     }
 
@@ -557,6 +558,7 @@
 
     // ── MindAR wiring ──────────────────────────────────────────────────
     document.querySelector('a-scene').addEventListener('loaded', () => {
+      applyTransform();
       const targetEl = document.getElementById('target-sde4');
       const modelEl  = document.getElementById('model-sde4');
 
