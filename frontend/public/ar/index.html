@@ -135,30 +135,52 @@
     #cal-panel { z-index: 1001; }
     #cal-toggle { z-index: 1002; }
 
-    /* ── Rotate handle ── */
-    #rotate-btn {
-      display: none; position: fixed; right: 14px; top: 50%; transform: translateY(-50%);
-      z-index: 998; width: 56px; height: 56px; border-radius: 50%;
-      background: rgba(0,0,0,0.65); border: 1.5px solid rgba(255,255,255,0.35);
-      flex-direction: column; align-items: center; justify-content: center;
-      color: #fff; cursor: pointer; user-select: none; -webkit-user-select: none;
+    /* ── Rotate controls ── */
+    #rotate-controls {
+      display: none; position: fixed; right: 10px; top: 50%; transform: translateY(-50%);
+      z-index: 998; flex-direction: column; gap: 8px; align-items: center;
+      user-select: none; -webkit-user-select: none;
     }
-    #rotate-btn.visible { display: flex; }
-    #rotate-btn.dragging { background: rgba(255,180,0,0.45); border-color: #fa0; }
-    #rotate-btn .ricon { font-size: 22px; line-height: 1; }
-    #rotate-btn .rlabel { font-size: 8px; letter-spacing: 0.08em; margin-top: 2px; opacity: 0.7; }
-    #rotate-overlay {
-      display: none; position: fixed; inset: 0; z-index: 999; touch-action: none;
+    #rotate-controls.visible { display: flex; }
+    .rgroup { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+    .rgroup-label { font-size: 8px; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; }
+    .rgroup-row { display: flex; gap: 4px; }
+    .rbtn {
+      width: 44px; height: 44px; border-radius: 10px;
+      background: rgba(0,0,0,0.65); border: 1.5px solid rgba(255,255,255,0.3);
+      color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; touch-action: none;
     }
-    #rotate-overlay.active { display: block; }
+    .rbtn:active, .rbtn.pressing { background: rgba(255,180,0,0.45); border-color: #fa0; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <button id="cal-toggle" onclick="toggleCal()">⚙ CALIBRATE</button>
   <div id="cal-overlay"></div>
-  <div id="rotate-btn"><div class="ricon">↻</div><div class="rlabel">ROTATE</div></div>
-  <div id="rotate-overlay"></div>
+  <div id="rotate-controls">
+    <div class="rgroup">
+      <div class="rgroup-label">L ↔ R</div>
+      <div class="rgroup-row">
+        <div class="rbtn" data-axis="y" data-dir="-1">◀</div>
+        <div class="rbtn" data-axis="y" data-dir="1">▶</div>
+      </div>
+    </div>
+    <div class="rgroup">
+      <div class="rgroup-label">U ↕ D</div>
+      <div class="rgroup-row">
+        <div class="rbtn" data-axis="x" data-dir="-1">▲</div>
+        <div class="rbtn" data-axis="x" data-dir="1">▼</div>
+      </div>
+    </div>
+    <div class="rgroup">
+      <div class="rgroup-label">FRONT</div>
+      <div class="rgroup-row">
+        <div class="rbtn" data-axis="z" data-dir="-1">↺</div>
+        <div class="rbtn" data-axis="z" data-dir="1">↻</div>
+      </div>
+    </div>
+  </div>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
   <div id="cal-panel">
@@ -473,38 +495,32 @@
 
     overlay.addEventListener('touchend', () => { lastGesture = null; });
 
-    // ── Rotate handle ──────────────────────────────────────────────────
-    const rotateBtn     = document.getElementById('rotate-btn');
-    const rotateOverlay = document.getElementById('rotate-overlay');
-    let lastRotX = null;
+    // ── Rotate controls ────────────────────────────────────────────────
+    const rotateControls = document.getElementById('rotate-controls');
+    let rotInterval = null;
 
-    let lastRotY = null;
+    function startRotating(axis, dir, btn) {
+      if (rotInterval) clearInterval(rotInterval);
+      btn.classList.add('pressing');
+      function step() { cal.rot[axis] = (cal.rot[axis] + dir + 360) % 360; applyTransform(); }
+      step();
+      rotInterval = setInterval(step, 30);
+    }
 
-    rotateBtn.addEventListener('touchstart', e => {
-      e.preventDefault();
-      rotateBtn.classList.add('dragging');
-      rotateOverlay.classList.add('active');
-      lastRotX = e.touches[0].clientX;
-      lastRotY = e.touches[0].clientY;
-    }, { passive: false });
+    function stopRotating() {
+      clearInterval(rotInterval);
+      rotInterval = null;
+      document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('pressing'));
+    }
 
-    rotateOverlay.addEventListener('touchmove', e => {
-      e.preventDefault();
-      if (lastRotX === null) return;
-      const dx = e.touches[0].clientX - lastRotX;
-      const dy = e.touches[0].clientY - lastRotY;
-      cal.rot.y += dx * 0.5;
-      cal.rot.x += dy * 0.5;
-      lastRotX = e.touches[0].clientX;
-      lastRotY = e.touches[0].clientY;
-      applyTransform();
-    }, { passive: false });
-
-    rotateOverlay.addEventListener('touchend', () => {
-      rotateBtn.classList.remove('dragging');
-      rotateOverlay.classList.remove('active');
-      lastRotX = null;
-      lastRotY = null;
+    document.querySelectorAll('.rbtn').forEach(btn => {
+      const axis = btn.dataset.axis;
+      const dir  = parseFloat(btn.dataset.dir);
+      btn.addEventListener('touchstart', e => { e.preventDefault(); startRotating(axis, dir, btn); }, { passive: false });
+      btn.addEventListener('touchend',   e => { e.preventDefault(); stopRotating(); }, { passive: false });
+      btn.addEventListener('mousedown',  () => startRotating(axis, dir, btn));
+      btn.addEventListener('mouseup',    () => stopRotating());
+      btn.addEventListener('mouseleave', () => stopRotating());
     });
 
     // ── MindAR wiring ──────────────────────────────────────────────────
@@ -514,13 +530,13 @@
 
       targetEl.addEventListener('targetFound', () => {
         modelEl.setAttribute('highlight-building', 'active', true);
-        rotateBtn.classList.add('visible');
+        rotateControls.classList.add('visible');
         showBuilding(BUILDINGS.sde4);
       });
 
       targetEl.addEventListener('targetLost', () => {
         modelEl.setAttribute('highlight-building', 'active', false);
-        rotateBtn.classList.remove('visible');
+        rotateControls.classList.remove('visible');
         hideBuilding();
       });
     });
