@@ -185,6 +185,13 @@
       <button id="sens-med"  onclick="setSens(0.003)" class="on">MED</button>
       <button id="sens-fast" onclick="setSens(0.007)">FAST</button>
     </div>
+    <div class="cal-row">
+      <span class="cal-lbl">SCALE</span>
+      <button class="cb" onclick="adjScale(0.5)">½×</button>
+      <button class="cb" onclick="adjScale(0.8)">-20%</button>
+      <button class="cb" onclick="adjScale(1.2)">+20%</button>
+      <button class="cb" onclick="adjScale(2)">2×</button>
+    </div>
     <button id="cal-copy"  onclick="copyVals()">COPY VALUES</button>
     <button id="cal-reset" onclick="resetCal()">RESET</button>
     <div id="cal-help">
@@ -375,6 +382,7 @@
     }
 
     function adjRot(axis, deg) { cal.rot[axis] = (cal.rot[axis] + deg + 360) % 360; if (cal.rot[axis] > 180) cal.rot[axis] -= 360; applyTransform(); }
+    function adjScale(factor) { cal.scale *= factor; applyTransform(); }
 
     function setSens(v) {
       cal.sens = v;
