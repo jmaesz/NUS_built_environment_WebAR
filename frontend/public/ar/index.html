@@ -325,6 +325,46 @@
       _hide() { this._meshes.forEach(o => { o.renderOrder = 0; o.material = this._origMats.get(o); }); },
       remove() { this._hide(); }
     });
+
+    // Locks world position+rotation on first detection; only scale follows distance.
+    AFRAME.registerComponent('stable-tracker', {
+      tick() {
+        if (!stableMode) return;
+        for (const idx of foundTargets) {
+          const state = stableStates[idx];
+          if (!state) continue;
+          const targetEl = document.getElementById(`target-${idx}`);
+          const modelEl  = document.getElementById(`model-${idx}`);
+          if (!targetEl || !modelEl) continue;
+
+          const parentObj = targetEl.object3D;
+          const modelObj  = modelEl.object3D;
+
+          // Current distance estimate from live MindAR pose
+          const curPos = new THREE.Vector3();
+          parentObj.getWorldPosition(curPos);
+          const curDist = Math.max(curPos.length(), 0.001);
+
+          // Smoothly scale: bigger when closer, smaller when further
+          const rawScale = state.initScale * (state.initDist / curDist);
+          state.curScale += (rawScale - state.curScale) * 0.05;
+
+          // Override local position → maintain locked world position
+          const localPos = state.worldPos.clone();
+          parentObj.worldToLocal(localPos);
+          modelObj.position.copy(localPos);
+
+          // Override local rotation → maintain locked world rotation
+          // localQuat = parentWorldQuat^-1 * lockedWorldQuat
+          const pq = new THREE.Quaternion();
+          parentObj.getWorldQuaternion(pq);
+          pq.invert();
+          modelObj.quaternion.copy(pq.multiply(state.worldQuat));
+
+          modelObj.scale.setScalar(state.curScale);
+        }
+      }
+    });
   </script>
 
   <!--
@@ -341,6 +381,7 @@
       <a-asset-item id="sde4-model" src="/models/sde4.glb"></a-asset-item>
     </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity stable-tracker></a-entity>
 
     <!-- Target 0: RIGHT -->
     <a-entity id="target-0" mindar-image-target="targetIndex: 0">
@@ -386,6 +427,25 @@
   </a-scene>
 
   <script>
+    // ── Stable lock state ─────────────────────────────────────────────
+    const stableStates = {};
+    let stableMode = false;
+
+    function lockTarget(idx) {
+      const targetEl = document.getElementById(`target-${idx}`);
+      if (!targetEl) return;
+      const worldPos = new THREE.Vector3();
+      const worldQuat = new THREE.Quaternion();
+      targetEl.object3D.getWorldPosition(worldPos);
+      targetEl.object3D.getWorldQuaternion(worldQuat);
+      const initDist = Math.max(worldPos.length(), 0.001);
+      stableStates[idx] = {
+        worldPos, worldQuat, initDist,
+        initScale: cals[idx].scale,
+        curScale:  cals[idx].scale
+      };
+    }
+
     // ── Building data ──────────────────────────────────────────────────
     const BUILDINGS = {
       sde4: {
@@ -532,6 +592,12 @@
       document.getElementById('cal-toggle').classList.toggle('active', calActive);
       document.getElementById('cal-panel').classList.toggle('open', calActive);
       document.getElementById('cal-overlay').classList.toggle('active', calActive);
+      // Stable mode active when cal is closed
+      stableMode = !calActive;
+      if (stableMode) {
+        // Lock all currently found targets
+        for (const idx of foundTargets) lockTarget(idx);
+      }
     }
 
     function adjRot(axis, deg) {
@@ -661,16 +727,18 @@
         targetEl.addEventListener('targetFound', () => {
           foundTargets.add(idx);
           modelEl.setAttribute('highlight-building', 'active', true);
-          // Auto-switch cal panel to the detected target
           calEditIdx = idx;
           updateCalTargetBar();
           updateCalDisplay();
           rotateControls.classList.add('visible');
           showBuilding(BUILDINGS.sde4);
+          // Lock transform after one frame so MindAR has positioned the entity
+          if (stableMode) requestAnimationFrame(() => lockTarget(idx));
         });
 
         targetEl.addEventListener('targetLost', () => {
           foundTargets.delete(idx);
+          delete stableStates[idx];
           modelEl.setAttribute('highlight-building', 'active', false);
           updateCalTargetBar();
           if (foundTargets.size === 0) {
