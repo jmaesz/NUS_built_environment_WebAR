@@ -112,11 +112,119 @@
     #detail-bar-bg { height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
     #detail-bar-fill { height: 100%; border-radius: 3px; transition: width 0.75s cubic-bezier(0.4,0,0.2,1); width: 0%; }
     #detail-pct { font-size: 10px; color: rgba(255,255,255,0.38); letter-spacing: 0.06em; text-transform: uppercase; }
+
+    /* ── Sky AR ── */
+    #sky-overlay {
+      position: fixed; inset: 0; z-index: 1002;
+      pointer-events: none;
+      opacity: 0; transition: opacity 0.6s ease;
+    }
+    #sky-overlay.visible { opacity: 1; pointer-events: auto; }
+
+    #sky-gradient {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom,
+        rgba(30,120,255,0.45) 0%,
+        rgba(80,180,255,0.25) 40%,
+        transparent 75%);
+    }
+
+    /* floating sun */
+    #sky-sun {
+      position: absolute; top: 8%; left: 50%; transform: translateX(-50%);
+      font-size: 64px;
+      filter: drop-shadow(0 0 24px rgba(255,220,80,0.9));
+      animation: sky-pulse 3s ease-in-out infinite;
+    }
+    @keyframes sky-pulse {
+      0%,100% { transform: translateX(-50%) scale(1);   filter: drop-shadow(0 0 24px rgba(255,220,80,0.9)); }
+      50%      { transform: translateX(-50%) scale(1.08); filter: drop-shadow(0 0 40px rgba(255,220,80,1));   }
+    }
+
+    .sky-card {
+      position: absolute;
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 14px; padding: 14px 18px;
+      color: #fff; min-width: 150px;
+      animation: sky-float 4s ease-in-out infinite;
+    }
+    @keyframes sky-float {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+    .sky-card-icon { font-size: 22px; margin-bottom: 4px; }
+    .sky-card-label { font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.7; }
+    .sky-card-value { font-size: 20px; font-weight: 800; margin-top: 2px; }
+    .sky-card-sub   { font-size: 10px; opacity: 0.6; margin-top: 2px; }
+
+    #sky-card-solar { left: 6%; top: 28%; animation-delay: 0s; }
+    #sky-card-co2   { right: 6%; top: 32%; animation-delay: 1.2s; }
+    #sky-card-netzero {
+      left: 50%; top: 55%; transform: translateX(-50%);
+      text-align: center; min-width: 180px;
+      animation-delay: 0.6s;
+      border-color: rgba(100,255,150,0.5);
+      background: rgba(20,60,30,0.4);
+    }
+    #sky-card-netzero .sky-card-value { font-size: 15px; color: #7CFC00; letter-spacing: 0.08em; }
+
+    /* floating particles */
+    .sky-particle {
+      position: absolute; border-radius: 50%;
+      background: rgba(255,220,80,0.7);
+      animation: sky-rise linear infinite;
+    }
+    @keyframes sky-rise {
+      0%   { transform: translateY(0) scale(1); opacity: 0.8; }
+      100% { transform: translateY(-60vh) scale(0); opacity: 0; }
+    }
+
+    /* iOS permission prompt */
+    #sky-permission {
+      position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+      z-index: 1003; background: rgba(30,120,255,0.85);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      color: #fff; border: none; border-radius: 10px;
+      padding: 13px 22px; font-size: 13px; font-weight: 700;
+      letter-spacing: 0.06em; cursor: pointer;
+      display: none; white-space: nowrap;
+    }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT SDE4</div>
+
+  <!-- Sky AR overlay — visible when device tilts upward -->
+  <div id="sky-overlay">
+    <div id="sky-gradient"></div>
+    <div id="sky-sun">☀️</div>
+
+    <div class="sky-card" id="sky-card-solar">
+      <div class="sky-card-icon">⚡</div>
+      <div class="sky-card-label">Solar Generation</div>
+      <div class="sky-card-value">500K kWh</div>
+      <div class="sky-card-sub">per year · 1,225 panels</div>
+    </div>
+
+    <div class="sky-card" id="sky-card-co2">
+      <div class="sky-card-icon">🌱</div>
+      <div class="sky-card-label">CO₂ Avoided</div>
+      <div class="sky-card-value">215 tonnes</div>
+      <div class="sky-card-sub">per year</div>
+    </div>
+
+    <div class="sky-card" id="sky-card-netzero">
+      <div class="sky-card-icon">🏆</div>
+      <div class="sky-card-label">Building Status</div>
+      <div class="sky-card-value">NET ZERO ENERGY</div>
+      <div class="sky-card-sub">Singapore's 1st net-zero building</div>
+    </div>
+  </div>
+
+  <button id="sky-permission" onclick="requestSkyPermission()">ENABLE SKY AR ↑</button>
 
   <!-- SVG overlay for annotation lines (anchor dot → top of label card) -->
   <svg id="ar-lines" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:997;overflow:visible">
@@ -484,6 +592,63 @@
 
     // Run overlay update at ~30 fps
     setInterval(updateOverlays, 33);
+
+    // ── Sky AR — device orientation ──────────────────────────────────────
+    const skyOverlay   = document.getElementById('sky-overlay');
+    const skyPermBtn   = document.getElementById('sky-permission');
+    let skyActive      = false;
+    let particleTimer  = null;
+
+    function setSkyVisible(on) {
+      if (on === skyActive) return;
+      skyActive = on;
+      skyOverlay.classList.toggle('visible', on);
+      if (on) spawnParticles(); else stopParticles();
+    }
+
+    function handleOrientation(e) {
+      if (e.beta === null) return;
+      // beta: ~90 = phone upright, ~0 or negative = pointing at sky
+      setSkyVisible(e.beta < 35);
+    }
+
+    function spawnParticles() {
+      stopParticles();
+      particleTimer = setInterval(() => {
+        const p = document.createElement('div');
+        p.className = 'sky-particle';
+        const sz = 4 + Math.random() * 8;
+        p.style.cssText = `width:${sz}px;height:${sz}px;left:${Math.random()*100}%;bottom:${20+Math.random()*30}%;animation-duration:${2+Math.random()*3}s;animation-delay:${Math.random()*0.5}s`;
+        skyOverlay.appendChild(p);
+        setTimeout(() => p.remove(), 5500);
+      }, 300);
+    }
+
+    function stopParticles() {
+      clearInterval(particleTimer);
+    }
+
+    function requestSkyPermission() {
+      DeviceOrientationEvent.requestPermission().then(state => {
+        if (state === 'granted') {
+          window.addEventListener('deviceorientation', handleOrientation);
+          skyPermBtn.style.display = 'none';
+        }
+      }).catch(console.error);
+    }
+
+    function initSkyAR() {
+      if (typeof DeviceOrientationEvent !== 'undefined' &&
+          typeof DeviceOrientationEvent.requestPermission === 'function') {
+        // iOS 13+ — show permission button
+        skyPermBtn.style.display = 'block';
+      } else {
+        // Android / desktop — no permission needed
+        window.addEventListener('deviceorientation', handleOrientation);
+      }
+    }
+
+    initSkyAR();
 
     // ── MindAR wiring ────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
