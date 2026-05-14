@@ -180,6 +180,13 @@
         <div class="rbtn" data-axis="z" data-dir="1">↻</div>
       </div>
     </div>
+    <div class="rgroup">
+      <div class="rgroup-label">DEPTH</div>
+      <div class="rgroup-row">
+        <div class="rbtn" data-pos="z" data-dir="-1">↙</div>
+        <div class="rbtn" data-pos="z" data-dir="1">↗</div>
+      </div>
+    </div>
   </div>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
@@ -514,13 +521,29 @@
     }
 
     document.querySelectorAll('.rbtn').forEach(btn => {
-      const axis = btn.dataset.axis;
-      const dir  = parseFloat(btn.dataset.dir);
-      btn.addEventListener('touchstart', e => { e.preventDefault(); startRotating(axis, dir, btn); }, { passive: false });
+      const dir = parseFloat(btn.dataset.dir);
+
+      let stepFn;
+      if (btn.dataset.axis) {
+        const axis = btn.dataset.axis;
+        stepFn = () => { cal.rot[axis] = (cal.rot[axis] + dir + 360) % 360; applyTransform(); };
+      } else {
+        const pos = btn.dataset.pos;
+        stepFn = () => { cal.pos[pos] += dir * 0.005; applyTransform(); };
+      }
+
+      function start() {
+        if (rotInterval) clearInterval(rotInterval);
+        btn.classList.add('pressing');
+        stepFn();
+        rotInterval = setInterval(stepFn, 30);
+      }
+
+      btn.addEventListener('touchstart', e => { e.preventDefault(); start(); }, { passive: false });
       btn.addEventListener('touchend',   e => { e.preventDefault(); stopRotating(); }, { passive: false });
-      btn.addEventListener('mousedown',  () => startRotating(axis, dir, btn));
-      btn.addEventListener('mouseup',    () => stopRotating());
-      btn.addEventListener('mouseleave', () => stopRotating());
+      btn.addEventListener('mousedown',  start);
+      btn.addEventListener('mouseup',    stopRotating);
+      btn.addEventListener('mouseleave', stopRotating);
     });
 
     // ── MindAR wiring ──────────────────────────────────────────────────
