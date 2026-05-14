@@ -27,11 +27,6 @@
       border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
     }
 
-    #ar-canvas {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
-      pointer-events: none; z-index: 10;
-    }
-
     /* ── Chart panel ── */
     #chart-panel {
       position: fixed; top: 12px; right: 12px; z-index: 999;
@@ -92,8 +87,6 @@
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
-  <canvas id="ar-canvas"></canvas>
-
   <div id="chart-panel">
     <div id="chart-building-name"></div>
     <div id="chart-subtitle">Energy Use Intensity</div>
@@ -119,6 +112,39 @@
     </div>
   </div>
 
+  <script>
+    AFRAME.registerComponent('highlight-building', {
+      schema: {
+        active:  { type: 'boolean', default: false },
+        r:       { type: 'number',  default: 0.13 },
+        g:       { type: 'number',  default: 0.77 },
+        b:       { type: 'number',  default: 0.37 },
+        opacity: { type: 'number',  default: 0.55 },
+      },
+      init() {
+        this._meshes = []; this._origMats = new Map(); this._hlMat = null; this._cached = false;
+        this.el.addEventListener('model-loaded', () => this._apply());
+      },
+      _apply() {
+        const root = this.el.getObject3D('mesh');
+        if (!root) return;
+        root.traverse(obj => {
+          if (!obj.isMesh) return;
+          this._origMats.set(obj, obj.material);
+          this._meshes.push(obj);
+        });
+        const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
+        this._hlMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: this.data.opacity, depthTest: false });
+        this._cached = true;
+        if (this.data.active) this._show();
+      },
+      update() { if (!this._cached) return; this.data.active ? this._show() : this._hide(); },
+      _show() { this._meshes.forEach(o => { o.renderOrder = 999; o.material = this._hlMat; }); },
+      _hide() { this._meshes.forEach(o => { o.renderOrder = 0;   o.material = this._origMats.get(o); }); },
+      remove() { this._hide(); }
+    });
+  </script>
+
   <a-scene
     mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.001; filterBeta: 0.01;"
     color-space="sRGB"
@@ -126,32 +152,28 @@
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
+    <a-assets>
+      <a-asset-item id="sde4-model" src="/models/sde4.glb"></a-asset-item>
+    </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-entity id="target-sde4" mindar-image-target="targetIndex: 0"></a-entity>
+    <a-entity id="target-sde4" mindar-image-target="targetIndex: 0">
+      <a-entity
+        id="model-sde4"
+        gltf-model="#sde4-model"
+        scale="0.01 0.01 0.01"
+        position="0 0 -0.426"
+        rotation="-90 270 0"
+        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55"
+      ></a-entity>
+    </a-entity>
   </a-scene>
 
   <script>
     // ── Building data ──────────────────────────────────────────────────
-    // Corners are in the target entity's LOCAL space (A-Frame units).
-    // SDE4: GLB size 85.2 × 60.4 × 25.1m, scale 0.01, rotation -90 270 0
-    //   GLB+X→A-Frame+Z, GLB+Y→A-Frame+X, GLB+Z→A-Frame+Y
-    //   Front face (east/+X) at Z=0, back face at Z=-0.852
-    //   Half-Y = 0.302 (left/right), half-Z = 0.1257 (up/down)
     const BUILDINGS = {
       sde4: {
         name: 'SDE4',
         tagline: 'Net-zero energy · NUS School of Design & Environment',
-        color: { fill: 'rgba(0,210,90,0.30)', stroke: '#00ff6a', lineWidth: 2.5 },
-        // Corners in MindAR target-entity local space (image plane = Z=0, depth = -Z)
-        // Image: 1836x660 px → aspect 2.78 → MindAR height = 0.360 units
-        // Building east face: 60.4m wide × 25.1m tall → fills image height
-        // 1 unit = 60.4mm → half-W=0.43, half-H=0.18, depth=85.2/60.4=1.41 → Z=-1.22
-        corners: [
-          [ 0.43,  0.18,  0],   [-0.43,  0.18,  0],
-          [-0.43, -0.18,  0],   [ 0.43, -0.18,  0],
-          [ 0.43,  0.18, -1.22],[-0.43,  0.18, -1.22],
-          [-0.43, -0.18, -1.22],[ 0.43, -0.18, -1.22],
-        ],
         energy: {
           total: 86,
           components: [
@@ -162,74 +184,6 @@
         }
       }
     };
-
-    // ── 2-D convex hull (Andrew's monotone chain) ──────────────────────
-    function convexHull(pts) {
-      if (pts.length < 3) return pts;
-      pts = pts.slice().sort((a, b) => a.x !== b.x ? a.x - b.x : a.y - b.y);
-      const cross = (O, A, B) => (A.x - O.x) * (B.y - O.y) - (A.y - O.y) * (B.x - O.x);
-      const lower = [], upper = [];
-      for (const p of pts) {
-        while (lower.length >= 2 && cross(lower[lower.length-2], lower[lower.length-1], p) <= 0) lower.pop();
-        lower.push(p);
-      }
-      for (let i = pts.length - 1; i >= 0; i--) {
-        const p = pts[i];
-        while (upper.length >= 2 && cross(upper[upper.length-2], upper[upper.length-1], p) <= 0) upper.pop();
-        upper.push(p);
-      }
-      upper.pop(); lower.pop();
-      return lower.concat(upper);
-    }
-
-    // ── Canvas & projection ────────────────────────────────────────────
-    const arCanvas = document.getElementById('ar-canvas');
-    const ctx2d = arCanvas.getContext('2d');
-
-    function resizeCanvas() {
-      arCanvas.width  = window.innerWidth;
-      arCanvas.height = window.innerHeight;
-    }
-    window.addEventListener('resize', resizeCanvas);
-    resizeCanvas();
-
-    let activeTarget = null;   // { targetObj, building }
-
-    function projectAndDraw() {
-      ctx2d.clearRect(0, 0, arCanvas.width, arCanvas.height);
-      if (!activeTarget) return;
-
-      const { targetObj, building } = activeTarget;
-      const scene  = document.querySelector('a-scene');
-      const camera = scene.camera;
-      const W = arCanvas.width, H = arCanvas.height;
-
-      const screenPts = [];
-      for (const [lx, ly, lz] of building.corners) {
-        const wp = new THREE.Vector3(lx, ly, lz);
-        targetObj.localToWorld(wp);
-        const ndc = wp.project(camera);
-        if (ndc.z > 1) continue;               // behind camera — skip
-        screenPts.push({ x: (ndc.x + 1) / 2 * W, y: (-ndc.y + 1) / 2 * H });
-      }
-
-      if (screenPts.length < 3) return;
-      const hull = convexHull(screenPts);
-      if (hull.length < 3) return;
-
-      const { fill, stroke, lineWidth } = building.color;
-      ctx2d.beginPath();
-      ctx2d.moveTo(hull[0].x, hull[0].y);
-      for (let i = 1; i < hull.length; i++) ctx2d.lineTo(hull[i].x, hull[i].y);
-      ctx2d.closePath();
-      ctx2d.fillStyle   = fill;
-      ctx2d.fill();
-      ctx2d.strokeStyle = stroke;
-      ctx2d.lineWidth   = lineWidth;
-      ctx2d.stroke();
-    }
-
-    function loop() { projectAndDraw(); requestAnimationFrame(loop); }
 
     // ── UI helpers ─────────────────────────────────────────────────────
     const chartPanel = document.getElementById('chart-panel');
@@ -293,19 +247,17 @@
     // ── MindAR wiring ──────────────────────────────────────────────────
     document.querySelector('a-scene').addEventListener('loaded', () => {
       const targetEl = document.getElementById('target-sde4');
+      const modelEl  = document.getElementById('model-sde4');
 
       targetEl.addEventListener('targetFound', () => {
-        activeTarget = { targetObj: targetEl.object3D, building: BUILDINGS.sde4 };
+        modelEl.setAttribute('highlight-building', 'active', true);
         showBuilding(BUILDINGS.sde4);
       });
 
       targetEl.addEventListener('targetLost', () => {
-        activeTarget = null;
-        ctx2d.clearRect(0, 0, arCanvas.width, arCanvas.height);
+        modelEl.setAttribute('highlight-building', 'active', false);
         hideBuilding();
       });
-
-      requestAnimationFrame(loop);
     });
   </script>
 </body>
