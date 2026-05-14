@@ -126,11 +126,20 @@
       font-size: 10px; letter-spacing: 0.1em; border-radius: 4px; cursor: pointer;
     }
     #cal-help { font-size: 9px; color: #555; margin-top: 8px; line-height: 1.7; }
+
+    #cal-overlay {
+      display: none; position: fixed; inset: 0; z-index: 1000;
+      touch-action: none;
+    }
+    #cal-overlay.active { display: block; }
+    #cal-panel { z-index: 1001; }
+    #cal-toggle { z-index: 1002; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <button id="cal-toggle" onclick="toggleCal()">⚙ CALIBRATE</button>
+  <div id="cal-overlay"></div>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
   <div id="cal-panel">
@@ -347,6 +356,7 @@
       cal.active = !cal.active;
       document.getElementById('cal-toggle').classList.toggle('active', cal.active);
       document.getElementById('cal-panel').classList.toggle('open', cal.active);
+      document.getElementById('cal-overlay').classList.toggle('active', cal.active);
     }
 
     function applyTransform() {
@@ -392,8 +402,9 @@
       });
     }
 
-    // ── Touch gesture handling ──────────────────────────────────────────
+    // ── Touch gesture handling (on overlay so we own the events) ──────────
     let lastGesture = null;
+    const overlay = document.getElementById('cal-overlay');
 
     function readGesture(touches) {
       if (!touches.length) return null;
@@ -409,13 +420,12 @@
       };
     }
 
-    document.addEventListener('touchstart', e => {
-      if (!cal.active) return;
+    overlay.addEventListener('touchstart', e => {
+      e.preventDefault();
       lastGesture = readGesture(Array.from(e.touches));
-    }, { passive: true });
+    }, { passive: false });
 
-    document.addEventListener('touchmove', e => {
-      if (!cal.active) return;
+    overlay.addEventListener('touchmove', e => {
       e.preventDefault();
       const cur = readGesture(Array.from(e.touches));
       if (!lastGesture || cur.n !== lastGesture.n) { lastGesture = cur; return; }
@@ -434,7 +444,7 @@
       applyTransform();
     }, { passive: false });
 
-    document.addEventListener('touchend', () => { lastGesture = null; });
+    overlay.addEventListener('touchend', () => { lastGesture = null; });
 
     // ── MindAR wiring ──────────────────────────────────────────────────
     document.querySelector('a-scene').addEventListener('loaded', () => {
