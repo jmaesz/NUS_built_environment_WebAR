@@ -178,7 +178,7 @@
   </div>
 
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 8; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.001; filterBeta: 0.01; missTolerance: 5; warmupTolerance: 3;"
+    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 12; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.001; filterBeta: 0.01; missTolerance: 5; warmupTolerance: 3;"
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
@@ -373,6 +373,94 @@
       <a-entity id="m-li-7" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
+    <!-- Target 8 -->
+    <a-entity id="target-8" mindar-image-target="targetIndex: 8">
+      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity id="m-eq-8" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-8" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-8" position="0.85 -0.42 0.02"></a-entity>
+    </a-entity>
+
+    <!-- Target 9 -->
+    <a-entity id="target-9" mindar-image-target="targetIndex: 9">
+      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity id="m-eq-9" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-9" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-9" position="0.85 -0.42 0.02"></a-entity>
+    </a-entity>
+
+    <!-- Target 10 -->
+    <a-entity id="target-10" mindar-image-target="targetIndex: 10">
+      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity id="m-eq-10" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-10" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-10" position="0.85 -0.42 0.02"></a-entity>
+    </a-entity>
+
+    <!-- Target 11 -->
+    <a-entity id="target-11" mindar-image-target="targetIndex: 11">
+      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity id="m-eq-11" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-11" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-11" position="0.85 -0.42 0.02"></a-entity>
+    </a-entity>
+
   </a-scene>
 
   <script>
@@ -531,7 +619,7 @@
 
     // ── MindAR wiring ────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
-      for (let i = 0; i < 8; i++) {
+      for (let i = 0; i < 12; i++) {
         const el = document.getElementById(`target-${i}`);
         el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
         el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
