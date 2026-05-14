@@ -216,6 +216,8 @@
       <button class="cal-target-btn active-view" data-tidx="1" onclick="selectCalTarget(1)">FRONT</button>
       <button class="cal-target-btn" data-tidx="2" onclick="selectCalTarget(2)">LEFT</button>
       <button class="cal-target-btn" data-tidx="3" onclick="selectCalTarget(3)">TOP</button>
+      <button class="cal-target-btn" data-tidx="4" onclick="selectCalTarget(4)">F-L</button>
+      <button class="cal-target-btn" data-tidx="5" onclick="selectCalTarget(5)">F-R</button>
     </div>
     <div class="cal-display">
       POS&nbsp; <span class="cv" id="cv-px">0.101</span>&nbsp;
@@ -329,7 +331,7 @@
     targetIndex order (upload order): 0=RIGHT, 1=FRONT, 2=LEFT, 3=TOP
   -->
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 4; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
+    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 6; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
     color-space="sRGB"
     renderer="colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
@@ -364,6 +366,20 @@
     <!-- Target 3: TOP -->
     <a-entity id="target-3" mindar-image-target="targetIndex: 3">
       <a-entity id="model-3" gltf-model="#sde4-model"
+        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      </a-entity>
+    </a-entity>
+
+    <!-- Target 4: FRONT-LEFT -->
+    <a-entity id="target-4" mindar-image-target="targetIndex: 4">
+      <a-entity id="model-4" gltf-model="#sde4-model"
+        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      </a-entity>
+    </a-entity>
+
+    <!-- Target 5: FRONT-RIGHT -->
+    <a-entity id="target-5" mindar-image-target="targetIndex: 5">
+      <a-entity id="model-5" gltf-model="#sde4-model"
         highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
       </a-entity>
     </a-entity>
@@ -449,14 +465,16 @@
     // Each target has its own calibration — calibrate each face separately.
     // calEditIdx = which target the cal panel is currently editing (0/1/2).
     // foundTargets = set of currently-found target indices.
-    // targetIndex order matches upload order: 0=RIGHT, 1=FRONT, 2=LEFT, 3=TOP
-    const TARGET_LABELS = ['RIGHT', 'FRONT', 'LEFT', 'TOP'];
+    // targetIndex order: 0=RIGHT, 1=FRONT, 2=LEFT, 3=TOP, 4=FRONT-LEFT, 5=FRONT-RIGHT
+    const TARGET_LABELS = ['RIGHT', 'FRONT', 'LEFT', 'TOP', 'FRONT-LEFT', 'FRONT-RIGHT'];
 
     const CAL_DEFAULTS = [
-      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 290.0, y: -50.9, z: 13.0  }, scale: 0.0096 }, // 0: RIGHT
-      { pos: { x: -0.006, y: 0.059, z: -0.195 }, rot: { x: 288.0, y: 27.5, z: 9.0  }, scale: 0.0127 }, // 1: FRONT (calibrated)
-      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 290.0, y: 129.1, z: 13.0  }, scale: 0.0096 }, // 2: LEFT
-      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 200.0, y: 39.1,  z: 13.0  }, scale: 0.0096 }, // 3: TOP
+      { pos: { x: 0,      y: 0,     z: 0.266  }, rot: { x: 290.0, y: -50.9, z: 13.0 }, scale: 0.0127 }, // 0: RIGHT
+      { pos: { x: -0.006, y: 0.059, z: -0.195 }, rot: { x: 288.0, y: 27.5,  z: 9.0  }, scale: 0.0127 }, // 1: FRONT (calibrated)
+      { pos: { x: 0,      y: 0,     z: 0.266  }, rot: { x: 290.0, y: 129.1, z: 13.0 }, scale: 0.0127 }, // 2: LEFT
+      { pos: { x: 0,      y: 0,     z: 0.266  }, rot: { x: 200.0, y: 27.5,  z: 9.0  }, scale: 0.0127 }, // 3: TOP
+      { pos: { x: -0.006, y: 0.059, z: -0.195 }, rot: { x: 288.0, y: 78.5,  z: 9.0  }, scale: 0.0127 }, // 4: FRONT-LEFT
+      { pos: { x: -0.006, y: 0.059, z: -0.195 }, rot: { x: 288.0, y: -23.5, z: 9.0  }, scale: 0.0127 }, // 5: FRONT-RIGHT
     ];
 
     const cals = CAL_DEFAULTS.map(d => ({
@@ -631,11 +649,11 @@
     // ── MindAR wiring ──────────────────────────────────────────────────
     document.querySelector('a-scene').addEventListener('loaded', () => {
       // Apply all calibrations immediately so models are positioned on first detection
-      for (let i = 0; i < 4; i++) applyTransform(i);
+      for (let i = 0; i < 6; i++) applyTransform(i);
       updateCalDisplay();
       updateCalTargetBar();
 
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 6; i++) {
         const targetEl = document.getElementById(`target-${i}`);
         const modelEl  = document.getElementById(`model-${i}`);
         const idx = i;
