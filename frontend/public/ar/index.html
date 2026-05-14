@@ -134,12 +134,31 @@
     #cal-overlay.active { display: block; }
     #cal-panel { z-index: 1001; }
     #cal-toggle { z-index: 1002; }
+
+    /* ── Rotate handle ── */
+    #rotate-btn {
+      display: none; position: fixed; right: 14px; top: 50%; transform: translateY(-50%);
+      z-index: 998; width: 56px; height: 56px; border-radius: 50%;
+      background: rgba(0,0,0,0.65); border: 1.5px solid rgba(255,255,255,0.35);
+      flex-direction: column; align-items: center; justify-content: center;
+      color: #fff; cursor: pointer; user-select: none; -webkit-user-select: none;
+    }
+    #rotate-btn.visible { display: flex; }
+    #rotate-btn.dragging { background: rgba(255,180,0,0.45); border-color: #fa0; }
+    #rotate-btn .ricon { font-size: 22px; line-height: 1; }
+    #rotate-btn .rlabel { font-size: 8px; letter-spacing: 0.08em; margin-top: 2px; opacity: 0.7; }
+    #rotate-overlay {
+      display: none; position: fixed; inset: 0; z-index: 999; touch-action: none;
+    }
+    #rotate-overlay.active { display: block; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <button id="cal-toggle" onclick="toggleCal()">⚙ CALIBRATE</button>
   <div id="cal-overlay"></div>
+  <div id="rotate-btn"><div class="ricon">↻</div><div class="rlabel">ROTATE</div></div>
+  <div id="rotate-overlay"></div>
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
   <div id="cal-panel">
@@ -252,7 +271,7 @@
   </script>
 
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.001; filterBeta: 0.01;"
+    mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
     color-space="sRGB"
     renderer="colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
@@ -454,6 +473,33 @@
 
     overlay.addEventListener('touchend', () => { lastGesture = null; });
 
+    // ── Rotate handle ──────────────────────────────────────────────────
+    const rotateBtn     = document.getElementById('rotate-btn');
+    const rotateOverlay = document.getElementById('rotate-overlay');
+    let lastRotX = null;
+
+    rotateBtn.addEventListener('touchstart', e => {
+      e.preventDefault();
+      rotateBtn.classList.add('dragging');
+      rotateOverlay.classList.add('active');
+      lastRotX = e.touches[0].clientX;
+    }, { passive: false });
+
+    rotateOverlay.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (lastRotX === null) return;
+      const dx = e.touches[0].clientX - lastRotX;
+      cal.rot.y += dx * 0.5;
+      lastRotX = e.touches[0].clientX;
+      applyTransform();
+    }, { passive: false });
+
+    rotateOverlay.addEventListener('touchend', () => {
+      rotateBtn.classList.remove('dragging');
+      rotateOverlay.classList.remove('active');
+      lastRotX = null;
+    });
+
     // ── MindAR wiring ──────────────────────────────────────────────────
     document.querySelector('a-scene').addEventListener('loaded', () => {
       const targetEl = document.getElementById('target-sde4');
@@ -461,11 +507,13 @@
 
       targetEl.addEventListener('targetFound', () => {
         modelEl.setAttribute('highlight-building', 'active', true);
+        rotateBtn.classList.add('visible');
         showBuilding(BUILDINGS.sde4);
       });
 
       targetEl.addEventListener('targetLost', () => {
         modelEl.setAttribute('highlight-building', 'active', false);
+        rotateBtn.classList.remove('visible');
         hideBuilding();
       });
     });
