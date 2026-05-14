@@ -212,9 +212,9 @@
   <div id="cal-panel">
     <!-- Target selector: tap to switch which face you're calibrating -->
     <div id="cal-target-bar">
-      <button class="cal-target-btn" data-tidx="0" onclick="selectCalTarget(0)">LEFT</button>
-      <button class="cal-target-btn" data-tidx="1" onclick="selectCalTarget(1)">RIGHT</button>
-      <button class="cal-target-btn active-view" data-tidx="2" onclick="selectCalTarget(2)">FRONT</button>
+      <button class="cal-target-btn" data-tidx="0" onclick="selectCalTarget(0)">RIGHT</button>
+      <button class="cal-target-btn active-view" data-tidx="1" onclick="selectCalTarget(1)">FRONT</button>
+      <button class="cal-target-btn" data-tidx="2" onclick="selectCalTarget(2)">LEFT</button>
       <button class="cal-target-btn" data-tidx="3" onclick="selectCalTarget(3)">TOP</button>
     </div>
     <div class="cal-display">
@@ -326,7 +326,7 @@
   </script>
 
   <!--
-    targetIndex order (upload order): 0=LEFT, 1=RIGHT, 2=FRONT, 3=TOP
+    targetIndex order (upload order): 0=RIGHT, 1=FRONT, 2=LEFT, 3=TOP
   -->
   <a-scene
     mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 4; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
@@ -340,21 +340,21 @@
     </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
-    <!-- Target 0: LEFT -->
+    <!-- Target 0: RIGHT -->
     <a-entity id="target-0" mindar-image-target="targetIndex: 0">
       <a-entity id="model-0" gltf-model="#sde4-model"
         highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
       </a-entity>
     </a-entity>
 
-    <!-- Target 1: RIGHT -->
+    <!-- Target 1: FRONT -->
     <a-entity id="target-1" mindar-image-target="targetIndex: 1">
       <a-entity id="model-1" gltf-model="#sde4-model"
         highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
       </a-entity>
     </a-entity>
 
-    <!-- Target 2: FRONT -->
+    <!-- Target 2: LEFT -->
     <a-entity id="target-2" mindar-image-target="targetIndex: 2">
       <a-entity id="model-2" gltf-model="#sde4-model"
         highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
@@ -449,13 +449,13 @@
     // Each target has its own calibration — calibrate each face separately.
     // calEditIdx = which target the cal panel is currently editing (0/1/2).
     // foundTargets = set of currently-found target indices.
-    // targetIndex order matches upload order: 0=LEFT, 1=RIGHT, 2=FRONT, 3=TOP
-    const TARGET_LABELS = ['LEFT', 'RIGHT', 'FRONT', 'TOP'];
+    // targetIndex order matches upload order: 0=RIGHT, 1=FRONT, 2=LEFT, 3=TOP
+    const TARGET_LABELS = ['RIGHT', 'FRONT', 'LEFT', 'TOP'];
 
     const CAL_DEFAULTS = [
-      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 290.0, y: 129.1, z: 13.0  }, scale: 0.0096 }, // 0: LEFT
-      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 290.0, y: -50.9, z: 13.0  }, scale: 0.0096 }, // 1: RIGHT
-      { pos: { x: 0.101, y: -0.087, z: 0.266 }, rot: { x: 290.0, y: 39.1,  z: 13.0  }, scale: 0.0096 }, // 2: FRONT (calibrated)
+      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 290.0, y: -50.9, z: 13.0  }, scale: 0.0096 }, // 0: RIGHT
+      { pos: { x: 0.101, y: -0.087, z: 0.266 }, rot: { x: 290.0, y: 39.1,  z: 13.0  }, scale: 0.0096 }, // 1: FRONT (calibrated)
+      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 290.0, y: 129.1, z: 13.0  }, scale: 0.0096 }, // 2: LEFT
       { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 200.0, y: 39.1,  z: 13.0  }, scale: 0.0096 }, // 3: TOP
     ];
 
@@ -463,7 +463,7 @@
       pos: { ...d.pos }, rot: { ...d.rot }, scale: d.scale
     }));
 
-    let calEditIdx = 2; // default to FRONT
+    let calEditIdx = 1; // default to FRONT
     let foundTargets = new Set();
     let calActive = false;
     let calSens = 0.003;
