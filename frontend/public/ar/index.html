@@ -12,16 +12,15 @@
     body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
 
     #back-btn {
-      position: fixed; top: 16px; left: 16px; z-index: 999;
+      position: fixed; top: 16px; left: 16px; z-index: 1000;
       background: rgba(0,0,0,0.55); color: #fff;
       border: 1px solid rgba(255,255,255,0.25);
       padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
       cursor: pointer; border-radius: 4px; text-decoration: none;
     }
-
     #scan-hint {
       position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
-      z-index: 999; background: rgba(0,0,0,0.55); color: #fff;
+      z-index: 1000; background: rgba(0,0,0,0.55); color: #fff;
       padding: 11px 18px; font-size: 11px; letter-spacing: 0.1em;
       border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
     }
@@ -32,12 +31,10 @@
       width: 200px;
       background: rgba(255,255,255,0.18);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.35);
-      border-radius: 10px; padding: 14px;
+      border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; padding: 14px;
       box-shadow: 0 4px 24px rgba(0,0,0,0.12);
       opacity: 0; transform: translateX(16px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
-      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease; pointer-events: none;
     }
     #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
     #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
@@ -48,72 +45,92 @@
     .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
     .legend-label { font-size: 10px; color: #333; flex: 1; }
     .legend-value { font-size: 10px; font-weight: 600; color: #111; }
-    .legend-pct { font-size: 9px; color: #555; margin-left: 2px; }
     .divider { height: 1px; background: rgba(0,0,0,0.12); margin: 10px 0; }
     #total-row { display: flex; justify-content: space-between; align-items: center; }
     #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
     #total-value { font-size: 11px; font-weight: 700; color: #111; }
 
+    /* ── AR labels (HTML overlay, always clickable) ── */
+    .ar-label {
+      position: fixed; z-index: 998;
+      transform: translate(-50%, -50%);
+      display: none; align-items: center; gap: 10px;
+      background: rgba(12, 12, 28, 0.93);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 10px; padding: 14px 18px 14px 14px;
+      min-width: 160px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+      cursor: pointer; pointer-events: auto;
+      user-select: none; -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+    }
+    .ar-label:active { opacity: 0.7; }
+    .ar-label-bar { width: 4px; border-radius: 2px; height: 38px; flex-shrink: 0; }
+    .ar-label-title {
+      font-size: 15px; font-weight: 800; color: white;
+      letter-spacing: 0.07em; text-transform: uppercase;
+    }
+    .ar-label-sub { font-size: 10px; color: rgba(255,255,255,0.42); margin-top: 3px; letter-spacing: 0.03em; }
+
     /* ── Detail slide-up panel ── */
     #detail-panel {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
-      background: rgba(12, 12, 16, 0.94);
-      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.1);
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1001;
+      background: rgba(10, 10, 18, 0.95);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(255,255,255,0.08);
       border-radius: 20px 20px 0 0;
-      padding: 12px 24px 48px;
+      padding: 12px 24px 52px;
       transform: translateY(100%);
-      transition: transform 0.45s cubic-bezier(0.34, 1.2, 0.64, 1);
+      transition: transform 0.45s cubic-bezier(0.34, 1.15, 0.64, 1);
     }
     #detail-panel.visible { transform: translateY(0); }
-    #detail-handle {
-      width: 36px; height: 4px; background: rgba(255,255,255,0.2);
-      border-radius: 2px; margin: 0 auto 20px;
-    }
-    #detail-header {
-      display: flex; align-items: center; gap: 12px; margin-bottom: 14px;
-    }
-    #detail-color-bar {
-      width: 4px; height: 40px; border-radius: 2px; flex-shrink: 0;
-    }
-    #detail-title {
-      font-size: 18px; font-weight: 800; letter-spacing: 0.06em;
-      text-transform: uppercase; color: #fff; flex: 1;
-    }
-    #detail-value {
-      font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.6);
-      margin-top: 2px;
-    }
+    #detail-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px; margin: 0 auto 22px; }
+    #detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    #detail-color-bar { width: 4px; height: 44px; border-radius: 2px; flex-shrink: 0; }
+    #detail-title { font-size: 20px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; flex: 1; }
+    #detail-value { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.55); margin-top: 3px; }
     #detail-close {
-      width: 32px; height: 32px; border-radius: 50%;
-      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-      color: #fff; font-size: 18px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
+      color: #fff; font-size: 20px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
-    #detail-desc {
-      font-size: 13px; line-height: 1.75; color: rgba(255,255,255,0.72);
-      margin-bottom: 20px;
-    }
-    #detail-bar-bg {
-      height: 4px; background: rgba(255,255,255,0.08);
-      border-radius: 2px; overflow: hidden; margin-bottom: 8px;
-    }
-    #detail-bar-fill {
-      height: 100%; border-radius: 2px;
-      transition: width 0.7s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    #detail-pct {
-      font-size: 10px; color: rgba(255,255,255,0.4);
-      letter-spacing: 0.06em; text-transform: uppercase;
-    }
+    #detail-desc { font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.68); margin-bottom: 22px; }
+    #detail-bar-bg { height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
+    #detail-bar-fill { height: 100%; border-radius: 3px; transition: width 0.75s cubic-bezier(0.4,0,0.2,1); width: 0%; }
+    #detail-pct { font-size: 10px; color: rgba(255,255,255,0.38); letter-spacing: 0.06em; text-transform: uppercase; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT SDE4</div>
 
-  <!-- Pie chart (frosted glass) -->
+  <!-- HTML overlay labels — positioned via Three.js worldToScreen each frame -->
+  <div class="ar-label" id="ar-label-equipment" onclick="showDetail('equipment')">
+    <div class="ar-label-bar" style="background:#F5A623"></div>
+    <div>
+      <div class="ar-label-title">EQUIPMENT</div>
+      <div class="ar-label-sub">Tap for details →</div>
+    </div>
+  </div>
+  <div class="ar-label" id="ar-label-cooling" onclick="showDetail('cooling')">
+    <div class="ar-label-bar" style="background:#4A90D9"></div>
+    <div>
+      <div class="ar-label-title">COOLING</div>
+      <div class="ar-label-sub">Tap for details →</div>
+    </div>
+  </div>
+  <div class="ar-label" id="ar-label-lighting" onclick="showDetail('lighting')">
+    <div class="ar-label-bar" style="background:#7ED321"></div>
+    <div>
+      <div class="ar-label-title">LIGHTING</div>
+      <div class="ar-label-sub">Tap for details →</div>
+    </div>
+  </div>
+
+  <!-- Chart panel -->
   <div id="chart-panel">
     <div id="chart-building-name">SDE4</div>
     <div id="chart-subtitle">Energy Use Intensity</div>
@@ -126,12 +143,12 @@
     </div>
   </div>
 
-  <!-- Detail slide-up panel -->
+  <!-- Detail panel -->
   <div id="detail-panel">
     <div id="detail-handle"></div>
     <div id="detail-header">
       <div id="detail-color-bar"></div>
-      <div>
+      <div style="flex:1">
         <div id="detail-title"></div>
         <div id="detail-value"></div>
       </div>
@@ -144,61 +161,47 @@
 
   <a-scene
     mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 6; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
-    color-space="sRGB"
-    renderer="colorManagement: true"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
+    color-space="sRGB" renderer="colorManagement: true"
+    vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
-    <a-camera position="0 0 0" look-controls="enabled: false">
-      <a-entity cursor="fuse: false; rayOrigin: mouse"
-                raycaster="objects: .clickable; far: 5; interval: 0"></a-entity>
-    </a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <!-- Annotation positions (same for all 6 targets):
+         Anchor dots on building surface → diagonal lines → marker entities
+         Markers are invisible but their world positions drive the HTML label overlays.
+
+         Equipment: anchor (-0.22,-0.06) → label (-0.60,-0.38) diagonal down-left
+         Cooling:   anchor ( 0.05,-0.09) → label ( 0.10,-0.42) diagonal down
+         Lighting:  anchor ( 0.26, 0.02) → label ( 0.60,-0.26) diagonal down-right
+    -->
 
     <!-- Target 0: RIGHT -->
     <a-entity id="target-0" mindar-image-target="targetIndex: 0">
-      <!-- Red glowing frame — outer glow -->
+      <!-- Glowing red frame -->
       <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <!-- inner glow -->
       <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <!-- solid frame -->
-      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <!-- Dot anchors on building -->
-      <a-sphere position="-0.18 -0.05 0.012" radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0 -0.08 0.012"     radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.22 0.05 0.012"   radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <!-- EQUIPMENT label+line -->
-      <a-entity line="start:-0.18 -0.05 0.012;end:-0.42 -0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="-0.52 -0.05 0.014">
-        <a-plane class="clickable" data-type="equipment" width="0.20" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.085 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#F5A623;shader:flat"></a-box>
-        <a-text value="EQUIPMENT" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <!-- COOLING label+line -->
-      <a-entity line="start:0 -0.08 0.012;end:0 -0.247 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0 -0.28 0.014">
-        <a-plane class="clickable" data-type="cooling" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#4A90D9;shader:flat"></a-box>
-        <a-text value="COOLING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <!-- LIGHTING label+line -->
-      <a-entity line="start:0.22 0.05 0.012;end:0.435 0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0.52 0.05 0.014">
-        <a-plane class="clickable" data-type="lighting" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#7ED321;shader:flat"></a-box>
-        <a-text value="LIGHTING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <!-- Anchor dots -->
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <!-- Diagonal annotation lines -->
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
+      <!-- Invisible marker entities for HTML label anchoring -->
+      <a-entity id="m-eq-0" position="-0.60 -0.38 0.02"></a-entity>
+      <a-entity id="m-co-0" position="0.10 -0.42 0.02"></a-entity>
+      <a-entity id="m-li-0" position="0.60 -0.26 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 1: FRONT -->
@@ -211,34 +214,19 @@
       <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.18 -0.05 0.012" radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0 -0.08 0.012"     radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.22 0.05 0.012"   radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.18 -0.05 0.012;end:-0.42 -0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="-0.52 -0.05 0.014">
-        <a-plane class="clickable" data-type="equipment" width="0.20" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.085 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#F5A623;shader:flat"></a-box>
-        <a-text value="EQUIPMENT" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0 -0.08 0.012;end:0 -0.247 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0 -0.28 0.014">
-        <a-plane class="clickable" data-type="cooling" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#4A90D9;shader:flat"></a-box>
-        <a-text value="COOLING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0.22 0.05 0.012;end:0.435 0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0.52 0.05 0.014">
-        <a-plane class="clickable" data-type="lighting" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#7ED321;shader:flat"></a-box>
-        <a-text value="LIGHTING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-1" position="-0.60 -0.38 0.02"></a-entity>
+      <a-entity id="m-co-1" position="0.10 -0.42 0.02"></a-entity>
+      <a-entity id="m-li-1" position="0.60 -0.26 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 2: LEFT -->
@@ -251,34 +239,19 @@
       <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.18 -0.05 0.012" radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0 -0.08 0.012"     radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.22 0.05 0.012"   radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.18 -0.05 0.012;end:-0.42 -0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="-0.52 -0.05 0.014">
-        <a-plane class="clickable" data-type="equipment" width="0.20" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.085 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#F5A623;shader:flat"></a-box>
-        <a-text value="EQUIPMENT" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0 -0.08 0.012;end:0 -0.247 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0 -0.28 0.014">
-        <a-plane class="clickable" data-type="cooling" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#4A90D9;shader:flat"></a-box>
-        <a-text value="COOLING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0.22 0.05 0.012;end:0.435 0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0.52 0.05 0.014">
-        <a-plane class="clickable" data-type="lighting" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#7ED321;shader:flat"></a-box>
-        <a-text value="LIGHTING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-2" position="-0.60 -0.38 0.02"></a-entity>
+      <a-entity id="m-co-2" position="0.10 -0.42 0.02"></a-entity>
+      <a-entity id="m-li-2" position="0.60 -0.26 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 3: TOP -->
@@ -291,34 +264,19 @@
       <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.18 -0.05 0.012" radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0 -0.08 0.012"     radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.22 0.05 0.012"   radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.18 -0.05 0.012;end:-0.42 -0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="-0.52 -0.05 0.014">
-        <a-plane class="clickable" data-type="equipment" width="0.20" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.085 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#F5A623;shader:flat"></a-box>
-        <a-text value="EQUIPMENT" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0 -0.08 0.012;end:0 -0.247 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0 -0.28 0.014">
-        <a-plane class="clickable" data-type="cooling" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#4A90D9;shader:flat"></a-box>
-        <a-text value="COOLING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0.22 0.05 0.012;end:0.435 0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0.52 0.05 0.014">
-        <a-plane class="clickable" data-type="lighting" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#7ED321;shader:flat"></a-box>
-        <a-text value="LIGHTING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-3" position="-0.60 -0.38 0.02"></a-entity>
+      <a-entity id="m-co-3" position="0.10 -0.42 0.02"></a-entity>
+      <a-entity id="m-li-3" position="0.60 -0.26 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 4: FRONT-LEFT -->
@@ -331,34 +289,19 @@
       <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.18 -0.05 0.012" radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0 -0.08 0.012"     radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.22 0.05 0.012"   radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.18 -0.05 0.012;end:-0.42 -0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="-0.52 -0.05 0.014">
-        <a-plane class="clickable" data-type="equipment" width="0.20" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.085 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#F5A623;shader:flat"></a-box>
-        <a-text value="EQUIPMENT" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0 -0.08 0.012;end:0 -0.247 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0 -0.28 0.014">
-        <a-plane class="clickable" data-type="cooling" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#4A90D9;shader:flat"></a-box>
-        <a-text value="COOLING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0.22 0.05 0.012;end:0.435 0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0.52 0.05 0.014">
-        <a-plane class="clickable" data-type="lighting" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#7ED321;shader:flat"></a-box>
-        <a-text value="LIGHTING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-4" position="-0.60 -0.38 0.02"></a-entity>
+      <a-entity id="m-co-4" position="0.10 -0.42 0.02"></a-entity>
+      <a-entity id="m-li-4" position="0.60 -0.26 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 5: FRONT-RIGHT -->
@@ -371,34 +314,19 @@
       <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
       <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.18 -0.05 0.012" radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0 -0.08 0.012"     radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.22 0.05 0.012"   radius="0.008" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.18 -0.05 0.012;end:-0.42 -0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="-0.52 -0.05 0.014">
-        <a-plane class="clickable" data-type="equipment" width="0.20" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.085 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#F5A623;shader:flat"></a-box>
-        <a-text value="EQUIPMENT" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0 -0.08 0.012;end:0 -0.247 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0 -0.28 0.014">
-        <a-plane class="clickable" data-type="cooling" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#4A90D9;shader:flat"></a-box>
-        <a-text value="COOLING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
-      <a-entity line="start:0.22 0.05 0.012;end:0.435 0.05 0.012;color:#dddddd"></a-entity>
-      <a-entity position="0.52 0.05 0.014">
-        <a-plane class="clickable" data-type="lighting" width="0.17" height="0.065" material="color:#1a1a2e;shader:flat;opacity:0.92;transparent:true"></a-plane>
-        <a-box position="-0.072 0 0.002" width="0.004" height="0.065" depth="0.001" material="color:#7ED321;shader:flat"></a-box>
-        <a-text value="LIGHTING" color="white" align="center" position="0.01 0.008 0.004" scale="0.062 0.062 0.062"></a-text>
-        <a-text value="tap for details" color="#aaaaaa" align="center" position="0.01 -0.012 0.004" scale="0.038 0.038 0.038"></a-text>
-      </a-entity>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-5" position="-0.60 -0.38 0.02"></a-entity>
+      <a-entity id="m-co-5" position="0.10 -0.42 0.02"></a-entity>
+      <a-entity id="m-li-5" position="0.60 -0.26 0.02"></a-entity>
     </a-entity>
 
   </a-scene>
@@ -419,13 +347,11 @@
       }
     };
 
-    const BUILDING = {
-      energy: { total: 86, components: [
-        { label: 'Cooling',   value: 37, color: '#4A90D9' },
-        { label: 'Equipment', value: 32, color: '#F5A623' },
-        { label: 'Lighting',  value: 17, color: '#7ED321' },
-      ]}
-    };
+    const BUILDING_ENERGY = { total: 86, components: [
+      { label: 'Cooling', value: 37, color: '#4A90D9' },
+      { label: 'Equipment', value: 32, color: '#F5A623' },
+      { label: 'Lighting', value: 17, color: '#7ED321' },
+    ]};
 
     const chartPanel  = document.getElementById('chart-panel');
     const detailPanel = document.getElementById('detail-panel');
@@ -433,15 +359,16 @@
     let chartInstance = null;
     let foundTargets  = new Set();
 
+    // ── Detail panel ────────────────────────────────────────────────────
     function showDetail(type) {
       const d = DETAILS[type];
       if (!d) return;
-      document.getElementById('detail-title').textContent     = d.label;
-      document.getElementById('detail-value').textContent     = d.value;
-      document.getElementById('detail-desc').textContent      = d.desc;
-      document.getElementById('detail-color-bar').style.background = d.color;
-      document.getElementById('detail-bar-fill').style.background  = d.color;
-      document.getElementById('detail-bar-fill').style.width = '0%';
+      document.getElementById('detail-title').textContent = d.label;
+      document.getElementById('detail-value').textContent = d.value;
+      document.getElementById('detail-desc').textContent  = d.desc;
+      document.getElementById('detail-color-bar').style.background  = d.color;
+      document.getElementById('detail-bar-fill').style.background   = d.color;
+      document.getElementById('detail-bar-fill').style.width        = '0%';
       document.getElementById('detail-pct').textContent = `${d.pct}% of total energy use`;
       detailPanel.classList.add('visible');
       requestAnimationFrame(() => {
@@ -449,28 +376,22 @@
       });
     }
 
-    function closeDetail() {
-      detailPanel.classList.remove('visible');
-    }
+    function closeDetail() { detailPanel.classList.remove('visible'); }
 
-    // Close detail when tapping outside it
-    detailPanel.addEventListener('click', e => {
-      if (e.target === detailPanel) closeDetail();
-    });
-
+    // ── Chart ────────────────────────────────────────────────────────────
     function showChart() {
       if (!chartInstance) {
-        const { components, total } = BUILDING.energy;
+        const { components, total } = BUILDING_ENERGY;
         document.getElementById('total-value').textContent = total + ' kWh/m²/yr';
         const legend = document.getElementById('legend');
         legend.innerHTML = '';
         components.forEach(c => {
-          legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span class="legend-label">${c.label}</span><span class="legend-value">${c.value}<span class="legend-pct"> kWh</span></span></div>`;
+          legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span class="legend-label">${c.label}</span><span class="legend-value">${c.value} kWh</span></div>`;
         });
         const ctx = document.getElementById('energy-chart').getContext('2d');
         chartInstance = new Chart(ctx, {
           type: 'doughnut',
-          data: { labels: components.map(c => c.label), datasets: [{ data: components.map(c => c.value), backgroundColor: components.map(c => c.color), borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' }] },
+          data: { labels: components.map(c=>c.label), datasets: [{ data: components.map(c=>c.value), backgroundColor: components.map(c=>c.color), borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' }] },
           options: { cutout: '60%', plugins: { legend: { display: false } }, animation: { duration: 600 } }
         });
       }
@@ -478,26 +399,58 @@
       scanHint.style.opacity = '0';
     }
 
-    function hideChart() {
-      if (foundTargets.size === 0) {
-        chartPanel.classList.remove('visible');
-        closeDetail();
-        scanHint.style.opacity = '1';
-      }
+    function hideUI() {
+      if (foundTargets.size > 0) return;
+      chartPanel.classList.remove('visible');
+      closeDetail();
+      scanHint.style.opacity = '1';
+      ['equipment','cooling','lighting'].forEach(t => {
+        document.getElementById('ar-label-' + t).style.display = 'none';
+      });
     }
 
-    document.querySelector('a-scene').addEventListener('loaded', () => {
-      // Wire target found/lost
+    // ── HTML label overlay — projects 3D marker world pos → screen px ───
+    const sceneEl = document.querySelector('a-scene');
+    const _tmpVec = new THREE.Vector3();
+
+    function updateOverlays() {
+      if (foundTargets.size === 0) return;
+
+      const camera = sceneEl.camera;
+      if (!camera) return;
+
+      const tIdx = [...foundTargets][0];
+      const W = window.innerWidth, H = window.innerHeight;
+
+      [['equipment','eq'],['cooling','co'],['lighting','li']].forEach(([type, sh]) => {
+        const marker = document.getElementById(`m-${sh}-${tIdx}`);
+        const label  = document.getElementById(`ar-label-${type}`);
+        if (!marker || !label) return;
+
+        marker.object3D.getWorldPosition(_tmpVec);
+        _tmpVec.project(camera);
+
+        // Behind camera or too far off-screen → hide
+        if (_tmpVec.z > 1) { label.style.display = 'none'; return; }
+
+        const sx = (_tmpVec.x + 1) / 2 * W;
+        const sy = (-_tmpVec.y + 1) / 2 * H;
+        label.style.display = 'flex';
+        label.style.left = sx + 'px';
+        label.style.top  = sy + 'px';
+      });
+    }
+
+    // Run overlay update at ~30 fps
+    setInterval(updateOverlays, 33);
+
+    // ── MindAR wiring ────────────────────────────────────────────────────
+    sceneEl.addEventListener('loaded', () => {
       for (let i = 0; i < 6; i++) {
         const el = document.getElementById(`target-${i}`);
         el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
-        el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideChart(); });
+        el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
       }
-
-      // Wire clickable labels via A-Frame click events
-      document.querySelectorAll('a-plane.clickable').forEach(el => {
-        el.addEventListener('click', () => showDetail(el.dataset.type));
-      });
     });
   </script>
 </body>
