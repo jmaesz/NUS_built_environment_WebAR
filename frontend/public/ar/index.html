@@ -3,11 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Campus AR</title>
+  <title>SDE4 AR</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
@@ -27,259 +26,41 @@
       border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
     }
 
-    /* ── Chart panel ── */
+    /* translucent frosted chart panel */
     #chart-panel {
       position: fixed; top: 12px; right: 12px; z-index: 999;
-      width: 200px; background: rgba(255,255,255,0.93);
+      width: 200px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.35);
       border-radius: 10px; padding: 14px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.25);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
       opacity: 0; transform: translateX(16px);
       transition: opacity 0.35s ease, transform 0.35s ease;
       pointer-events: none;
     }
     #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
     #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
-    #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #888; margin-bottom: 10px; }
+    #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
     #chart-container { position: relative; width: 100%; height: 130px; margin-bottom: 10px; }
     .legend { display: flex; flex-direction: column; gap: 6px; }
     .legend-item { display: flex; align-items: center; gap: 7px; }
     .legend-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .legend-label { font-size: 10px; color: #444; flex: 1; }
+    .legend-label { font-size: 10px; color: #333; flex: 1; }
     .legend-value { font-size: 10px; font-weight: 600; color: #111; }
-    .legend-pct { font-size: 9px; color: #888; margin-left: 2px; }
-    .divider { height: 1px; background: #eee; margin: 10px 0; }
+    .legend-pct { font-size: 9px; color: #555; margin-left: 2px; }
+    .divider { height: 1px; background: rgba(0,0,0,0.12); margin: 10px 0; }
     #total-row { display: flex; justify-content: space-between; align-items: center; }
-    #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #888; }
+    #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
     #total-value { font-size: 11px; font-weight: 700; color: #111; }
-
-    /* ── Bottom panel ── */
-    #bottom-panel {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
-      background: rgba(10,10,10,0.92); border-top: 1px solid rgba(255,255,255,0.12);
-      transform: translateY(100%); transition: transform 0.4s ease;
-    }
-    #bottom-panel.visible { transform: translateY(0); }
-    #bottom-collapsed { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
-    #bottom-bname { font-size: 14px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #fff; }
-    #bottom-tagline { font-size: 10px; color: #aaa; margin-top: 2px; letter-spacing: 0.04em; }
-    #details-btn {
-      background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-      color: #fff; padding: 8px 14px; font-size: 10px; letter-spacing: 0.1em;
-      text-transform: uppercase; border-radius: 4px; cursor: pointer;
-      white-space: nowrap; flex-shrink: 0; margin-left: 12px; transition: background 0.2s;
-    }
-    #details-btn:active { background: rgba(255,255,255,0.2); }
-    #bottom-expanded { max-height: 0; overflow: hidden; transition: max-height 0.4s ease; }
-    #bottom-expanded.open { max-height: 400px; }
-    #bottom-expanded-inner { padding: 0 20px 24px; display: flex; flex-direction: column; gap: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 14px; }
-    .detail-item { display: flex; gap: 12px; align-items: flex-start; }
-    .detail-color-bar { width: 3px; border-radius: 2px; flex-shrink: 0; align-self: stretch; min-height: 40px; }
-    .detail-content { flex: 1; }
-    .detail-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-    .detail-name { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; }
-    .detail-val { font-size: 11px; font-weight: 600; color: #fff; }
-    .detail-desc { font-size: 10px; line-height: 1.6; color: #999; }
-    .detail-bar-bg { height: 3px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 6px; overflow: hidden; }
-    .detail-bar-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
-
-    /* ── Calibration ── */
-    #cal-toggle {
-      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
-      z-index: 1001; background: rgba(0,0,0,0.6); color: #fff;
-      border: 1px solid rgba(255,255,255,0.25); padding: 8px 16px;
-      font-size: 10px; letter-spacing: 0.12em; border-radius: 4px; cursor: pointer;
-      white-space: nowrap;
-    }
-    #cal-toggle.active { background: rgba(220,100,0,0.8); border-color: #f80; }
-
-    #cal-panel {
-      display: none; position: fixed; left: 10px; top: 56px;
-      z-index: 1001; background: rgba(0,0,0,0.88);
-      border: 1px solid rgba(255,255,255,0.15); border-radius: 10px;
-      padding: 12px; width: 230px; color: #fff; font-family: monospace; font-size: 11px;
-    }
-    #cal-panel.open { display: block; }
-
-    #cal-target-bar {
-      display: flex; gap: 4px; margin-bottom: 10px;
-    }
-    .cal-target-btn {
-      flex: 1; padding: 5px 0; font-size: 9px; letter-spacing: 0.08em;
-      border-radius: 3px; cursor: pointer; text-align: center;
-      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-      color: #aaa;
-    }
-    .cal-target-btn.active-view {
-      background: rgba(255,180,0,0.25); border-color: #fa0; color: #fa0;
-    }
-    .cal-target-btn.found {
-      border-color: rgba(0,255,140,0.4); color: #0f9;
-    }
-    .cal-target-btn.active-view.found {
-      background: rgba(0,200,100,0.25); border-color: #0fa; color: #0fa;
-    }
-
-    .cv { color: #4df; }
-    .cal-display { line-height: 2; margin-bottom: 10px; }
-    .cal-row { display: flex; align-items: center; gap: 4px; margin-bottom: 5px; }
-    .cal-lbl { width: 38px; color: #aaa; font-size: 10px; flex-shrink: 0; }
-    .cb {
-      flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
-      color: #fff; padding: 5px 0; font-size: 10px; border-radius: 3px; cursor: pointer; text-align: center;
-    }
-    .cb:active { background: rgba(255,255,255,0.3); }
-    .cal-sens { display: flex; align-items: center; gap: 6px; margin: 8px 0 4px; font-size: 10px; color: #aaa; }
-    .cal-sens button {
-      flex: 1; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-      color: #aaa; padding: 4px; font-size: 9px; border-radius: 3px; cursor: pointer;
-    }
-    .cal-sens button.on { background: rgba(255,180,0,0.3); border-color: #fa0; color: #fa0; }
-    #cal-copy {
-      width: 100%; margin-top: 8px; background: rgba(0,150,80,0.3);
-      border: 1px solid rgba(0,255,140,0.35); color: #0f6; padding: 8px;
-      font-size: 10px; letter-spacing: 0.1em; border-radius: 4px; cursor: pointer;
-    }
-    #cal-reset {
-      width: 100%; margin-top: 5px; background: rgba(100,0,0,0.3);
-      border: 1px solid rgba(255,80,80,0.3); color: #f88; padding: 6px;
-      font-size: 10px; letter-spacing: 0.1em; border-radius: 4px; cursor: pointer;
-    }
-    #cal-help { font-size: 9px; color: #555; margin-top: 8px; line-height: 1.7; }
-
-    #cal-overlay {
-      display: none; position: fixed; inset: 0; z-index: 1000;
-      touch-action: none;
-    }
-    #cal-overlay.active { display: block; }
-    #cal-panel { z-index: 1001; }
-    #cal-toggle { z-index: 1002; }
-
-    /* ── Rotate controls ── */
-    #rotate-controls {
-      display: none; position: fixed; right: 10px; top: 65%; transform: translateY(-50%);
-      z-index: 998; flex-direction: column; gap: 8px; align-items: center;
-      user-select: none; -webkit-user-select: none;
-    }
-    #rotate-controls.visible { display: flex; }
-    .rgroup { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-    .rgroup-label { font-size: 8px; color: rgba(255,255,255,0.5); letter-spacing: 0.08em; }
-    .rgroup-row { display: flex; gap: 4px; }
-    .rbtn {
-      width: 44px; height: 44px; border-radius: 10px;
-      background: rgba(0,0,0,0.65); border: 1.5px solid rgba(255,255,255,0.3);
-      color: #fff; font-size: 18px; display: flex; align-items: center; justify-content: center;
-      cursor: pointer; touch-action: none;
-    }
-    .rbtn:active, .rbtn.pressing { background: rgba(255,180,0,0.45); border-color: #fa0; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
-  <button id="cal-toggle" onclick="toggleCal()">⚙ CALIBRATE</button>
-  <div id="cal-overlay"></div>
-  <div id="rotate-controls">
-    <div class="rgroup">
-      <div class="rgroup-label">L ↔ R</div>
-      <div class="rgroup-row">
-        <div class="rbtn" data-axis="y" data-dir="-1">◀</div>
-        <div class="rbtn" data-axis="y" data-dir="1">▶</div>
-      </div>
-    </div>
-    <div class="rgroup">
-      <div class="rgroup-label">U ↕ D</div>
-      <div class="rgroup-row">
-        <div class="rbtn" data-axis="x" data-dir="-1">▲</div>
-        <div class="rbtn" data-axis="x" data-dir="1">▼</div>
-      </div>
-    </div>
-    <div class="rgroup">
-      <div class="rgroup-label">FRONT</div>
-      <div class="rgroup-row">
-        <div class="rbtn" data-axis="z" data-dir="-1">↺</div>
-        <div class="rbtn" data-axis="z" data-dir="1">↻</div>
-      </div>
-    </div>
-    <div class="rgroup">
-      <div class="rgroup-label">DEPTH</div>
-      <div class="rgroup-row">
-        <div class="rbtn" data-pos="z" data-dir="-1">↙</div>
-        <div class="rbtn" data-pos="z" data-dir="1">↗</div>
-      </div>
-    </div>
-  </div>
-  <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
-
-  <div id="cal-panel">
-    <!-- Target selector: tap to switch which face you're calibrating -->
-    <div id="cal-target-bar">
-      <button class="cal-target-btn" data-tidx="0" onclick="selectCalTarget(0)">RIGHT</button>
-      <button class="cal-target-btn active-view" data-tidx="1" onclick="selectCalTarget(1)">FRONT</button>
-      <button class="cal-target-btn" data-tidx="2" onclick="selectCalTarget(2)">LEFT</button>
-      <button class="cal-target-btn" data-tidx="3" onclick="selectCalTarget(3)">TOP</button>
-      <button class="cal-target-btn" data-tidx="4" onclick="selectCalTarget(4)">F-L</button>
-      <button class="cal-target-btn" data-tidx="5" onclick="selectCalTarget(5)">F-R</button>
-    </div>
-    <div class="cal-display">
-      POS&nbsp; <span class="cv" id="cv-px">0.101</span>&nbsp;
-               <span class="cv" id="cv-py">-0.087</span>&nbsp;
-               <span class="cv" id="cv-pz">0.266</span><br>
-      ROT&nbsp; <span class="cv" id="cv-rx">290.0</span>&nbsp;
-               <span class="cv" id="cv-ry">39.1</span>&nbsp;
-               <span class="cv" id="cv-rz">13.0</span><br>
-      SCL&nbsp; <span class="cv" id="cv-sc">0.0096</span>
-    </div>
-    <div class="cal-row">
-      <span class="cal-lbl">ROT X</span>
-      <button class="cb" onclick="adjRot('x',-90)">-90</button>
-      <button class="cb" onclick="adjRot('x',-15)">-15</button>
-      <button class="cb" onclick="adjRot('x',-5)">-5</button>
-      <button class="cb" onclick="adjRot('x',5)">+5</button>
-      <button class="cb" onclick="adjRot('x',15)">+15</button>
-      <button class="cb" onclick="adjRot('x',90)">+90</button>
-    </div>
-    <div class="cal-row">
-      <span class="cal-lbl">ROT Y</span>
-      <button class="cb" onclick="adjRot('y',-90)">-90</button>
-      <button class="cb" onclick="adjRot('y',-15)">-15</button>
-      <button class="cb" onclick="adjRot('y',-5)">-5</button>
-      <button class="cb" onclick="adjRot('y',5)">+5</button>
-      <button class="cb" onclick="adjRot('y',15)">+15</button>
-      <button class="cb" onclick="adjRot('y',90)">+90</button>
-    </div>
-    <div class="cal-row">
-      <span class="cal-lbl">ROT Z</span>
-      <button class="cb" onclick="adjRot('z',-90)">-90</button>
-      <button class="cb" onclick="adjRot('z',-15)">-15</button>
-      <button class="cb" onclick="adjRot('z',-5)">-5</button>
-      <button class="cb" onclick="adjRot('z',5)">+5</button>
-      <button class="cb" onclick="adjRot('z',15)">+15</button>
-      <button class="cb" onclick="adjRot('z',90)">+90</button>
-    </div>
-    <div class="cal-sens">
-      SENS
-      <button id="sens-slow" onclick="setSens(0.001)">SLOW</button>
-      <button id="sens-med"  onclick="setSens(0.003)" class="on">MED</button>
-      <button id="sens-fast" onclick="setSens(0.007)">FAST</button>
-    </div>
-    <div class="cal-row">
-      <span class="cal-lbl">SCALE</span>
-      <button class="cb" onclick="adjScale(0.5)">½×</button>
-      <button class="cb" onclick="adjScale(0.8)">-20%</button>
-      <button class="cb" onclick="adjScale(1.2)">+20%</button>
-      <button class="cb" onclick="adjScale(2)">2×</button>
-    </div>
-    <button id="cal-copy"  onclick="copyVals()">COPY VALUES</button>
-    <button id="cal-reset" onclick="resetCal()">RESET</button>
-    <div id="cal-help">
-      1 finger → move X / Y<br>
-      2 finger slide → move Z (depth)<br>
-      2 finger pinch → scale<br>
-      2 finger twist → rotate Y
-    </div>
-  </div>
+  <div id="scan-hint">POINT CAMERA AT SDE4</div>
 
   <div id="chart-panel">
-    <div id="chart-building-name"></div>
+    <div id="chart-building-name">SDE4</div>
     <div id="chart-subtitle">Energy Use Intensity</div>
     <div id="chart-container"><canvas id="energy-chart"></canvas></div>
     <div class="legend" id="legend"></div>
@@ -290,467 +71,238 @@
     </div>
   </div>
 
-  <div id="bottom-panel">
-    <div id="bottom-collapsed">
-      <div>
-        <div id="bottom-bname"></div>
-        <div id="bottom-tagline"></div>
-      </div>
-      <button id="details-btn" onclick="toggleDetails()">SEE DETAILS ↑</button>
-    </div>
-    <div id="bottom-expanded">
-      <div id="bottom-expanded-inner"></div>
-    </div>
-  </div>
-
-  <script>
-    AFRAME.registerComponent('highlight-building', {
-      schema: { active: { type: 'boolean', default: false }, r: { type: 'number', default: 0.13 }, g: { type: 'number', default: 0.77 }, b: { type: 'number', default: 0.37 }, opacity: { type: 'number', default: 0.75 } },
-      init() {
-        this._meshes = []; this._origMats = new Map(); this._hlMat = null; this._cached = false;
-        this.el.addEventListener('model-loaded', () => this._setup());
-        if (this.el.getObject3D('mesh')) this._setup();
-      },
-      _setup() {
-        const root = this.el.getObject3D('mesh');
-        if (!root) return;
-        this._meshes = []; this._origMats.clear();
-        root.traverse(o => { if (!o.isMesh) return; this._origMats.set(o, o.material); this._meshes.push(o); });
-        this._hlMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(this.data.r, this.data.g, this.data.b), transparent: true, opacity: this.data.opacity, side: THREE.DoubleSide, depthTest: false });
-        this._cached = true;
-        if (this.data.active) this._show();
-      },
-      update() { if (!this._cached) return; this.data.active ? this._show() : this._hide(); },
-      _show() { this._meshes.forEach(o => { o.renderOrder = 999; o.material = this._hlMat; }); },
-      _hide() { this._meshes.forEach(o => { o.renderOrder = 0; o.material = this._origMats.get(o); }); },
-      remove() { this._hide(); }
-    });
-
-    // Locks world position+rotation on first detection; only scale follows distance.
-    AFRAME.registerComponent('stable-tracker', {
-      tick() {
-        if (!stableMode) return;
-        for (const idx of foundTargets) {
-          const state = stableStates[idx];
-          if (!state) continue;
-          const targetEl = document.getElementById(`target-${idx}`);
-          const modelEl  = document.getElementById(`model-${idx}`);
-          if (!targetEl || !modelEl) continue;
-
-          const parentObj = targetEl.object3D;
-          const modelObj  = modelEl.object3D;
-
-          // Current distance estimate from live MindAR pose
-          const curPos = new THREE.Vector3();
-          parentObj.getWorldPosition(curPos);
-          const curDist = Math.max(curPos.length(), 0.001);
-
-          // Smoothly scale: bigger when closer, smaller when further
-          const rawScale = state.initScale * (state.initDist / curDist);
-          state.curScale += (rawScale - state.curScale) * 0.05;
-
-          // Override local position → maintain locked world position
-          const localPos = state.worldPos.clone();
-          parentObj.worldToLocal(localPos);
-          modelObj.position.copy(localPos);
-
-          // Override local rotation → maintain locked world rotation
-          // localQuat = parentWorldQuat^-1 * lockedWorldQuat
-          const pq = new THREE.Quaternion();
-          parentObj.getWorldQuaternion(pq);
-          pq.invert();
-          modelObj.quaternion.copy(pq.multiply(state.worldQuat));
-
-          modelObj.scale.setScalar(state.curScale);
-        }
-      }
-    });
-  </script>
-
-  <!--
-    targetIndex order (upload order): 0=RIGHT, 1=FRONT, 2=LEFT, 3=TOP
-  -->
   <a-scene
     mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 6; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
     color-space="sRGB"
-    renderer="colorManagement: true; physicallyCorrectLights: true"
+    renderer="colorManagement: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
   >
-    <a-assets>
-      <a-asset-item id="sde4-model" src="/models/sde4.glb"></a-asset-item>
-    </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-entity stable-tracker></a-entity>
 
     <!-- Target 0: RIGHT -->
     <a-entity id="target-0" mindar-image-target="targetIndex: 0">
-      <a-entity id="model-0" gltf-model="#sde4-model"
-        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-entity position="0 0.22 0.015">
+        <a-circle radius="0.045" material="color:#E8772F;shader:flat" segments="32"></a-circle>
+        <a-circle radius="0.019" material="color:white;shader:flat" segments="32" position="0 0.007 0.002"></a-circle>
+        <a-cone radius-bottom="0.001" radius-top="0.03" height="0.065" material="color:#E8772F;shader:flat" position="0 -0.065 0" rotation="180 0 0"></a-cone>
+      </a-entity>
+      <a-entity line="start:-0.15 -0.04 0.01;end:-0.35 -0.04 0.01;color:#222222"></a-entity>
+      <a-entity position="-0.46 -0.04 0.015">
+        <a-plane width="0.18" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="EQUIPMENT" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0 -0.07 0.01;end:0 -0.2 0.01;color:#222222"></a-entity>
+      <a-entity position="0 -0.26 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="COOLING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0.2 0.05 0.01;end:0.36 0.05 0.01;color:#222222"></a-entity>
+      <a-entity position="0.47 0.05 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="LIGHTING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
       </a-entity>
     </a-entity>
 
     <!-- Target 1: FRONT -->
     <a-entity id="target-1" mindar-image-target="targetIndex: 1">
-      <a-entity id="model-1" gltf-model="#sde4-model"
-        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-entity position="0 0.22 0.015">
+        <a-circle radius="0.045" material="color:#E8772F;shader:flat" segments="32"></a-circle>
+        <a-circle radius="0.019" material="color:white;shader:flat" segments="32" position="0 0.007 0.002"></a-circle>
+        <a-cone radius-bottom="0.001" radius-top="0.03" height="0.065" material="color:#E8772F;shader:flat" position="0 -0.065 0" rotation="180 0 0"></a-cone>
+      </a-entity>
+      <a-entity line="start:-0.15 -0.04 0.01;end:-0.35 -0.04 0.01;color:#222222"></a-entity>
+      <a-entity position="-0.46 -0.04 0.015">
+        <a-plane width="0.18" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="EQUIPMENT" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0 -0.07 0.01;end:0 -0.2 0.01;color:#222222"></a-entity>
+      <a-entity position="0 -0.26 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="COOLING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0.2 0.05 0.01;end:0.36 0.05 0.01;color:#222222"></a-entity>
+      <a-entity position="0.47 0.05 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="LIGHTING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
       </a-entity>
     </a-entity>
 
     <!-- Target 2: LEFT -->
     <a-entity id="target-2" mindar-image-target="targetIndex: 2">
-      <a-entity id="model-2" gltf-model="#sde4-model"
-        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-entity position="0 0.22 0.015">
+        <a-circle radius="0.045" material="color:#E8772F;shader:flat" segments="32"></a-circle>
+        <a-circle radius="0.019" material="color:white;shader:flat" segments="32" position="0 0.007 0.002"></a-circle>
+        <a-cone radius-bottom="0.001" radius-top="0.03" height="0.065" material="color:#E8772F;shader:flat" position="0 -0.065 0" rotation="180 0 0"></a-cone>
+      </a-entity>
+      <a-entity line="start:-0.15 -0.04 0.01;end:-0.35 -0.04 0.01;color:#222222"></a-entity>
+      <a-entity position="-0.46 -0.04 0.015">
+        <a-plane width="0.18" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="EQUIPMENT" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0 -0.07 0.01;end:0 -0.2 0.01;color:#222222"></a-entity>
+      <a-entity position="0 -0.26 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="COOLING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0.2 0.05 0.01;end:0.36 0.05 0.01;color:#222222"></a-entity>
+      <a-entity position="0.47 0.05 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="LIGHTING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
       </a-entity>
     </a-entity>
 
     <!-- Target 3: TOP -->
     <a-entity id="target-3" mindar-image-target="targetIndex: 3">
-      <a-entity id="model-3" gltf-model="#sde4-model"
-        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-entity position="0 0.22 0.015">
+        <a-circle radius="0.045" material="color:#E8772F;shader:flat" segments="32"></a-circle>
+        <a-circle radius="0.019" material="color:white;shader:flat" segments="32" position="0 0.007 0.002"></a-circle>
+        <a-cone radius-bottom="0.001" radius-top="0.03" height="0.065" material="color:#E8772F;shader:flat" position="0 -0.065 0" rotation="180 0 0"></a-cone>
+      </a-entity>
+      <a-entity line="start:-0.15 -0.04 0.01;end:-0.35 -0.04 0.01;color:#222222"></a-entity>
+      <a-entity position="-0.46 -0.04 0.015">
+        <a-plane width="0.18" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="EQUIPMENT" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0 -0.07 0.01;end:0 -0.2 0.01;color:#222222"></a-entity>
+      <a-entity position="0 -0.26 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="COOLING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0.2 0.05 0.01;end:0.36 0.05 0.01;color:#222222"></a-entity>
+      <a-entity position="0.47 0.05 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="LIGHTING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
       </a-entity>
     </a-entity>
 
     <!-- Target 4: FRONT-LEFT -->
     <a-entity id="target-4" mindar-image-target="targetIndex: 4">
-      <a-entity id="model-4" gltf-model="#sde4-model"
-        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-entity position="0 0.22 0.015">
+        <a-circle radius="0.045" material="color:#E8772F;shader:flat" segments="32"></a-circle>
+        <a-circle radius="0.019" material="color:white;shader:flat" segments="32" position="0 0.007 0.002"></a-circle>
+        <a-cone radius-bottom="0.001" radius-top="0.03" height="0.065" material="color:#E8772F;shader:flat" position="0 -0.065 0" rotation="180 0 0"></a-cone>
+      </a-entity>
+      <a-entity line="start:-0.15 -0.04 0.01;end:-0.35 -0.04 0.01;color:#222222"></a-entity>
+      <a-entity position="-0.46 -0.04 0.015">
+        <a-plane width="0.18" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="EQUIPMENT" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0 -0.07 0.01;end:0 -0.2 0.01;color:#222222"></a-entity>
+      <a-entity position="0 -0.26 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="COOLING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0.2 0.05 0.01;end:0.36 0.05 0.01;color:#222222"></a-entity>
+      <a-entity position="0.47 0.05 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="LIGHTING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
       </a-entity>
     </a-entity>
 
     <!-- Target 5: FRONT-RIGHT -->
     <a-entity id="target-5" mindar-image-target="targetIndex: 5">
-      <a-entity id="model-5" gltf-model="#sde4-model"
-        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      <a-box position="0 0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01" width="0.92" height="0.007" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01" width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#CC2200;shader:flat"></a-box>
+      <a-entity position="0 0.22 0.015">
+        <a-circle radius="0.045" material="color:#E8772F;shader:flat" segments="32"></a-circle>
+        <a-circle radius="0.019" material="color:white;shader:flat" segments="32" position="0 0.007 0.002"></a-circle>
+        <a-cone radius-bottom="0.001" radius-top="0.03" height="0.065" material="color:#E8772F;shader:flat" position="0 -0.065 0" rotation="180 0 0"></a-cone>
+      </a-entity>
+      <a-entity line="start:-0.15 -0.04 0.01;end:-0.35 -0.04 0.01;color:#222222"></a-entity>
+      <a-entity position="-0.46 -0.04 0.015">
+        <a-plane width="0.18" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="EQUIPMENT" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0 -0.07 0.01;end:0 -0.2 0.01;color:#222222"></a-entity>
+      <a-entity position="0 -0.26 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="COOLING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
+      </a-entity>
+      <a-entity line="start:0.2 0.05 0.01;end:0.36 0.05 0.01;color:#222222"></a-entity>
+      <a-entity position="0.47 0.05 0.015">
+        <a-plane width="0.15" height="0.055" material="color:#111111;shader:flat;opacity:0.88;transparent:true"></a-plane>
+        <a-text value="LIGHTING" color="white" align="center" position="0 0 0.003" scale="0.07 0.07 0.07"></a-text>
       </a-entity>
     </a-entity>
+
   </a-scene>
 
   <script>
-    // ── Stable lock state ─────────────────────────────────────────────
-    const stableStates = {};
-    let stableMode = true;
-
-    function lockTarget(idx) {
-      const targetEl = document.getElementById(`target-${idx}`);
-      const modelEl  = document.getElementById(`model-${idx}`);
-      if (!targetEl || !modelEl) return;
-      // Capture MODEL's world transform (includes calibration offset)
-      const worldPos  = new THREE.Vector3();
-      const worldQuat = new THREE.Quaternion();
-      modelEl.object3D.getWorldPosition(worldPos);
-      modelEl.object3D.getWorldQuaternion(worldQuat);
-      // Use TARGET's distance from camera for scale reference
-      const targetPos = new THREE.Vector3();
-      targetEl.object3D.getWorldPosition(targetPos);
-      const initDist = Math.max(targetPos.length(), 0.001);
-      stableStates[idx] = {
-        worldPos, worldQuat, initDist,
-        initScale: cals[idx].scale,
-        curScale:  cals[idx].scale
-      };
-    }
-
-    // ── Building data ──────────────────────────────────────────────────
-    const BUILDINGS = {
-      sde4: {
-        name: 'SDE4',
-        tagline: 'Net-zero energy · NUS School of Design & Environment',
-        energy: {
-          total: 86,
-          components: [
-            { label: 'Cooling',   value: 37, color: '#4A90D9', desc: 'Hybrid cooling system combining chilled ceilings and natural ventilation reduces HVAC load by ~30% vs a conventional building. Over 50% of spaces are naturally ventilated.' },
-            { label: 'Equipment', value: 32, color: '#F5A623', desc: 'Computers, monitors, lab equipment and studio devices. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices.' },
-            { label: 'Lighting',  value: 17, color: '#7ED321', desc: 'Full LED with daylight-linked dimming sensors. South-facing shading fins and deep overhangs maximise natural daylight, cutting artificial lighting hours significantly.' },
-          ]
-        }
+    const BUILDING = {
+      name: 'SDE4',
+      energy: {
+        total: 86,
+        components: [
+          { label: 'Cooling',   value: 37, color: '#4A90D9' },
+          { label: 'Equipment', value: 32, color: '#F5A623' },
+          { label: 'Lighting',  value: 17, color: '#7ED321' },
+        ]
       }
     };
 
-    // ── UI helpers ─────────────────────────────────────────────────────
     const chartPanel = document.getElementById('chart-panel');
-    const bottomPanel = document.getElementById('bottom-panel');
-    const scanHint    = document.getElementById('scan-hint');
-    const expandedEl  = document.getElementById('bottom-expanded');
-    let chartInstance = null, detailsOpen = false;
+    const scanHint  = document.getElementById('scan-hint');
+    let chartInstance = null;
+    let foundTargets = new Set();
 
-    function toggleDetails() {
-      detailsOpen = !detailsOpen;
-      expandedEl.classList.toggle('open', detailsOpen);
-      document.getElementById('details-btn').textContent = detailsOpen ? 'HIDE ↓' : 'SEE DETAILS ↑';
-    }
-
-    function renderChart(b) {
-      document.getElementById('chart-building-name').textContent = b.name;
-      const { components, total } = b.energy;
-      document.getElementById('total-value').textContent = total + ' kWh/m²/yr';
-      const legend = document.getElementById('legend');
-      legend.innerHTML = '';
-      components.forEach(c => {
-        legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span class="legend-label">${c.label}</span><span class="legend-value">${c.value}<span class="legend-pct"> kWh</span></span></div>`;
-      });
-      if (chartInstance) chartInstance.destroy();
-      const ctx = document.getElementById('energy-chart').getContext('2d');
-      chartInstance = new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels: components.map(c => c.label), datasets: [{ data: components.map(c => c.value), backgroundColor: components.map(c => c.color), borderWidth: 2, borderColor: '#fff' }] },
-        options: { cutout: '60%', plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} kWh/m²/yr` } } }, animation: { duration: 600 } }
-      });
-    }
-
-    function renderBottom(b) {
-      document.getElementById('bottom-bname').textContent = b.name;
-      document.getElementById('bottom-tagline').textContent = b.tagline;
-      const inner = document.getElementById('bottom-expanded-inner');
-      const { components, total } = b.energy;
-      inner.innerHTML = '';
-      components.forEach(c => {
-        const pct = Math.round((c.value / total) * 100);
-        inner.innerHTML += `<div class="detail-item"><div class="detail-color-bar" style="background:${c.color}"></div><div class="detail-content"><div class="detail-header"><span class="detail-name">${c.label}</span><span class="detail-val">${c.value} kWh/m²/yr</span></div><div class="detail-desc">${c.desc}</div><div class="detail-bar-bg"><div class="detail-bar-fill" style="width:${pct}%; background:${c.color}"></div></div></div></div>`;
-      });
-    }
-
-    function showBuilding(b) {
-      renderChart(b); renderBottom(b);
+    function showChart() {
+      if (!chartInstance) {
+        const { components, total } = BUILDING.energy;
+        document.getElementById('total-value').textContent = total + ' kWh/m²/yr';
+        const legend = document.getElementById('legend');
+        legend.innerHTML = '';
+        components.forEach(c => {
+          legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span class="legend-label">${c.label}</span><span class="legend-value">${c.value}<span class="legend-pct"> kWh</span></span></div>`;
+        });
+        const ctx = document.getElementById('energy-chart').getContext('2d');
+        chartInstance = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: components.map(c => c.label),
+            datasets: [{ data: components.map(c => c.value), backgroundColor: components.map(c => c.color), borderWidth: 2, borderColor: 'rgba(255,255,255,0.4)' }]
+          },
+          options: { cutout: '60%', plugins: { legend: { display: false } }, animation: { duration: 600 } }
+        });
+      }
       chartPanel.classList.add('visible');
-      bottomPanel.classList.add('visible');
       scanHint.style.opacity = '0';
     }
 
-    function hideBuilding() {
-      chartPanel.classList.remove('visible');
-      bottomPanel.classList.remove('visible');
-      scanHint.style.opacity = '1';
-      detailsOpen = false;
-      expandedEl.classList.remove('open');
-      document.getElementById('details-btn').textContent = 'SEE DETAILS ↑';
-    }
-
-    // ── Per-target calibration ─────────────────────────────────────────
-    // Each target has its own calibration — calibrate each face separately.
-    // calEditIdx = which target the cal panel is currently editing (0/1/2).
-    // foundTargets = set of currently-found target indices.
-    // targetIndex order: 0=RIGHT, 1=FRONT, 2=LEFT, 3=TOP, 4=FRONT-LEFT, 5=FRONT-RIGHT
-    const TARGET_LABELS = ['RIGHT', 'FRONT', 'LEFT', 'TOP', 'FRONT-LEFT', 'FRONT-RIGHT'];
-
-    const CAL_DEFAULTS = [
-      { pos: { x: 0,      y: 0,     z: 0.266  }, rot: { x: 290.0, y: -50.9, z: 13.0 }, scale: 0.0127 }, // 0: RIGHT
-      { pos: { x: -0.061, y: -0.049, z: 0.138 }, rot: { x: 279.0, y: 16.3,  z: 3.0  }, scale: 0.0096 }, // 1: FRONT (calibrated)
-      { pos: { x: 0,      y: 0,     z: 0.266  }, rot: { x: 290.0, y: 129.1, z: 13.0 }, scale: 0.0127 }, // 2: LEFT
-      { pos: { x: 0,      y: 0,     z: 0.266  }, rot: { x: 200.0, y: 27.5,  z: 9.0  }, scale: 0.0127 }, // 3: TOP
-      { pos: { x: -0.006, y: 0.059, z: -0.195 }, rot: { x: 288.0, y: 78.5,  z: 9.0  }, scale: 0.0127 }, // 4: FRONT-LEFT
-      { pos: { x: -0.006, y: 0.059, z: -0.195 }, rot: { x: 288.0, y: -23.5, z: 9.0  }, scale: 0.0127 }, // 5: FRONT-RIGHT
-    ];
-
-    const cals = CAL_DEFAULTS.map(d => ({
-      pos: { ...d.pos }, rot: { ...d.rot }, scale: d.scale
-    }));
-
-    let calEditIdx = 1; // default to FRONT
-    let foundTargets = new Set();
-    let calActive = false;
-    let calSens = 0.003;
-
-    function selectCalTarget(idx) {
-      calEditIdx = idx;
-      updateCalTargetBar();
-      updateCalDisplay();
-    }
-
-    function updateCalTargetBar() {
-      document.querySelectorAll('.cal-target-btn').forEach(btn => {
-        const i = parseInt(btn.dataset.tidx);
-        btn.classList.toggle('active-view', i === calEditIdx);
-        btn.classList.toggle('found', foundTargets.has(i));
-      });
-    }
-
-    function applyTransform(idx) {
-      const c = cals[idx];
-      const el = document.getElementById(`model-${idx}`);
-      el.setAttribute('position', `${c.pos.x.toFixed(3)} ${c.pos.y.toFixed(3)} ${c.pos.z.toFixed(3)}`);
-      const s = c.scale.toFixed(4);
-      el.setAttribute('scale', `${s} ${s} ${s}`);
-      if (el.object3D) {
-        const D = Math.PI / 180;
-        const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), c.rot.x * D);
-        const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), c.rot.y * D);
-        const qZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), c.rot.z * D);
-        el.object3D.quaternion.copy(qX).premultiply(qY).premultiply(qZ);
-      }
-      if (idx === calEditIdx) updateCalDisplay();
-    }
-
-    function updateCalDisplay() {
-      const c = cals[calEditIdx];
-      document.getElementById('cv-px').textContent = c.pos.x.toFixed(3);
-      document.getElementById('cv-py').textContent = c.pos.y.toFixed(3);
-      document.getElementById('cv-pz').textContent = c.pos.z.toFixed(3);
-      document.getElementById('cv-rx').textContent = c.rot.x.toFixed(1);
-      document.getElementById('cv-ry').textContent = c.rot.y.toFixed(1);
-      document.getElementById('cv-rz').textContent = c.rot.z.toFixed(1);
-      document.getElementById('cv-sc').textContent = c.scale.toFixed(4);
-    }
-
-    function toggleCal() {
-      calActive = !calActive;
-      document.getElementById('cal-toggle').classList.toggle('active', calActive);
-      document.getElementById('cal-panel').classList.toggle('open', calActive);
-      document.getElementById('cal-overlay').classList.toggle('active', calActive);
-      // Stable mode active when cal is closed
-      stableMode = !calActive;
-      if (stableMode) {
-        // Lock all currently found targets
-        for (const idx of foundTargets) lockTarget(idx);
+    function hideChart() {
+      if (foundTargets.size === 0) {
+        chartPanel.classList.remove('visible');
+        scanHint.style.opacity = '1';
       }
     }
 
-    function adjRot(axis, deg) {
-      cals[calEditIdx].rot[axis] += deg;
-      applyTransform(calEditIdx);
-    }
-
-    function adjScale(factor) {
-      cals[calEditIdx].scale *= factor;
-      applyTransform(calEditIdx);
-    }
-
-    function setSens(v) {
-      calSens = v;
-      ['slow','med','fast'].forEach(id => document.getElementById('sens-'+id).classList.remove('on'));
-      if (v === 0.001) document.getElementById('sens-slow').classList.add('on');
-      else if (v === 0.003) document.getElementById('sens-med').classList.add('on');
-      else document.getElementById('sens-fast').classList.add('on');
-    }
-
-    function resetCal() {
-      const d = CAL_DEFAULTS[calEditIdx];
-      cals[calEditIdx] = { pos: { ...d.pos }, rot: { ...d.rot }, scale: d.scale };
-      applyTransform(calEditIdx);
-    }
-
-    function copyVals() {
-      const c = cals[calEditIdx];
-      const p = c.pos, r = c.rot, s = c.scale.toFixed(4);
-      const label = TARGET_LABELS[calEditIdx];
-      const txt = `// ${label}\nposition="${p.x.toFixed(3)} ${p.y.toFixed(3)} ${p.z.toFixed(3)}" rotation="${r.x.toFixed(1)} ${r.y.toFixed(1)} ${r.z.toFixed(1)}" scale="${s} ${s} ${s}"`;
-      navigator.clipboard.writeText(txt).then(() => {
-        const btn = document.getElementById('cal-copy');
-        const orig = btn.textContent;
-        btn.textContent = '✓ COPIED!';
-        setTimeout(() => btn.textContent = orig, 1500);
-      });
-    }
-
-    // ── Touch gesture handling ─────────────────────────────────────────
-    let lastGesture = null;
-    const overlay = document.getElementById('cal-overlay');
-
-    function readGesture(touches) {
-      if (!touches.length) return null;
-      if (touches.length === 1) return { n: 1, x: touches[0].clientX, y: touches[0].clientY };
-      const dx = touches[1].clientX - touches[0].clientX;
-      const dy = touches[1].clientY - touches[0].clientY;
-      return {
-        n: 2,
-        cx: (touches[0].clientX + touches[1].clientX) / 2,
-        cy: (touches[0].clientY + touches[1].clientY) / 2,
-        dist: Math.hypot(dx, dy),
-        angle: Math.atan2(dy, dx)
-      };
-    }
-
-    overlay.addEventListener('touchstart', e => {
-      e.preventDefault();
-      lastGesture = readGesture(Array.from(e.touches));
-    }, { passive: false });
-
-    overlay.addEventListener('touchmove', e => {
-      e.preventDefault();
-      const cur = readGesture(Array.from(e.touches));
-      if (!lastGesture || cur.n !== lastGesture.n) { lastGesture = cur; return; }
-      const c = cals[calEditIdx];
-      if (cur.n === 1) {
-        c.pos.x += (cur.x - lastGesture.x) * calSens;
-        c.pos.y -= (cur.y - lastGesture.y) * calSens;
-      } else {
-        if (lastGesture.dist > 5) c.scale *= cur.dist / lastGesture.dist;
-        c.rot.y += (cur.angle - lastGesture.angle) * (180 / Math.PI);
-        c.pos.z += (cur.cy - lastGesture.cy) * calSens;
-      }
-      lastGesture = cur;
-      applyTransform(calEditIdx);
-    }, { passive: false });
-
-    overlay.addEventListener('touchend', () => { lastGesture = null; });
-
-    // ── Rotate controls ────────────────────────────────────────────────
-    const rotateControls = document.getElementById('rotate-controls');
-    let rotInterval = null;
-
-    function stopRotating() {
-      clearInterval(rotInterval);
-      rotInterval = null;
-      document.querySelectorAll('.rbtn').forEach(b => b.classList.remove('pressing'));
-    }
-
-    document.querySelectorAll('.rbtn').forEach(btn => {
-      const dir = parseFloat(btn.dataset.dir);
-      let stepFn;
-      if (btn.dataset.axis) {
-        const axis = btn.dataset.axis;
-        stepFn = () => { cals[calEditIdx].rot[axis] = (cals[calEditIdx].rot[axis] + dir + 360) % 360; applyTransform(calEditIdx); };
-      } else {
-        const pos = btn.dataset.pos;
-        stepFn = () => { cals[calEditIdx].pos[pos] += dir * 0.005; applyTransform(calEditIdx); };
-      }
-      function start() {
-        if (rotInterval) clearInterval(rotInterval);
-        btn.classList.add('pressing');
-        stepFn();
-        rotInterval = setInterval(stepFn, 30);
-      }
-      btn.addEventListener('touchstart', e => { e.preventDefault(); start(); }, { passive: false });
-      btn.addEventListener('touchend',   e => { e.preventDefault(); stopRotating(); }, { passive: false });
-      btn.addEventListener('mousedown',  start);
-      btn.addEventListener('mouseup',    stopRotating);
-      btn.addEventListener('mouseleave', stopRotating);
-    });
-
-    // ── MindAR wiring ──────────────────────────────────────────────────
     document.querySelector('a-scene').addEventListener('loaded', () => {
-      // Apply all calibrations immediately so models are positioned on first detection
-      for (let i = 0; i < 6; i++) applyTransform(i);
-      updateCalDisplay();
-      updateCalTargetBar();
-
       for (let i = 0; i < 6; i++) {
-        const targetEl = document.getElementById(`target-${i}`);
-        const modelEl  = document.getElementById(`model-${i}`);
-        const idx = i;
-
-        targetEl.addEventListener('targetFound', () => {
-          foundTargets.add(idx);
-          modelEl.setAttribute('highlight-building', 'active', true);
-          calEditIdx = idx;
-          updateCalTargetBar();
-          updateCalDisplay();
-          rotateControls.classList.add('visible');
-          showBuilding(BUILDINGS.sde4);
-          // Lock transform after one frame so MindAR has positioned the entity
-          if (stableMode) requestAnimationFrame(() => lockTarget(idx));
-        });
-
-        targetEl.addEventListener('targetLost', () => {
-          foundTargets.delete(idx);
-          delete stableStates[idx];
-          modelEl.setAttribute('highlight-building', 'active', false);
-          updateCalTargetBar();
-          if (foundTargets.size === 0) {
-            rotateControls.classList.remove('visible');
-            hideBuilding();
-          }
-        });
+        const el = document.getElementById(`target-${i}`);
+        el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
+        el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideChart(); });
       }
     });
   </script>
