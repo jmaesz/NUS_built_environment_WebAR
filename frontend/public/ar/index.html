@@ -433,12 +433,17 @@
 
     function lockTarget(idx) {
       const targetEl = document.getElementById(`target-${idx}`);
-      if (!targetEl) return;
-      const worldPos = new THREE.Vector3();
+      const modelEl  = document.getElementById(`model-${idx}`);
+      if (!targetEl || !modelEl) return;
+      // Capture MODEL's world transform (includes calibration offset)
+      const worldPos  = new THREE.Vector3();
       const worldQuat = new THREE.Quaternion();
-      targetEl.object3D.getWorldPosition(worldPos);
-      targetEl.object3D.getWorldQuaternion(worldQuat);
-      const initDist = Math.max(worldPos.length(), 0.001);
+      modelEl.object3D.getWorldPosition(worldPos);
+      modelEl.object3D.getWorldQuaternion(worldQuat);
+      // Use TARGET's distance from camera for scale reference
+      const targetPos = new THREE.Vector3();
+      targetEl.object3D.getWorldPosition(targetPos);
+      const initDist = Math.max(targetPos.length(), 0.001);
       stableStates[idx] = {
         worldPos, worldQuat, initDist,
         initScale: cals[idx].scale,
