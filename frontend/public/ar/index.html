@@ -408,8 +408,10 @@
     const chartPanel  = document.getElementById('chart-panel');
     const detailPanel = document.getElementById('detail-panel');
     const scanHint    = document.getElementById('scan-hint');
+    const mapsPanel   = document.getElementById('maps-panel');
     let chartInstance = null;
     let foundTargets  = new Set();
+    let mapsHideTimer = null;
 
     // ── Detail panel ────────────────────────────────────────────────────
     function showDetail(type) {
@@ -449,9 +451,9 @@
       }
       chartPanel.classList.add('visible');
       scanHint.style.opacity = '0';
-      const mp = document.getElementById('maps-panel');
-      mp.style.display = 'block';
-      requestAnimationFrame(() => mp.classList.add('visible'));
+      if (mapsHideTimer) { clearTimeout(mapsHideTimer); mapsHideTimer = null; }
+      mapsPanel.style.display = 'block';
+      requestAnimationFrame(() => mapsPanel.classList.add('visible'));
     }
 
     function hideUI() {
@@ -459,9 +461,8 @@
       chartPanel.classList.remove('visible');
       closeDetail();
       scanHint.style.opacity = '1';
-      const mp = document.getElementById('maps-panel');
-      mp.classList.remove('visible');
-      setTimeout(() => { mp.style.display = 'none'; }, 300);
+      mapsPanel.classList.remove('visible');
+      mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
       ['equipment','cooling','lighting'].forEach(t => {
         document.getElementById('ar-label-' + t).style.display = 'none';
         const l = document.getElementById('line-' + t);
