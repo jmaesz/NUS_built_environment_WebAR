@@ -213,33 +213,24 @@
 
   <script>
     AFRAME.registerComponent('highlight-building', {
-      schema: {
-        active:  { type: 'boolean', default: false },
-        r:       { type: 'number',  default: 0.13 },
-        g:       { type: 'number',  default: 0.77 },
-        b:       { type: 'number',  default: 0.37 },
-        opacity: { type: 'number',  default: 0.55 },
-      },
+      schema: { active: { type: 'boolean', default: false }, r: { type: 'number', default: 0.13 }, g: { type: 'number', default: 0.77 }, b: { type: 'number', default: 0.37 }, opacity: { type: 'number', default: 0.75 } },
       init() {
         this._meshes = []; this._origMats = new Map(); this._hlMat = null; this._cached = false;
-        this.el.addEventListener('model-loaded', () => this._apply());
+        this.el.addEventListener('model-loaded', () => this._setup());
+        if (this.el.getObject3D('mesh')) this._setup();
       },
-      _apply() {
+      _setup() {
         const root = this.el.getObject3D('mesh');
         if (!root) return;
-        root.traverse(obj => {
-          if (!obj.isMesh) return;
-          this._origMats.set(obj, obj.material);
-          this._meshes.push(obj);
-        });
-        const c = new THREE.Color(this.data.r, this.data.g, this.data.b);
-        this._hlMat = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, transparent: true, opacity: this.data.opacity, depthTest: false });
+        this._meshes = []; this._origMats.clear();
+        root.traverse(o => { if (!o.isMesh) return; this._origMats.set(o, o.material); this._meshes.push(o); });
+        this._hlMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(this.data.r, this.data.g, this.data.b), transparent: true, opacity: this.data.opacity, side: THREE.DoubleSide, depthTest: false });
         this._cached = true;
         if (this.data.active) this._show();
       },
       update() { if (!this._cached) return; this.data.active ? this._show() : this._hide(); },
       _show() { this._meshes.forEach(o => { o.renderOrder = 999; o.material = this._hlMat; }); },
-      _hide() { this._meshes.forEach(o => { o.renderOrder = 0;   o.material = this._origMats.get(o); }); },
+      _hide() { this._meshes.forEach(o => { o.renderOrder = 0; o.material = this._origMats.get(o); }); },
       remove() { this._hide(); }
     });
   </script>
