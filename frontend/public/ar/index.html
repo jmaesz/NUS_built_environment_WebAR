@@ -54,12 +54,12 @@
     .ar-label {
       position: fixed; z-index: 998;
       transform: translate(-50%, -50%);
-      display: none; align-items: center; gap: 10px;
+      display: none; align-items: center; gap: 8px;
       background: rgba(12, 12, 28, 0.93);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
       border: 1px solid rgba(255,255,255,0.13);
-      border-radius: 10px; padding: 14px 18px 14px 14px;
-      min-width: 160px;
+      border-radius: 8px; padding: 10px 13px 10px 10px;
+      min-width: 110px;
       box-shadow: 0 6px 24px rgba(0,0,0,0.45);
       cursor: pointer; pointer-events: auto;
       user-select: none; -webkit-user-select: none;
@@ -67,12 +67,23 @@
       transition: opacity 0.15s;
     }
     .ar-label:active { opacity: 0.7; }
-    .ar-label-bar { width: 4px; border-radius: 2px; height: 38px; flex-shrink: 0; }
+    .ar-label-bar { width: 3px; border-radius: 2px; height: 28px; flex-shrink: 0; }
     .ar-label-title {
-      font-size: 15px; font-weight: 800; color: white;
+      font-size: 12px; font-weight: 800; color: white;
       letter-spacing: 0.07em; text-transform: uppercase;
     }
-    .ar-label-sub { font-size: 10px; color: rgba(255,255,255,0.42); margin-top: 3px; letter-spacing: 0.03em; }
+    .ar-label-sub { font-size: 9px; color: rgba(255,255,255,0.42); margin-top: 2px; letter-spacing: 0.03em; }
+
+    /* iPad and larger — bigger labels */
+    @media (min-width: 768px) {
+      .ar-label {
+        gap: 10px; border-radius: 10px;
+        padding: 14px 18px 14px 14px; min-width: 160px;
+      }
+      .ar-label-bar { width: 4px; height: 38px; }
+      .ar-label-title { font-size: 15px; }
+      .ar-label-sub { font-size: 10px; margin-top: 3px; }
+    }
 
     /* ── Detail slide-up panel ── */
     #detail-panel {
@@ -195,13 +206,13 @@
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <!-- Diagonal annotation lines -->
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
       <!-- Invisible marker entities for HTML label anchoring -->
-      <a-entity id="m-eq-0" position="-0.60 -0.38 0.02"></a-entity>
-      <a-entity id="m-co-0" position="0.10 -0.42 0.02"></a-entity>
-      <a-entity id="m-li-0" position="0.60 -0.26 0.02"></a-entity>
+      <a-entity id="m-eq-0" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-0" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-0" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 1: FRONT -->
@@ -221,12 +232,12 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
-      <a-entity id="m-eq-1" position="-0.60 -0.38 0.02"></a-entity>
-      <a-entity id="m-co-1" position="0.10 -0.42 0.02"></a-entity>
-      <a-entity id="m-li-1" position="0.60 -0.26 0.02"></a-entity>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-1" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-1" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-1" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 2: LEFT -->
@@ -246,12 +257,12 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
-      <a-entity id="m-eq-2" position="-0.60 -0.38 0.02"></a-entity>
-      <a-entity id="m-co-2" position="0.10 -0.42 0.02"></a-entity>
-      <a-entity id="m-li-2" position="0.60 -0.26 0.02"></a-entity>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-2" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-2" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-2" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 3: TOP -->
@@ -271,12 +282,12 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
-      <a-entity id="m-eq-3" position="-0.60 -0.38 0.02"></a-entity>
-      <a-entity id="m-co-3" position="0.10 -0.42 0.02"></a-entity>
-      <a-entity id="m-li-3" position="0.60 -0.26 0.02"></a-entity>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-3" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-3" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-3" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 4: FRONT-LEFT -->
@@ -296,12 +307,12 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
-      <a-entity id="m-eq-4" position="-0.60 -0.38 0.02"></a-entity>
-      <a-entity id="m-co-4" position="0.10 -0.42 0.02"></a-entity>
-      <a-entity id="m-li-4" position="0.60 -0.26 0.02"></a-entity>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-4" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-4" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-4" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
     <!-- Target 5: FRONT-RIGHT -->
@@ -321,12 +332,12 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity line="start:-0.22 -0.06 0.013;end:-0.60 -0.38 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.05 -0.09 0.013;end:0.10 -0.42 0.02;color:#bbbbbb"></a-entity>
-      <a-entity line="start:0.26 0.02 0.013;end:0.60 -0.26 0.02;color:#bbbbbb"></a-entity>
-      <a-entity id="m-eq-5" position="-0.60 -0.38 0.02"></a-entity>
-      <a-entity id="m-co-5" position="0.10 -0.42 0.02"></a-entity>
-      <a-entity id="m-li-5" position="0.60 -0.26 0.02"></a-entity>
+      <a-entity line="start:-0.22 -0.06 0.013;end:-0.85 -0.55 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.05 -0.09 0.013;end:0.05 -0.65 0.02;color:#bbbbbb"></a-entity>
+      <a-entity line="start:0.26 0.02 0.013;end:0.85 -0.42 0.02;color:#bbbbbb"></a-entity>
+      <a-entity id="m-eq-5" position="-0.85 -0.55 0.02"></a-entity>
+      <a-entity id="m-co-5" position="0.05 -0.65 0.02"></a-entity>
+      <a-entity id="m-li-5" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
   </a-scene>
