@@ -100,6 +100,25 @@
     }
     #cal-panel.open { display: block; }
 
+    #cal-target-bar {
+      display: flex; gap: 4px; margin-bottom: 10px;
+    }
+    .cal-target-btn {
+      flex: 1; padding: 5px 0; font-size: 9px; letter-spacing: 0.08em;
+      border-radius: 3px; cursor: pointer; text-align: center;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      color: #aaa;
+    }
+    .cal-target-btn.active-view {
+      background: rgba(255,180,0,0.25); border-color: #fa0; color: #fa0;
+    }
+    .cal-target-btn.found {
+      border-color: rgba(0,255,140,0.4); color: #0f9;
+    }
+    .cal-target-btn.active-view.found {
+      background: rgba(0,200,100,0.25); border-color: #0fa; color: #0fa;
+    }
+
     .cv { color: #4df; }
     .cal-display { line-height: 2; margin-bottom: 10px; }
     .cal-row { display: flex; align-items: center; gap: 4px; margin-bottom: 5px; }
@@ -191,6 +210,13 @@
   <div id="scan-hint">POINT CAMERA AT A BUILDING</div>
 
   <div id="cal-panel">
+    <!-- Target selector: tap to switch which face you're calibrating -->
+    <div id="cal-target-bar">
+      <button class="cal-target-btn" data-tidx="0" onclick="selectCalTarget(0)">LEFT</button>
+      <button class="cal-target-btn" data-tidx="1" onclick="selectCalTarget(1)">RIGHT</button>
+      <button class="cal-target-btn active-view" data-tidx="2" onclick="selectCalTarget(2)">FRONT</button>
+      <button class="cal-target-btn" data-tidx="3" onclick="selectCalTarget(3)">TOP</button>
+    </div>
     <div class="cal-display">
       POS&nbsp; <span class="cv" id="cv-px">0.101</span>&nbsp;
                <span class="cv" id="cv-py">-0.087</span>&nbsp;
@@ -299,8 +325,11 @@
     });
   </script>
 
+  <!--
+    targetIndex order (upload order): 0=LEFT, 1=RIGHT, 2=FRONT, 3=TOP
+  -->
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets.mind; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
+    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 4; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
     color-space="sRGB"
     renderer="colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
@@ -310,14 +339,33 @@
       <a-asset-item id="sde4-model" src="/models/sde4.glb"></a-asset-item>
     </a-assets>
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-entity id="target-sde4" mindar-image-target="targetIndex: 0">
-      <a-entity
-        id="model-sde4"
-        gltf-model="#sde4-model"
-        scale="0.0096 0.0096 0.0096"
-        position="0.101 -0.087 0.266"
-        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55"
-      ></a-entity>
+
+    <!-- Target 0: LEFT -->
+    <a-entity id="target-0" mindar-image-target="targetIndex: 0">
+      <a-entity id="model-0" gltf-model="#sde4-model"
+        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      </a-entity>
+    </a-entity>
+
+    <!-- Target 1: RIGHT -->
+    <a-entity id="target-1" mindar-image-target="targetIndex: 1">
+      <a-entity id="model-1" gltf-model="#sde4-model"
+        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      </a-entity>
+    </a-entity>
+
+    <!-- Target 2: FRONT -->
+    <a-entity id="target-2" mindar-image-target="targetIndex: 2">
+      <a-entity id="model-2" gltf-model="#sde4-model"
+        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      </a-entity>
+    </a-entity>
+
+    <!-- Target 3: TOP -->
+    <a-entity id="target-3" mindar-image-target="targetIndex: 3">
+      <a-entity id="model-3" gltf-model="#sde4-model"
+        highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55">
+      </a-entity>
     </a-entity>
   </a-scene>
 
@@ -397,53 +445,89 @@
       document.getElementById('details-btn').textContent = 'SEE DETAILS ↑';
     }
 
-    // ── Calibration ────────────────────────────────────────────────────
-    const CAL_DEFAULT = { pos: { x: 0.101, y: -0.087, z: 0.266 }, rot: { x: 290.0, y: 39.1, z: 13.0 }, scale: 0.0096 };
-    const cal = {
-      pos: { ...CAL_DEFAULT.pos },
-      rot: { ...CAL_DEFAULT.rot },
-      scale: CAL_DEFAULT.scale,
-      active: false,
-      sens: 0.003
-    };
+    // ── Per-target calibration ─────────────────────────────────────────
+    // Each target has its own calibration — calibrate each face separately.
+    // calEditIdx = which target the cal panel is currently editing (0/1/2).
+    // foundTargets = set of currently-found target indices.
+    // targetIndex order matches upload order: 0=LEFT, 1=RIGHT, 2=FRONT, 3=TOP
+    const TARGET_LABELS = ['LEFT', 'RIGHT', 'FRONT', 'TOP'];
 
-    function toggleCal() {
-      cal.active = !cal.active;
-      document.getElementById('cal-toggle').classList.toggle('active', cal.active);
-      document.getElementById('cal-panel').classList.toggle('open', cal.active);
-      document.getElementById('cal-overlay').classList.toggle('active', cal.active);
+    const CAL_DEFAULTS = [
+      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 290.0, y: 129.1, z: 13.0  }, scale: 0.0096 }, // 0: LEFT
+      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 290.0, y: -50.9, z: 13.0  }, scale: 0.0096 }, // 1: RIGHT
+      { pos: { x: 0.101, y: -0.087, z: 0.266 }, rot: { x: 290.0, y: 39.1,  z: 13.0  }, scale: 0.0096 }, // 2: FRONT (calibrated)
+      { pos: { x: 0,     y: 0,      z: 0.266 }, rot: { x: 200.0, y: 39.1,  z: 13.0  }, scale: 0.0096 }, // 3: TOP
+    ];
+
+    const cals = CAL_DEFAULTS.map(d => ({
+      pos: { ...d.pos }, rot: { ...d.rot }, scale: d.scale
+    }));
+
+    let calEditIdx = 2; // default to FRONT
+    let foundTargets = new Set();
+    let calActive = false;
+    let calSens = 0.003;
+
+    function selectCalTarget(idx) {
+      calEditIdx = idx;
+      updateCalTargetBar();
+      updateCalDisplay();
     }
 
-    function applyTransform() {
-      const el = document.getElementById('model-sde4');
-      el.setAttribute('position', `${cal.pos.x.toFixed(3)} ${cal.pos.y.toFixed(3)} ${cal.pos.z.toFixed(3)}`);
-      const s = cal.scale.toFixed(4);
-      el.setAttribute('scale', `${s} ${s} ${s}`);
+    function updateCalTargetBar() {
+      document.querySelectorAll('.cal-target-btn').forEach(btn => {
+        const i = parseInt(btn.dataset.tidx);
+        btn.classList.toggle('active-view', i === calEditIdx);
+        btn.classList.toggle('found', foundTargets.has(i));
+      });
+    }
 
-      // Quaternion rotation so Z always spins around the screen-facing axis:
-      // order: qZ (front, outermost) * qY (left/right) * qX (tilt, innermost)
+    function applyTransform(idx) {
+      const c = cals[idx];
+      const el = document.getElementById(`model-${idx}`);
+      el.setAttribute('position', `${c.pos.x.toFixed(3)} ${c.pos.y.toFixed(3)} ${c.pos.z.toFixed(3)}`);
+      const s = c.scale.toFixed(4);
+      el.setAttribute('scale', `${s} ${s} ${s}`);
       if (el.object3D) {
         const D = Math.PI / 180;
-        const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), cal.rot.x * D);
-        const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), cal.rot.y * D);
-        const qZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), cal.rot.z * D);
+        const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), c.rot.x * D);
+        const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), c.rot.y * D);
+        const qZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), c.rot.z * D);
         el.object3D.quaternion.copy(qX).premultiply(qY).premultiply(qZ);
       }
-
-      document.getElementById('cv-px').textContent = cal.pos.x.toFixed(3);
-      document.getElementById('cv-py').textContent = cal.pos.y.toFixed(3);
-      document.getElementById('cv-pz').textContent = cal.pos.z.toFixed(3);
-      document.getElementById('cv-rx').textContent = cal.rot.x.toFixed(1);
-      document.getElementById('cv-ry').textContent = cal.rot.y.toFixed(1);
-      document.getElementById('cv-rz').textContent = cal.rot.z.toFixed(1);
-      document.getElementById('cv-sc').textContent = cal.scale.toFixed(4);
+      if (idx === calEditIdx) updateCalDisplay();
     }
 
-    function adjRot(axis, deg) { cal.rot[axis] += deg; applyTransform(); }
-    function adjScale(factor) { cal.scale *= factor; applyTransform(); }
+    function updateCalDisplay() {
+      const c = cals[calEditIdx];
+      document.getElementById('cv-px').textContent = c.pos.x.toFixed(3);
+      document.getElementById('cv-py').textContent = c.pos.y.toFixed(3);
+      document.getElementById('cv-pz').textContent = c.pos.z.toFixed(3);
+      document.getElementById('cv-rx').textContent = c.rot.x.toFixed(1);
+      document.getElementById('cv-ry').textContent = c.rot.y.toFixed(1);
+      document.getElementById('cv-rz').textContent = c.rot.z.toFixed(1);
+      document.getElementById('cv-sc').textContent = c.scale.toFixed(4);
+    }
+
+    function toggleCal() {
+      calActive = !calActive;
+      document.getElementById('cal-toggle').classList.toggle('active', calActive);
+      document.getElementById('cal-panel').classList.toggle('open', calActive);
+      document.getElementById('cal-overlay').classList.toggle('active', calActive);
+    }
+
+    function adjRot(axis, deg) {
+      cals[calEditIdx].rot[axis] += deg;
+      applyTransform(calEditIdx);
+    }
+
+    function adjScale(factor) {
+      cals[calEditIdx].scale *= factor;
+      applyTransform(calEditIdx);
+    }
 
     function setSens(v) {
-      cal.sens = v;
+      calSens = v;
       ['slow','med','fast'].forEach(id => document.getElementById('sens-'+id).classList.remove('on'));
       if (v === 0.001) document.getElementById('sens-slow').classList.add('on');
       else if (v === 0.003) document.getElementById('sens-med').classList.add('on');
@@ -451,15 +535,16 @@
     }
 
     function resetCal() {
-      cal.pos = { ...CAL_DEFAULT.pos };
-      cal.rot = { ...CAL_DEFAULT.rot };
-      cal.scale = CAL_DEFAULT.scale;
-      applyTransform();
+      const d = CAL_DEFAULTS[calEditIdx];
+      cals[calEditIdx] = { pos: { ...d.pos }, rot: { ...d.rot }, scale: d.scale };
+      applyTransform(calEditIdx);
     }
 
     function copyVals() {
-      const p = cal.pos, r = cal.rot, s = cal.scale.toFixed(4);
-      const txt = `position="${p.x.toFixed(3)} ${p.y.toFixed(3)} ${p.z.toFixed(3)}" rotation="${r.x.toFixed(1)} ${r.y.toFixed(1)} ${r.z.toFixed(1)}" scale="${s} ${s} ${s}"`;
+      const c = cals[calEditIdx];
+      const p = c.pos, r = c.rot, s = c.scale.toFixed(4);
+      const label = TARGET_LABELS[calEditIdx];
+      const txt = `// ${label}\nposition="${p.x.toFixed(3)} ${p.y.toFixed(3)} ${p.z.toFixed(3)}" rotation="${r.x.toFixed(1)} ${r.y.toFixed(1)} ${r.z.toFixed(1)}" scale="${s} ${s} ${s}"`;
       navigator.clipboard.writeText(txt).then(() => {
         const btn = document.getElementById('cal-copy');
         const orig = btn.textContent;
@@ -468,7 +553,7 @@
       });
     }
 
-    // ── Touch gesture handling (on overlay so we own the events) ──────────
+    // ── Touch gesture handling ─────────────────────────────────────────
     let lastGesture = null;
     const overlay = document.getElementById('cal-overlay');
 
@@ -495,19 +580,17 @@
       e.preventDefault();
       const cur = readGesture(Array.from(e.touches));
       if (!lastGesture || cur.n !== lastGesture.n) { lastGesture = cur; return; }
-
+      const c = cals[calEditIdx];
       if (cur.n === 1) {
-        cal.pos.x += (cur.x - lastGesture.x) * cal.sens;
-        cal.pos.y -= (cur.y - lastGesture.y) * cal.sens;
+        c.pos.x += (cur.x - lastGesture.x) * calSens;
+        c.pos.y -= (cur.y - lastGesture.y) * calSens;
       } else {
-        if (lastGesture.dist > 5) cal.scale *= cur.dist / lastGesture.dist;
-        const twist = (cur.angle - lastGesture.angle) * (180 / Math.PI);
-        cal.rot.y += twist;
-        cal.pos.z += (cur.cy - lastGesture.cy) * cal.sens;
+        if (lastGesture.dist > 5) c.scale *= cur.dist / lastGesture.dist;
+        c.rot.y += (cur.angle - lastGesture.angle) * (180 / Math.PI);
+        c.pos.z += (cur.cy - lastGesture.cy) * calSens;
       }
-
       lastGesture = cur;
-      applyTransform();
+      applyTransform(calEditIdx);
     }, { passive: false });
 
     overlay.addEventListener('touchend', () => { lastGesture = null; });
@@ -515,14 +598,6 @@
     // ── Rotate controls ────────────────────────────────────────────────
     const rotateControls = document.getElementById('rotate-controls');
     let rotInterval = null;
-
-    function startRotating(axis, dir, btn) {
-      if (rotInterval) clearInterval(rotInterval);
-      btn.classList.add('pressing');
-      function step() { cal.rot[axis] = (cal.rot[axis] + dir + 360) % 360; applyTransform(); }
-      step();
-      rotInterval = setInterval(step, 30);
-    }
 
     function stopRotating() {
       clearInterval(rotInterval);
@@ -532,23 +607,20 @@
 
     document.querySelectorAll('.rbtn').forEach(btn => {
       const dir = parseFloat(btn.dataset.dir);
-
       let stepFn;
       if (btn.dataset.axis) {
         const axis = btn.dataset.axis;
-        stepFn = () => { cal.rot[axis] = (cal.rot[axis] + dir + 360) % 360; applyTransform(); };
+        stepFn = () => { cals[calEditIdx].rot[axis] = (cals[calEditIdx].rot[axis] + dir + 360) % 360; applyTransform(calEditIdx); };
       } else {
         const pos = btn.dataset.pos;
-        stepFn = () => { cal.pos[pos] += dir * 0.005; applyTransform(); };
+        stepFn = () => { cals[calEditIdx].pos[pos] += dir * 0.005; applyTransform(calEditIdx); };
       }
-
       function start() {
         if (rotInterval) clearInterval(rotInterval);
         btn.classList.add('pressing');
         stepFn();
         rotInterval = setInterval(stepFn, 30);
       }
-
       btn.addEventListener('touchstart', e => { e.preventDefault(); start(); }, { passive: false });
       btn.addEventListener('touchend',   e => { e.preventDefault(); stopRotating(); }, { passive: false });
       btn.addEventListener('mousedown',  start);
@@ -558,21 +630,37 @@
 
     // ── MindAR wiring ──────────────────────────────────────────────────
     document.querySelector('a-scene').addEventListener('loaded', () => {
-      applyTransform();
-      const targetEl = document.getElementById('target-sde4');
-      const modelEl  = document.getElementById('model-sde4');
+      // Apply all calibrations immediately so models are positioned on first detection
+      for (let i = 0; i < 4; i++) applyTransform(i);
+      updateCalDisplay();
+      updateCalTargetBar();
 
-      targetEl.addEventListener('targetFound', () => {
-        modelEl.setAttribute('highlight-building', 'active', true);
-        rotateControls.classList.add('visible');
-        showBuilding(BUILDINGS.sde4);
-      });
+      for (let i = 0; i < 4; i++) {
+        const targetEl = document.getElementById(`target-${i}`);
+        const modelEl  = document.getElementById(`model-${i}`);
+        const idx = i;
 
-      targetEl.addEventListener('targetLost', () => {
-        modelEl.setAttribute('highlight-building', 'active', false);
-        rotateControls.classList.remove('visible');
-        hideBuilding();
-      });
+        targetEl.addEventListener('targetFound', () => {
+          foundTargets.add(idx);
+          modelEl.setAttribute('highlight-building', 'active', true);
+          // Auto-switch cal panel to the detected target
+          calEditIdx = idx;
+          updateCalTargetBar();
+          updateCalDisplay();
+          rotateControls.classList.add('visible');
+          showBuilding(BUILDINGS.sde4);
+        });
+
+        targetEl.addEventListener('targetLost', () => {
+          foundTargets.delete(idx);
+          modelEl.setAttribute('highlight-building', 'active', false);
+          updateCalTargetBar();
+          if (foundTargets.size === 0) {
+            rotateControls.classList.remove('visible');
+            hideBuilding();
+          }
+        });
+      }
     });
   </script>
 </body>
