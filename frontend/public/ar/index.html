@@ -118,12 +118,10 @@
   <a href="/" id="back-btn">← BACK</a>
   <div id="scan-hint">POINT CAMERA AT SDE4</div>
 
-  <!-- SVG overlay for annotation lines (anchor dot → top of label card) -->
-  <svg id="ar-lines" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:999;overflow:visible">
-    <line id="line-equipment" style="stroke:#000000;stroke-width:3;stroke-linecap:round;display:none"/>
-    <line id="line-cooling"   style="stroke:#000000;stroke-width:3;stroke-linecap:round;display:none"/>
-    <line id="line-lighting"  style="stroke:#000000;stroke-width:3;stroke-linecap:round;display:none"/>
-  </svg>
+  <!-- HTML div lines (rotate trick — works on all browsers/Safari) -->
+  <div id="line-equipment" style="position:fixed;z-index:999;height:3px;background:#000;transform-origin:left center;display:none;pointer-events:none"></div>
+  <div id="line-cooling"   style="position:fixed;z-index:999;height:3px;background:#000;transform-origin:left center;display:none;pointer-events:none"></div>
+  <div id="line-lighting"  style="position:fixed;z-index:999;height:3px;background:#000;transform-origin:left center;display:none;pointer-events:none"></div>
 
   <!-- HTML overlay labels — positioned via Three.js worldToScreen each frame -->
   <div class="ar-label" id="ar-label-equipment" onclick="showDetail('equipment')">
@@ -448,6 +446,7 @@
           return;
         }
 
+
         const sx = (_tmpVec.x + 1) / 2 * W;
         const sy = (-_tmpVec.y + 1) / 2 * H;
 
@@ -460,19 +459,22 @@
         label.style.left = cx + 'px';
         label.style.top  = cy + 'px';
 
-        if (svgLine && anchorEl) {
+        if (svgLine && anchorEl && anchorEl.object3D) {
           anchorEl.object3D.getWorldPosition(_tmpVec2);
           _tmpVec2.project(camera);
           const ax = (_tmpVec2.x + 1) / 2 * W;
           const ay = (-_tmpVec2.y + 1) / 2 * H;
           const rect = label.getBoundingClientRect();
-          svgLine.setAttribute('x1', ax.toFixed(1));
-          svgLine.setAttribute('y1', ay.toFixed(1));
-          svgLine.setAttribute('x2', (rect.left + rect.width / 2).toFixed(1));
-          svgLine.setAttribute('y2', rect.top.toFixed(1));
-          svgLine.style.stroke = '#000000';
-          svgLine.style.strokeWidth = '3';
-          svgLine.style.display = 'inline';
+          const ex = rect.left + rect.width / 2;
+          const ey = rect.top;
+          const dx = ex - ax, dy = ey - ay;
+          const len = Math.sqrt(dx * dx + dy * dy);
+          const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+          svgLine.style.width     = len + 'px';
+          svgLine.style.left      = ax + 'px';
+          svgLine.style.top       = ay + 'px';
+          svgLine.style.transform = `rotate(${angle}deg)`;
+          svgLine.style.display   = 'block';
         }
       });
     }
