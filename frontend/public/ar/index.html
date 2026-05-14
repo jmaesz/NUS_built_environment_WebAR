@@ -119,15 +119,43 @@
       box-shadow: 0 4px 24px rgba(0,0,0,0.25);
       display: none; opacity: 0; transform: translateY(8px);
       transition: opacity 0.3s ease, transform 0.3s ease;
-      -webkit-tap-highlight-color: transparent;
+      -webkit-tap-highlight-color: transparent; text-decoration: none;
     }
     #maps-panel.visible { opacity: 1; transform: translateY(0); }
+    #maps-panel-img-wrap { position: relative; }
+    #maps-panel-img-wrap img { display: block; width: 100%; height: auto; }
+    #maps-panel-top {
+      position: absolute; top: 8px; left: 8px;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+      border-radius: 6px; padding: 4px 8px;
+      font-size: 12px; font-weight: 800; color: #fff; letter-spacing: 0.06em;
+    }
+    #maps-panel-bottom {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.72));
+      padding: 18px 10px 10px;
+    }
+    #maps-panel-addr-lbl { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.4; margin-bottom: 5px; }
+    #maps-panel-cta {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em;
+    }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
   <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
-    <img src="/bg1.png" alt="SDE4 location map" style="display:block;width:100%;height:auto;border-radius:12px">
+    <div id="maps-panel-img-wrap">
+      <img src="/bg1.png" alt="SDE4">
+      <div id="maps-panel-top">SDE4</div>
+      <div id="maps-panel-bottom">
+        <div id="maps-panel-addr-lbl">NUS School of Design<br>and Environment 4</div>
+        <div id="maps-panel-cta">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          Open in Google Maps
+        </div>
+      </div>
+    </div>
   </a>
   <div id="scan-hint">POINT CAMERA AT SDE4</div>
 
