@@ -316,7 +316,6 @@
         gltf-model="#sde4-model"
         scale="0.01 0.01 0.01"
         position="0 0 0"
-        rotation="-90 0 0"
         highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55"
       ></a-entity>
     </a-entity>
@@ -417,9 +416,19 @@
     function applyTransform() {
       const el = document.getElementById('model-sde4');
       el.setAttribute('position', `${cal.pos.x.toFixed(3)} ${cal.pos.y.toFixed(3)} ${cal.pos.z.toFixed(3)}`);
-      el.setAttribute('rotation', `${cal.rot.x.toFixed(1)} ${cal.rot.y.toFixed(1)} ${cal.rot.z.toFixed(1)}`);
       const s = cal.scale.toFixed(4);
       el.setAttribute('scale', `${s} ${s} ${s}`);
+
+      // Quaternion rotation so Z always spins around the screen-facing axis:
+      // order: qZ (front, outermost) * qY (left/right) * qX (tilt, innermost)
+      if (el.object3D) {
+        const D = Math.PI / 180;
+        const qX = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1,0,0), cal.rot.x * D);
+        const qY = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), cal.rot.y * D);
+        const qZ = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1), cal.rot.z * D);
+        el.object3D.quaternion.copy(qX).premultiply(qY).premultiply(qZ);
+      }
+
       document.getElementById('cv-px').textContent = cal.pos.x.toFixed(3);
       document.getElementById('cv-py').textContent = cal.pos.y.toFixed(3);
       document.getElementById('cv-pz').textContent = cal.pos.z.toFixed(3);
