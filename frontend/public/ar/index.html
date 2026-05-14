@@ -432,6 +432,7 @@
 
       const tIdx = [...foundTargets][0];
       const W = window.innerWidth, H = window.innerHeight;
+      const PAD = 10; // min gap from screen edge
 
       [['equipment','eq'],['cooling','co'],['lighting','li']].forEach(([type, sh]) => {
         const marker = document.getElementById(`m-${sh}-${tIdx}`);
@@ -441,14 +442,22 @@
         marker.object3D.getWorldPosition(_tmpVec);
         _tmpVec.project(camera);
 
-        // Behind camera or too far off-screen → hide
         if (_tmpVec.z > 1) { label.style.display = 'none'; return; }
 
         const sx = (_tmpVec.x + 1) / 2 * W;
         const sy = (-_tmpVec.y + 1) / 2 * H;
+
+        // Show first so offsetWidth/Height are accurate
         label.style.display = 'flex';
-        label.style.left = sx + 'px';
-        label.style.top  = sy + 'px';
+        const hw = label.offsetWidth  / 2;
+        const hh = label.offsetHeight / 2;
+
+        // Clamp center so label never clips off any edge
+        const cx = Math.max(hw + PAD, Math.min(W - hw - PAD, sx));
+        const cy = Math.max(hh + PAD, Math.min(H - hh - PAD, sy));
+
+        label.style.left = cx + 'px';
+        label.style.top  = cy + 'px';
       });
     }
 
