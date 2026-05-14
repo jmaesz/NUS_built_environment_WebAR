@@ -142,11 +142,15 @@
         name: 'SDE4',
         tagline: 'Net-zero energy · NUS School of Design & Environment',
         color: { fill: 'rgba(0,210,90,0.30)', stroke: '#00ff6a', lineWidth: 2.5 },
+        // Corners in MindAR target-entity local space (image plane = Z=0, depth = -Z)
+        // Image: 1836x660 px → aspect 2.78 → MindAR height = 0.360 units
+        // Building east face: 60.4m wide × 25.1m tall → fills image height
+        // 1 unit = 60.4mm → half-W=0.43, half-H=0.18, depth=85.2/60.4=1.41 → Z=-1.22
         corners: [
-          [ 0.302,  0.1257,  0],      [-0.302,  0.1257,  0],
-          [-0.302, -0.1257,  0],      [ 0.302, -0.1257,  0],
-          [ 0.302,  0.1257, -0.852],  [-0.302,  0.1257, -0.852],
-          [-0.302, -0.1257, -0.852],  [ 0.302, -0.1257, -0.852],
+          [ 0.43,  0.18,  0],   [-0.43,  0.18,  0],
+          [-0.43, -0.18,  0],   [ 0.43, -0.18,  0],
+          [ 0.43,  0.18, -1.22],[-0.43,  0.18, -1.22],
+          [-0.43, -0.18, -1.22],[ 0.43, -0.18, -1.22],
         ],
         energy: {
           total: 86,
