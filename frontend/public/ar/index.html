@@ -137,10 +137,10 @@
     <div class="cal-display">
       POS&nbsp; <span class="cv" id="cv-px">0.000</span>&nbsp;
                <span class="cv" id="cv-py">0.000</span>&nbsp;
-               <span class="cv" id="cv-pz">-0.426</span><br>
+               <span class="cv" id="cv-pz">0.000</span><br>
       ROT&nbsp; <span class="cv" id="cv-rx">-90.0</span>&nbsp;
                <span class="cv" id="cv-ry">0.0</span>&nbsp;
-               <span class="cv" id="cv-rz">-90.0</span><br>
+               <span class="cv" id="cv-rz">0.0</span><br>
       SCL&nbsp; <span class="cv" id="cv-sc">0.0100</span>
     </div>
     <div class="cal-row">
@@ -251,8 +251,8 @@
         id="model-sde4"
         gltf-model="#sde4-model"
         scale="0.01 0.01 0.01"
-        position="0 0 -0.426"
-        rotation="-90 0 -90"
+        position="0 0 0"
+        rotation="-90 0 0"
         highlight-building="active: false; r: 0.13; g: 0.77; b: 0.37; opacity: 0.55"
       ></a-entity>
     </a-entity>
@@ -336,8 +336,8 @@
 
     // ── Calibration ────────────────────────────────────────────────────
     const cal = {
-      pos: { x: 0, y: 0, z: -0.426 },
-      rot: { x: -90, y: 0, z: -90 },
+      pos: { x: 0, y: 0, z: 0 },
+      rot: { x: -90, y: 0, z: 0 },
       scale: 0.01,
       active: false,
       sens: 0.003
@@ -375,8 +375,8 @@
     }
 
     function resetCal() {
-      cal.pos = { x: 0, y: 0, z: -0.426 };
-      cal.rot = { x: -90, y: 0, z: -90 };
+      cal.pos = { x: 0, y: 0, z: 0 };
+      cal.rot = { x: -90, y: 0, z: 0 };
       cal.scale = 0.01;
       applyTransform();
     }
