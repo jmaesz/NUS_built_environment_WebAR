@@ -544,6 +544,7 @@
       function makePinFor(targetEl) {
         const pin = document.createElement('a-gltf-model');
         pin.setAttribute('src', '/ar/map_pin.glb');
+        pin.setAttribute('scale', '0.333 0.333 0.333');
         pin.setAttribute('position', `0 ${PIN_Y} 0`);
         pin.setAttribute('animation', 'property: position; from: 0 ' + PIN_Y + ' 0; to: 0 ' + (PIN_Y + 0.06) + ' 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
         targetEl.appendChild(pin);
