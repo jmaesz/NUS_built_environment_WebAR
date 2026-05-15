@@ -226,9 +226,8 @@
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
-    <a-camera position="0 0 0" look-controls="enabled: false">
-      <a-cursor raycaster="objects: .ar-clickable; far: 20" material="opacity: 0" geometry="primitive: ring; radiusInner: 0; radiusOuter: 0" fuse="false"></a-cursor>
-    </a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity cursor="rayOrigin: mouse" raycaster="objects: .ar-clickable; far: 20"></a-entity>
     <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
     <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
 
@@ -551,26 +550,16 @@
     }
 
     let speakerEl = null;
-    let speakerCircle = null;
-    let isSpeaking = false;
-
-    function setSpeakerColor(speaking) {
-      if (!speakerCircle) return;
-      speakerCircle.setAttribute('material', `color: ${speaking ? '#E53935' : '#3949AB'}; shader: flat; side: double`);
-    }
 
     function toggleAudio() {
       if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        isSpeaking = false; setSpeakerColor(false); return;
+        window.speechSynthesis.cancel(); return;
       }
       const utter = new SpeechSynthesisUtterance(AUDIO_TEXT);
       utter.rate = 0.95;
       const trySpeak = () => {
         const v = pickFemaleVoice();
         if (v) utter.voice = v;
-        utter.onend = utter.onerror = () => { isSpeaking = false; setSpeakerColor(false); };
-        isSpeaking = true; setSpeakerColor(true);
         window.speechSynthesis.speak(utter);
       };
       if (window.speechSynthesis.getVoices().length) { trySpeak(); }
@@ -578,39 +567,35 @@
     }
 
     function makeSpeakerFor(targetEl) {
-      // Container — sits to the LEFT of the building at same height as pin (Y=0.325)
+      // Container — left of building, same Y as pin
       speakerEl = document.createElement('a-entity');
       speakerEl.setAttribute('position', '-0.58 0.325 0.02');
-      speakerEl.setAttribute('class', 'ar-clickable');
 
-      // Blue disc background
-      speakerCircle = document.createElement('a-circle');
-      speakerCircle.setAttribute('radius', '0.04');
-      speakerCircle.setAttribute('segments', '32');
-      speakerCircle.setAttribute('material', 'color: #3949AB; shader: flat; side: double');
-      speakerEl.appendChild(speakerCircle);
+      // volume.glb at 1/3 of the main overlay scale (0.9823/3 ≈ 0.327)
+      const model = document.createElement('a-gltf-model');
+      model.setAttribute('src', '/ar/volume.glb');
+      model.setAttribute('scale', '0.327 0.327 0.327');
+      speakerEl.appendChild(model);
 
-      // Speaker wave lines using thin boxes
-      [[-0.012, 0, 0.001, 0.006, 0.028, 0.001],
-       [ 0.006, 0, 0.001, 0.006, 0.036, 0.001],
-       [ 0.022, 0, 0.001, 0.006, 0.044, 0.001]].forEach(([x,y,z,w,h,d]) => {
-        const bar = document.createElement('a-box');
-        bar.setAttribute('position', `${x} ${y} ${z}`);
-        bar.setAttribute('width', `${w}`); bar.setAttribute('height', `${h}`); bar.setAttribute('depth', `${d}`);
-        bar.setAttribute('material', 'color: #ffffff; shader: flat');
-        speakerEl.appendChild(bar);
-      });
+      // Invisible hit-box for reliable touch raycasting
+      const hit = document.createElement('a-box');
+      hit.setAttribute('width', '0.14');
+      hit.setAttribute('height', '0.14');
+      hit.setAttribute('depth', '0.14');
+      hit.setAttribute('material', 'opacity: 0; transparent: true');
+      hit.setAttribute('class', 'ar-clickable');
+      speakerEl.appendChild(hit);
 
       // Label below
       const label = document.createElement('a-text');
       label.setAttribute('value', 'LISTEN');
       label.setAttribute('align', 'center');
       label.setAttribute('color', '#ffffff');
-      label.setAttribute('position', '0 -0.058 0.001');
-      label.setAttribute('width', '0.38');
+      label.setAttribute('position', '0 -0.1 0.001');
+      label.setAttribute('width', '0.42');
       speakerEl.appendChild(label);
 
-      speakerEl.addEventListener('click', toggleAudio);
+      hit.addEventListener('click', toggleAudio);
       targetEl.appendChild(speakerEl);
     }
 
