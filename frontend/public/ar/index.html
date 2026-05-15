@@ -424,37 +424,36 @@
     let thermalAnimId = null;
     let thermalCanvas = null;
     let thermalCtx = null;
+    let arCanvas = null; // set in loaded handler — avoids grabbing Chart.js canvas
 
     function thermalLoop() {
       if (!thermalActive || !thermalVideo || !thermalCanvas) return;
-      thermalCtx.drawImage(thermalVideo, 0, 0, THERMAL_W, THERMAL_H);
-      const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
-      const d = img.data;
-      for (let i = 0; i < d.length; i += 4) {
-        const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
-        if (s < 0.18 || v < 0.12) {
-          // Grey terrain / dark background — desaturate to dark grey
-          const grey = Math.round(v * 70);
-          d[i] = grey; d[i+1] = grey; d[i+2] = grey;
-        } else {
-          // Saturated = coloured building: map hue sector → temperature
-          const sector = Math.min(7, Math.floor(h / 45));
-          // Add per-pixel luminance variation for shading within each building
-          const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
-          const temp = Math.max(0, Math.min(1, HUE_TEMPS[sector] + (lum - 0.5) * 0.12));
-          const [tr, tg, tb] = jetColor(temp);
-          d[i] = tr; d[i+1] = tg; d[i+2] = tb;
+      if (thermalVideo.readyState >= 2) {
+        thermalCtx.drawImage(thermalVideo, 0, 0, THERMAL_W, THERMAL_H);
+        const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
+        const d = img.data;
+        for (let i = 0; i < d.length; i += 4) {
+          const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+          if (s >= 0.18 && v >= 0.12) {
+            // Saturated = coloured building → remap to thermal
+            const sector = Math.min(7, Math.floor(h / 45));
+            const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
+            const temp = Math.max(0, Math.min(1, HUE_TEMPS[sector] + (lum - 0.5) * 0.12));
+            const [tr, tg, tb] = jetColor(temp);
+            d[i] = tr; d[i+1] = tg; d[i+2] = tb;
+            // else: leave pixel as-is (white background, grey terrain stay natural)
+          }
         }
+        thermalCtx.putImageData(img, 0, 0);
       }
-      thermalCtx.putImageData(img, 0, 0);
       thermalAnimId = requestAnimationFrame(thermalLoop);
     }
 
     function setupThermalCanvas() {
       if (thermalCanvas) return true;
       thermalVideo = document.querySelector('video');
-      const aframeCanvas = document.querySelector('canvas');
-      if (!thermalVideo || !aframeCanvas) return false;
+      if (!thermalVideo || !arCanvas) return false;
+      const aframeCanvas = arCanvas;
       thermalCanvas = document.createElement('canvas');
       thermalCanvas.width = THERMAL_W;
       thermalCanvas.height = THERMAL_H;
@@ -753,6 +752,9 @@
     sceneEl.addEventListener('loaded', () => {
       // Strip any remaining red boxes / anchor dots
       document.querySelectorAll('[id^="target-"] a-box, [id^="target-"] a-sphere').forEach(el => el.remove());
+
+      // Store the A-Frame/Three.js renderer canvas so thermal setup uses the right one
+      arCanvas = sceneEl.canvas;
 
       // ── Location pin: built once, added to all front-facing targets ──
       // From a front target (vertical wall), Y = up.
