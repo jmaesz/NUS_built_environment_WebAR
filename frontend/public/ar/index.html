@@ -429,9 +429,9 @@
       return [c(1.5 - Math.abs(4*t - 3)), c(1.5 - Math.abs(4*t - 2)), c(1.5 - Math.abs(4*t - 1))];
     }
 
-    const THERMAL_W = 480, THERMAL_H = 360;
-    const T_X0 = Math.round(THERMAL_W * 0.12), T_X1 = Math.round(THERMAL_W * 0.88);
-    const T_Y0 = Math.round(THERMAL_H * 0.06), T_Y1 = Math.round(THERMAL_H * 0.72);
+    const THERMAL_W = 640, THERMAL_H = 480;
+    const T_X0 = Math.round(THERMAL_W * 0.10), T_X1 = Math.round(THERMAL_W * 0.90);
+    const T_Y0 = Math.round(THERMAL_H * 0.05), T_Y1 = Math.round(THERMAL_H * 0.75);
     let thermalActive = false;
     let thermalVideo = null;
     let thermalAnimId = null;
@@ -442,30 +442,34 @@
     function thermalLoop() {
       if (!thermalActive || !thermalVideo || !thermalCanvas) return;
       if (thermalVideo.readyState >= 2) {
-        // Sample video at low res for colour analysis
         thermalCtx.drawImage(thermalVideo, 0, 0, THERMAL_W, THERMAL_H);
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
+
+        // Pass 1 — find the actual top/bottom Y of matched building pixels
+        // so the gradient is always normalized to the building's real extent in frame
+        let minY = THERMAL_H, maxY = 0;
         for (let i = 0; i < d.length; i += 4) {
-          const px = (i >> 2) % THERMAL_W;
-          const py = Math.floor((i >> 2) / THERMAL_W);
-          // Outside center region → always transparent (real-world surroundings ignored)
-          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) {
-            d[i+3] = 0; continue;
-          }
+          const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
+          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
-          const bld = matchBuilding(h, s, v);
-          if (bld) {
+          if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
+        }
+        const yRange = Math.max(maxY - minY, 1);
+
+        // Pass 2 — apply thermal colour; gradient spans exactly min→max Y of building
+        for (let i = 0; i < d.length; i += 4) {
+          const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
+          d[i+3] = 0;
+          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
+          const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+          if (matchBuilding(h, s, v)) {
             const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
-            // Vertical gradient: top of building = hot (red), bottom = cold (blue)
-            const yNorm = (py - T_Y0) / (T_Y1 - T_Y0);
-            const posTemp = 0.90 - yNorm * 0.82; // 0.90 at top (dark red) → 0.08 at bottom (deep blue)
-            // Luminance adds local variation (lighter patches = hotter surface)
-            const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.22));
+            const yNorm = (py - minY) / yRange; // 0 = top of building, 1 = bottom
+            const posTemp = 0.90 - yNorm * 0.82; // top=red(0.90), bottom=blue(0.08)
+            const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.20));
             const [tr, tg, tb] = jetColor(temp);
             d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
-          } else {
-            d[i+3] = 0;
           }
         }
         thermalCtx.putImageData(img, 0, 0);
