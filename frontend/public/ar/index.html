@@ -400,16 +400,14 @@
     ];
 
     function matchBuilding(h, s, v) {
-      if (s < 0.15) return null;
-      let best = null, bestDist = 0.55; // generous tolerance for camera/screen colour shift
+      if (s < 0.18) return null; // unsaturated = background, skip
       for (const b of BUILDING_COLORS) {
-        const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h)) / 180;
-        const ds = Math.abs(s - b.s);
-        const dv = Math.abs(v - b.v);
-        const dist = dh * 1.5 + ds * 0.6 + dv * 0.3;
-        if (dist < bestDist) { bestDist = dist; best = b; }
+        // Hard hue gate — must be within ±20° of the exact building hue
+        // This rejects blue taskbar (H≈210°, 30° away), red items (180° away), etc.
+        const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
+        if (dh <= 20) return b;
       }
-      return best;
+      return null;
     }
 
     function rgbToHsv(r, g, b) {
