@@ -400,7 +400,7 @@
     ];
 
     function matchBuilding(h, s, v) {
-      if (s < 0.18) return null; // unsaturated = background, skip
+      if (s < 0.12) return null; // unsaturated = background, skip
       for (const b of BUILDING_COLORS) {
         // Hard hue gate — must be within ±20° of the exact building hue
         // This rejects blue taskbar (H≈210°, 30° away), red items (180° away), etc.
@@ -430,9 +430,8 @@
     }
 
     const THERMAL_W = 480, THERMAL_H = 360;
-    // Only process the inner region — keeps thermal off the real-world surroundings
-    const T_X0 = Math.round(THERMAL_W * 0.15), T_X1 = Math.round(THERMAL_W * 0.85);
-    const T_Y0 = Math.round(THERMAL_H * 0.10), T_Y1 = Math.round(THERMAL_H * 0.90);
+    const T_X0 = Math.round(THERMAL_W * 0.12), T_X1 = Math.round(THERMAL_W * 0.88);
+    const T_Y0 = Math.round(THERMAL_H * 0.06), T_Y1 = Math.round(THERMAL_H * 0.78);
     let thermalActive = false;
     let thermalVideo = null;
     let thermalAnimId = null;
@@ -460,7 +459,7 @@
             const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
             // Vertical gradient: top of building = hot (red), bottom = cold (blue)
             const yNorm = (py - T_Y0) / (T_Y1 - T_Y0);
-            const posTemp = 0.95 - yNorm * 0.68; // 0.95 at top → 0.27 at bottom
+            const posTemp = 0.90 - yNorm * 0.82; // 0.90 at top (dark red) → 0.08 at bottom (deep blue)
             // Luminance adds local variation (lighter patches = hotter surface)
             const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.22));
             const [tr, tg, tb] = jetColor(temp);
