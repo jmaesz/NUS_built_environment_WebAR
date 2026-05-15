@@ -491,20 +491,22 @@
       return true;
     }
 
-    let thermalOverlayEl = null;
-
     function enableThermal() {
+      if (!setupThermalCanvas()) { console.warn('Thermal: video or canvas not ready yet'); return; }
       thermalActive = true;
-      if (thermalOverlayEl) thermalOverlayEl.setAttribute('visible', 'true');
+      thermalCanvas.style.display = 'block';
+      // Video stays visible — canvas is transparent overlay, only matched pixels painted
       document.getElementById('thermal-btn').classList.add('active');
       document.getElementById('thermal-legend').classList.add('visible');
+      thermalAnimId = requestAnimationFrame(thermalLoop);
     }
 
     function disableThermal() {
       thermalActive = false;
-      if (thermalOverlayEl) thermalOverlayEl.setAttribute('visible', 'false');
+      if (thermalCanvas) thermalCanvas.style.display = 'none';
       document.getElementById('thermal-btn').classList.remove('active');
       document.getElementById('thermal-legend').classList.remove('visible');
+      if (thermalAnimId) { cancelAnimationFrame(thermalAnimId); thermalAnimId = null; }
     }
 
     function toggleThermal() {
@@ -773,20 +775,6 @@
 
     function closeArDetail() { arDetailEl.setAttribute('visible', 'false'); }
 
-    function makeThermalOverlay(targetEl) {
-      // Wrap applies centering offset (model origin is at real-world coords ~34962, 1549, -10)
-      // then scale to fit within MindAR target (~0.87 units wide)
-      const wrap = document.createElement('a-entity');
-      wrap.setAttribute('visible', 'false');
-      wrap.setAttribute('scale', '0.0016 0.0016 0.0016');
-      const model = document.createElement('a-gltf-model');
-      model.setAttribute('src', '/ar/scene-thermal.glb');
-      model.setAttribute('position', '-34962 -1549 10');
-      wrap.appendChild(model);
-      targetEl.appendChild(wrap);
-      thermalOverlayEl = wrap;
-    }
-
     // ── MindAR wiring ────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
       // Strip any remaining red boxes / anchor dots
@@ -816,7 +804,7 @@
         const el = document.getElementById(`target-${i}`);
         if (!el) continue;
         if (FRONT_TARGETS.has(i)) { makePinFor(el); }
-        if (i === 0) { makeSpeakerFor(el); makeCaption(el); makeArLabels(el); makeArDetail(el); makeThermalOverlay(el); }
+        if (i === 0) { makeSpeakerFor(el); makeCaption(el); makeArLabels(el); makeArDetail(el); }
         el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
         el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
       }
