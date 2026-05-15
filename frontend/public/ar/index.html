@@ -79,10 +79,36 @@
       display: flex; align-items: center; gap: 4px;
       font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em;
     }
+
+    #thermal-btn {
+      position: fixed; top: 16px; left: 90px; z-index: 1000;
+      background: rgba(0,0,0,0.55); color: #ff7043;
+      border: 1px solid rgba(255,112,67,0.4);
+      padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
+      cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
+    }
+    #thermal-btn.active { background: rgba(220,60,20,0.85); color: #fff; border-color: #ff7043; }
+    #thermal-legend {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; display: none; flex-direction: column; align-items: center; gap: 4px;
+      background: rgba(0,0,0,0.55); padding: 8px 14px; border-radius: 6px;
+    }
+    #thermal-legend.visible { display: flex; }
+    #thermal-legend-bar {
+      width: 140px; height: 10px; border-radius: 3px;
+      background: linear-gradient(to right, #00008b, #00bfff, #00ff00, #ffff00, #ff4500, #8b0000);
+    }
+    #thermal-legend-labels { display: flex; justify-content: space-between; width: 140px; }
+    #thermal-legend-labels span { font-size: 9px; color: #ddd; letter-spacing: 0.05em; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
+  <button id="thermal-btn" onclick="toggleThermal()">THERMAL</button>
+  <div id="thermal-legend">
+    <div id="thermal-legend-bar"></div>
+    <div id="thermal-legend-labels"><span>COLD</span><span>HOT</span></div>
+  </div>
   <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
     <div id="maps-panel-img-wrap">
       <img src="/bg1.png" alt="SDE4">
@@ -366,6 +392,87 @@
       dispatchArTap(e.clientX, e.clientY);
     });
 
+    // ── Thermal camera mode ──────────────────────────────────────────────
+    // Each building in scene-colored.glb has a unique hue (from color-buildings.mjs).
+    // We scan the live camera frame by pixel hue and remap to jet thermal colormap.
+    // Hue sectors (each 45°): red→orange→olive→green→cyan→blue→purple→pink
+    // Temperature values (0=cold/blue, 1=hot/red) assigned per sector for visual diversity
+    const HUE_TEMPS = [0.95, 0.80, 0.50, 0.35, 0.65, 0.20, 0.42, 0.72];
+
+    function rgbToHsv(r, g, b) {
+      const rr = r / 255, gg = g / 255, bb = b / 255;
+      const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb), d = max - min;
+      const s = max === 0 ? 0 : d / max;
+      let h = 0;
+      if (d !== 0) {
+        if (max === rr)      h = ((gg - bb) / d % 6 + 6) % 6;
+        else if (max === gg) h = (bb - rr) / d + 2;
+        else                 h = (rr - gg) / d + 4;
+        h *= 60;
+      }
+      return [h, s, max];
+    }
+
+    function jetColor(t) {
+      const c = v => Math.round(255 * Math.max(0, Math.min(1, v)));
+      return [c(1.5 - Math.abs(4*t - 3)), c(1.5 - Math.abs(4*t - 2)), c(1.5 - Math.abs(4*t - 1))];
+    }
+
+    const THERMAL_W = 160, THERMAL_H = 120;
+    let thermalActive = false;
+    let thermalVideo = null;
+    let thermalAnimId = null;
+    let thermalCanvas = null;
+    let thermalCtx = null;
+
+    function thermalLoop() {
+      if (!thermalActive || !thermalVideo || !thermalCanvas) return;
+      thermalCtx.drawImage(thermalVideo, 0, 0, THERMAL_W, THERMAL_H);
+      const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
+      const d = img.data;
+      for (let i = 0; i < d.length; i += 4) {
+        const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+        if (s < 0.18 || v < 0.12) {
+          // Grey terrain / dark background — desaturate to dark grey
+          const grey = Math.round(v * 70);
+          d[i] = grey; d[i+1] = grey; d[i+2] = grey;
+        } else {
+          // Saturated = coloured building: map hue sector → temperature
+          const sector = Math.min(7, Math.floor(h / 45));
+          // Add per-pixel luminance variation for shading within each building
+          const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
+          const temp = Math.max(0, Math.min(1, HUE_TEMPS[sector] + (lum - 0.5) * 0.12));
+          const [tr, tg, tb] = jetColor(temp);
+          d[i] = tr; d[i+1] = tg; d[i+2] = tb;
+        }
+      }
+      thermalCtx.putImageData(img, 0, 0);
+      thermalAnimId = requestAnimationFrame(thermalLoop);
+    }
+
+    function enableThermal() {
+      if (!thermalCanvas) return;
+      thermalActive = true;
+      thermalCanvas.style.display = 'block';
+      if (thermalVideo) thermalVideo.style.opacity = '0';
+      document.getElementById('thermal-btn').classList.add('active');
+      document.getElementById('thermal-legend').classList.add('visible');
+      thermalAnimId = requestAnimationFrame(thermalLoop);
+    }
+
+    function disableThermal() {
+      thermalActive = false;
+      if (thermalCanvas) thermalCanvas.style.display = 'none';
+      if (thermalVideo) thermalVideo.style.opacity = '1';
+      document.getElementById('thermal-btn').classList.remove('active');
+      document.getElementById('thermal-legend').classList.remove('visible');
+      if (thermalAnimId) { cancelAnimationFrame(thermalAnimId); thermalAnimId = null; }
+    }
+
+    function toggleThermal() {
+      if (thermalActive) disableThermal(); else enableThermal();
+    }
+
     // ── Audio narration ──────────────────────────────────────────────────
     const AUDIO_TEXT = `SDE 4, the School of Design and Environment 4, is NUS's first net-zero energy building. ` +
       `Completed in 2019, the building was designed by Serie Architects and Multiply Architects. ` +
@@ -632,6 +739,20 @@
     sceneEl.addEventListener('loaded', () => {
       // Strip any remaining red boxes / anchor dots
       document.querySelectorAll('[id^="target-"] a-box, [id^="target-"] a-sphere').forEach(el => el.remove());
+
+      // ── Thermal canvas setup ──
+      // Insert processing canvas between MindAR's video and A-Frame's canvas
+      // so that when visible it replaces the camera background while 3D overlays remain
+      thermalVideo = document.querySelector('video');
+      const aframeCanvas = sceneEl.renderer.domElement;
+      if (thermalVideo && aframeCanvas) {
+        thermalCanvas = document.createElement('canvas');
+        thermalCanvas.width = THERMAL_W;
+        thermalCanvas.height = THERMAL_H;
+        thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;image-rendering:pixelated;object-fit:cover;';
+        aframeCanvas.parentNode.insertBefore(thermalCanvas, aframeCanvas);
+        thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
+      }
 
       // ── Location pin: built once, added to all front-facing targets ──
       // From a front target (vertical wall), Y = up.
