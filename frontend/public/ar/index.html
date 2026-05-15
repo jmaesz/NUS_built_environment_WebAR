@@ -545,14 +545,23 @@
 
       // Trees at base of building — Y=-0.325 (bottom), scattered left/right/front
       const TREE_POSITIONS = [
-        [-0.52,  -0.325,  0.04],
-        [-0.38,  -0.325,  0.09],
-        [-0.62,  -0.325,  0.07],
-        [ 0.52,  -0.325,  0.04],
-        [ 0.38,  -0.325,  0.09],
-        [ 0.62,  -0.325,  0.07],
-        [-0.18,  -0.325,  0.11],
-        [ 0.18,  -0.325,  0.11],
+        // left side — near to far
+        [-0.62, -0.325, 0.05],
+        [-0.50, -0.325, 0.11],
+        [-0.72, -0.325, 0.14],
+        [-0.38, -0.325, 0.08],
+        [-0.58, -0.325, 0.20],
+        // right side — near to far
+        [ 0.62, -0.325, 0.05],
+        [ 0.50, -0.325, 0.11],
+        [ 0.72, -0.325, 0.14],
+        [ 0.38, -0.325, 0.08],
+        [ 0.58, -0.325, 0.20],
+        // centre front
+        [-0.20, -0.325, 0.17],
+        [ 0.20, -0.325, 0.17],
+        [-0.42, -0.325, 0.22],
+        [ 0.42, -0.325, 0.22],
       ];
 
       function fixTreeColors(tree) {
@@ -573,9 +582,12 @@
       function makeTreesFor(targetEl) {
         TREE_POSITIONS.forEach(([x, y, z]) => {
           const tree = document.createElement('a-gltf-model');
+          const s = 0.01 * (0.85 + Math.random() * 0.3);
+          const ry = Math.floor(Math.random() * 360);
           tree.setAttribute('src', '/ar/trees.glb');
           tree.setAttribute('position', `${x} ${y} ${z}`);
-          tree.setAttribute('scale', '0.002 0.002 0.002');
+          tree.setAttribute('scale', `${s} ${s} ${s}`);
+          tree.setAttribute('rotation', `0 ${ry} 0`);
           fixTreeColors(tree);
           targetEl.appendChild(tree);
         });
