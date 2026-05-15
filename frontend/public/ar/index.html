@@ -400,10 +400,10 @@
     ];
 
     function matchBuilding(h, s, v) {
-      // Dark overhang: teal stays saturated even when very dark (S stays high, V drops near 0).
-      // Physical dark objects are both low-S AND low-V — rejected by S gate.
-      const brightTeal = s >= 0.30 && v >= 0.30;   // normal lit surfaces
-      const shadowTeal = s >= 0.50 && v >= 0.04;   // deep shadow overhang — near-black but still saturated
+      // Two-tier gate: shadowed teal stays saturated (S stays high) but gets dark (V drops).
+      // Physical dark objects are BOTH low-S and low-V — this rejects them.
+      const brightTeal = s >= 0.35 && v >= 0.35;   // normal lit surfaces
+      const shadowTeal = s >= 0.55 && v >= 0.15;   // shadowed overhang — still saturated, just dark
       if (!brightTeal && !shadowTeal) return null;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
@@ -440,7 +440,6 @@
     let thermalCanvas = null;
     let thermalCtx = null;
     let arCanvas = null; // set in loaded handler — avoids grabbing Chart.js canvas
-    let smoothMinY = -1, smoothMaxY = -1; // temporal smoothing — prevents gradient jumping on angle change
 
     function thermalLoop() {
       if (!thermalActive || !thermalVideo || !thermalCanvas) return;
@@ -449,7 +448,8 @@
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
 
-        // Pass 1 — find actual top/bottom Y of matched pixels this frame
+        // Pass 1 — find the actual top/bottom Y of matched building pixels
+        // so the gradient is always normalized to the building's real extent in frame
         let minY = THERMAL_H, maxY = 0;
         for (let i = 0; i < d.length; i += 4) {
           const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
@@ -457,24 +457,19 @@
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
           if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
         }
-        // Smooth minY/maxY across frames — prevents gradient jumping when angle shifts slightly
-        if (minY <= maxY) {
-          smoothMinY = smoothMinY < 0 ? minY : smoothMinY * 0.92 + minY * 0.08;
-          smoothMaxY = smoothMaxY < 0 ? maxY : smoothMaxY * 0.92 + maxY * 0.08;
-        }
-        const useMinY = smoothMinY < 0 ? minY : smoothMinY;
-        const useMaxY = smoothMaxY < 0 ? maxY : smoothMaxY;
-        const yRange = Math.max(useMaxY - useMinY, 1);
+        const yRange = Math.max(maxY - minY, 1);
 
-        // Pass 2 — apply thermal colour; gradient spans roof→ground
+        // Pass 2 — apply thermal colour; gradient spans exactly min→max Y of building
         for (let i = 0; i < d.length; i += 4) {
           const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
           d[i+3] = 0;
           if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
           if (matchBuilding(h, s, v)) {
-            const yNorm = (py - useMinY) / yRange; // 0 = roof, 1 = ground
-            const temp = Math.max(0, Math.min(1, 0.92 - yNorm * 0.84)); // roof→red, ground→blue
+            const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
+            const yNorm = (py - minY) / yRange; // 0 = top of building, 1 = bottom
+            const posTemp = 0.90 - yNorm * 0.82; // top=red(0.90), bottom=blue(0.08)
+            const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.20));
             const [tr, tg, tb] = jetColor(temp);
             d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
           }
@@ -492,7 +487,7 @@
       thermalCanvas = document.createElement('canvas');
       thermalCanvas.width = THERMAL_W;
       thermalCanvas.height = THERMAL_H;
-      thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;pointer-events:none;';
+      thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;image-rendering:pixelated;pointer-events:none;';
       aframeCanvas.parentNode.insertBefore(thermalCanvas, aframeCanvas);
       thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
       return true;
@@ -510,7 +505,6 @@
 
     function disableThermal() {
       thermalActive = false;
-      smoothMinY = -1; smoothMaxY = -1;
       if (thermalCanvas) thermalCanvas.style.display = 'none';
       document.getElementById('thermal-btn').classList.remove('active');
       document.getElementById('thermal-legend').classList.remove('visible');
