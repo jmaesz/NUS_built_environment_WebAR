@@ -541,6 +541,28 @@
       const PIN_Y = 0.325;  // half building height
       const FRONT_TARGETS = new Set([0, 4, 5]); // FRONT, FRONT-LEFT, FRONT-RIGHT
 
+      // Trees at base of building — Y=-0.325 (bottom), scattered left/right/front
+      const TREE_POSITIONS = [
+        [-0.52,  -0.325,  0.04],
+        [-0.38,  -0.325,  0.09],
+        [-0.62,  -0.325,  0.07],
+        [ 0.52,  -0.325,  0.04],
+        [ 0.38,  -0.325,  0.09],
+        [ 0.62,  -0.325,  0.07],
+        [-0.18,  -0.325,  0.11],
+        [ 0.18,  -0.325,  0.11],
+      ];
+
+      function makeTreesFor(targetEl) {
+        TREE_POSITIONS.forEach(([x, y, z]) => {
+          const tree = document.createElement('a-gltf-model');
+          tree.setAttribute('src', '/ar/trees.glb');
+          tree.setAttribute('position', `${x} ${y} ${z}`);
+          tree.setAttribute('scale', '0.04 0.04 0.04');
+          targetEl.appendChild(tree);
+        });
+      }
+
       function makePinFor(targetEl) {
         const pin = document.createElement('a-gltf-model');
         pin.setAttribute('src', '/ar/map_pin.glb');
@@ -553,7 +575,7 @@
       for (let i = 0; i < 6; i++) {
         const el = document.getElementById(`target-${i}`);
         if (!el) continue;
-        if (FRONT_TARGETS.has(i)) makePinFor(el);
+        if (FRONT_TARGETS.has(i)) { makePinFor(el); makeTreesFor(el); }
         el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
         el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
       }
