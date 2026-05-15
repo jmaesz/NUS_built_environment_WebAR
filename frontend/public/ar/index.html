@@ -400,14 +400,11 @@
     ];
 
     function matchBuilding(h, s, v) {
-      // Two-tier gate: shadowed teal stays saturated (S stays high) but gets dark (V drops).
-      // Physical dark objects are BOTH low-S and low-V — this rejects them.
-      const brightTeal = s >= 0.35 && v >= 0.35;   // normal lit surfaces
-      const shadowTeal = s >= 0.55 && v >= 0.15;   // shadowed overhang — still saturated, just dark
-      if (!brightTeal && !shadowTeal) return null;
+      // Reject achromatic pixels (grey/black/white) — teal always has S > 0.15
+      if (s < 0.15) return null;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
-        if (dh <= 24) return b;
+        if (dh <= 20) return b;
       }
       return null;
     }
@@ -461,7 +458,7 @@
           if (minY <= maxY) { lockedMinY = minY; lockedMaxY = maxY; } // lock on first valid frame
         }
 
-        const useMinY = lockedMinY < 0 ? 0 : lockedMinY;
+        const useMinY = Math.max(0, (lockedMinY < 0 ? 0 : lockedMinY) - 30);
         const useMaxY = lockedMaxY < 0 ? THERMAL_H : lockedMaxY;
         const yRange = Math.max(useMaxY - useMinY, 1);
 
