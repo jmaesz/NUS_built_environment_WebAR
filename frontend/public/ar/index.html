@@ -558,14 +558,26 @@
     }
 
     function makeCaption(targetEl) {
-      // Positioned to the LEFT of the speaker button (-0.52), same Y
+      const WRAP = 36, LINE_H = 0.038, PAD = 0.04;
+
+      // Count wrapped lines for full text to size box tightly
+      function countLines(text) {
+        let lines = 1, col = 0;
+        for (const w of text.split(' ')) {
+          if (col > 0 && col + 1 + w.length > WRAP) { lines++; col = w.length; }
+          else { col += (col ? 1 : 0) + w.length; }
+        }
+        return lines;
+      }
+      const boxH = +(countLines(AUDIO_TEXT) * LINE_H + PAD * 2).toFixed(3);
+
       captionEl = document.createElement('a-entity');
       captionEl.setAttribute('position', '-0.88 0.325 0.02');
       captionEl.setAttribute('visible', 'false');
 
       const bg = document.createElement('a-plane');
       bg.setAttribute('width', '0.52');
-      bg.setAttribute('height', '0.50');
+      bg.setAttribute('height', String(boxH));
       bg.setAttribute('material', 'color: #000000; opacity: 0.9; shader: flat; side: double');
       captionEl.appendChild(bg);
 
@@ -575,8 +587,8 @@
       captionTxt.setAttribute('color', '#ffffff');
       captionTxt.setAttribute('align', 'left');
       captionTxt.setAttribute('baseline', 'top');
-      captionTxt.setAttribute('position', '-0.22 0.23 0.002');
-      captionTxt.setAttribute('wrap-count', '36');
+      captionTxt.setAttribute('position', `-0.22 ${+(boxH / 2 - PAD).toFixed(3)} 0.002`);
+      captionTxt.setAttribute('wrap-count', String(WRAP));
       captionEl.appendChild(captionTxt);
 
       targetEl.appendChild(captionEl);
@@ -686,7 +698,7 @@
       // From a front target (vertical wall), Y = up.
       // Building height ≈ 0.65 MindAR units → pin sits at Y=0.65 above center.
       // Z=0.05 floats it slightly in front of the wall so it's visible.
-      const PIN_Y = 0.325;  // half building height
+      const PIN_Y = 0.27;
       const FRONT_TARGETS = new Set([0, 4, 5]); // FRONT, FRONT-LEFT, FRONT-RIGHT
 
 
