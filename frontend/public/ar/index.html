@@ -51,68 +51,6 @@
     #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
     #total-value { font-size: 11px; font-weight: 700; color: #111; }
 
-    /* ── AR labels (HTML overlay, always clickable) ── */
-    .ar-label {
-      position: fixed; z-index: 998;
-      transform: translate(-50%, -50%);
-      display: none; align-items: center; gap: 8px;
-      background: rgba(12, 12, 28, 0.93);
-      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-      border: 1px solid rgba(255,255,255,0.13);
-      border-radius: 8px; padding: 10px 13px 10px 10px;
-      min-width: 110px;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.45);
-      cursor: pointer; pointer-events: auto;
-      user-select: none; -webkit-user-select: none;
-      -webkit-tap-highlight-color: transparent;
-      transition: opacity 0.15s;
-    }
-    .ar-label:active { opacity: 0.7; }
-    .ar-label-bar { width: 3px; border-radius: 2px; height: 28px; flex-shrink: 0; }
-    .ar-label-title {
-      font-size: 12px; font-weight: 800; color: white;
-      letter-spacing: 0.07em; text-transform: uppercase;
-    }
-    .ar-label-sub { font-size: 9px; color: rgba(255,255,255,0.42); margin-top: 2px; letter-spacing: 0.03em; }
-
-    /* iPad and larger — bigger labels */
-    @media (min-width: 768px) {
-      .ar-label {
-        gap: 10px; border-radius: 10px;
-        padding: 14px 18px 14px 14px; min-width: 160px;
-      }
-      .ar-label-bar { width: 4px; height: 38px; }
-      .ar-label-title { font-size: 15px; }
-      .ar-label-sub { font-size: 10px; margin-top: 3px; }
-    }
-
-    /* ── Detail slide-up panel ── */
-    #detail-panel {
-      position: fixed; bottom: 0; left: 0; right: 0; z-index: 1001;
-      background: rgba(10, 10, 18, 0.95);
-      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-      border-top: 1px solid rgba(255,255,255,0.08);
-      border-radius: 20px 20px 0 0;
-      padding: 12px 24px 52px;
-      transform: translateY(100%);
-      transition: transform 0.45s cubic-bezier(0.34, 1.15, 0.64, 1);
-    }
-    #detail-panel.visible { transform: translateY(0); }
-    #detail-handle { width: 36px; height: 4px; background: rgba(255,255,255,0.18); border-radius: 2px; margin: 0 auto 22px; }
-    #detail-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-    #detail-color-bar { width: 4px; height: 44px; border-radius: 2px; flex-shrink: 0; }
-    #detail-title { font-size: 20px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #fff; flex: 1; }
-    #detail-value { font-size: 13px; font-weight: 500; color: rgba(255,255,255,0.55); margin-top: 3px; }
-    #detail-close {
-      width: 34px; height: 34px; border-radius: 50%;
-      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14);
-      color: #fff; font-size: 20px; cursor: pointer;
-      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
-    #detail-desc { font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.68); margin-bottom: 22px; }
-    #detail-bar-bg { height: 5px; background: rgba(255,255,255,0.07); border-radius: 3px; overflow: hidden; margin-bottom: 8px; }
-    #detail-bar-fill { height: 100%; border-radius: 3px; transition: width 0.75s cubic-bezier(0.4,0,0.2,1); width: 0%; }
-    #detail-pct { font-size: 10px; color: rgba(255,255,255,0.38); letter-spacing: 0.06em; text-transform: uppercase; }
 
     #maps-panel {
       position: fixed; bottom: 16px; right: 16px; z-index: 1000;
@@ -160,36 +98,6 @@
   </a>
   <div id="scan-hint">POINT CAMERA AT SDE4</div>
 
-  <!-- SVG overlay for annotation lines (anchor dot → top of label card) -->
-  <svg id="ar-lines" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:997;overflow:visible">
-    <line id="line-equipment" stroke="#000000" stroke-width="2" visibility="hidden"/>
-    <line id="line-cooling"   stroke="#000000" stroke-width="2" visibility="hidden"/>
-    <line id="line-lighting"  stroke="#000000" stroke-width="2" visibility="hidden"/>
-  </svg>
-
-  <!-- HTML overlay labels — positioned via Three.js worldToScreen each frame -->
-  <div class="ar-label" id="ar-label-equipment" onclick="showDetail('equipment')">
-    <div class="ar-label-bar" style="background:#F5A623"></div>
-    <div>
-      <div class="ar-label-title">EQUIPMENT</div>
-      <div class="ar-label-sub">Tap for details →</div>
-    </div>
-  </div>
-  <div class="ar-label" id="ar-label-cooling" onclick="showDetail('cooling')">
-    <div class="ar-label-bar" style="background:#4A90D9"></div>
-    <div>
-      <div class="ar-label-title">COOLING</div>
-      <div class="ar-label-sub">Tap for details →</div>
-    </div>
-  </div>
-  <div class="ar-label" id="ar-label-lighting" onclick="showDetail('lighting')">
-    <div class="ar-label-bar" style="background:#7ED321"></div>
-    <div>
-      <div class="ar-label-title">LIGHTING</div>
-      <div class="ar-label-sub">Tap for details →</div>
-    </div>
-  </div>
-
   <!-- Chart panel -->
   <div id="chart-panel">
     <div id="chart-building-name">SDE4</div>
@@ -206,21 +114,6 @@
   </div>
 
   <!-- Detail panel -->
-  <div id="detail-panel">
-    <div id="detail-handle"></div>
-    <div id="detail-header">
-      <div id="detail-color-bar"></div>
-      <div style="flex:1">
-        <div id="detail-title"></div>
-        <div id="detail-value"></div>
-      </div>
-      <button id="detail-close" onclick="closeDetail()">×</button>
-    </div>
-    <p id="detail-desc"></p>
-    <div id="detail-bar-bg"><div id="detail-bar-fill"></div></div>
-    <div id="detail-pct"></div>
-  </div>
-
   <a-scene
     mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 6; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
     color-space="sRGB" renderer="colorManagement: true"
@@ -394,31 +287,12 @@
     ]};
 
     const chartPanel  = document.getElementById('chart-panel');
-    const detailPanel = document.getElementById('detail-panel');
     const scanHint    = document.getElementById('scan-hint');
     const mapsPanel   = document.getElementById('maps-panel');
     let chartInstance = null;
     let foundTargets  = new Set();
     let mapsHideTimer = null;
 
-    // ── Detail panel ────────────────────────────────────────────────────
-    function showDetail(type) {
-      const d = DETAILS[type];
-      if (!d) return;
-      document.getElementById('detail-title').textContent = d.label;
-      document.getElementById('detail-value').textContent = d.value;
-      document.getElementById('detail-desc').textContent  = d.desc;
-      document.getElementById('detail-color-bar').style.background  = d.color;
-      document.getElementById('detail-bar-fill').style.background   = d.color;
-      document.getElementById('detail-bar-fill').style.width        = '0%';
-      document.getElementById('detail-pct').textContent = `${d.pct}% of total energy use`;
-      detailPanel.classList.add('visible');
-      requestAnimationFrame(() => {
-        document.getElementById('detail-bar-fill').style.width = d.pct + '%';
-      });
-    }
-
-    function closeDetail() { detailPanel.classList.remove('visible'); }
 
     // ── Chart ────────────────────────────────────────────────────────────
     function showChart() {
@@ -460,77 +334,37 @@
 
     // ── HTML label overlay — projects 3D marker world pos → screen px ───
     const sceneEl = document.querySelector('a-scene');
-    const _tmpVec  = new THREE.Vector3();
-    const _tmpVec2 = new THREE.Vector3();
+    // ── Global AR tap system ─────────────────────────────────────────────
+    const _arVec = new THREE.Vector3();
+    const arTaps = []; // { entity, radius, fn }
 
-    // Local-space anchor positions (where the dot sits on the building surface)
-    const ANCHOR_LOCAL = {
-      equipment: [-0.22, -0.06, 0.013],
-      cooling:   [ 0.05, -0.09, 0.013],
-      lighting:  [ 0.26,  0.02, 0.013],
-    };
-
-    function updateOverlays() {
-      if (foundTargets.size === 0) return;
-
-      const camera = sceneEl.camera;
-      if (!camera) return;
-
-      const tIdx = [...foundTargets][0];
-      const W = window.innerWidth, H = window.innerHeight;
-      const PAD = 10;
-      const targetEl = document.getElementById(`target-${tIdx}`);
-
-      [['equipment','eq'],['cooling','co'],['lighting','li']].forEach(([type, sh]) => {
-        const marker  = document.getElementById(`m-${sh}-${tIdx}`);
-        const label   = document.getElementById(`ar-label-${type}`);
-        const svgLine = document.getElementById(`line-${type}`);
-        if (!marker || !label) return;
-
-        // Project the label marker → desired screen position
-        marker.object3D.getWorldPosition(_tmpVec);
-        _tmpVec.project(camera);
-
-        if (_tmpVec.z > 1) {
-          label.style.display = 'none';
-          if (svgLine) svgLine.setAttribute('visibility', 'hidden');
-          return;
-        }
-
-        const sx = (_tmpVec.x + 1) / 2 * W;
-        const sy = (-_tmpVec.y + 1) / 2 * H;
-
-        // Show label so offsetWidth/Height are measurable
-        label.style.display = 'flex';
-        const hw = label.offsetWidth  / 2;
-        const hh = label.offsetHeight / 2;
-
-        // Clamp so label never clips any edge
-        const cx = Math.max(hw + PAD, Math.min(W - hw - PAD, sx));
-        const cy = Math.max(hh + PAD, Math.min(H - hh - PAD, sy));
-        label.style.left = cx + 'px';
-        label.style.top  = cy + 'px';
-
-        // Draw SVG line: from building anchor dot → top-center of label
-        if (svgLine && targetEl) {
-          const [lx, ly, lz] = ANCHOR_LOCAL[type];
-          _tmpVec2.set(lx, ly, lz);
-          _tmpVec2.applyMatrix4(targetEl.object3D.matrixWorld);
-          _tmpVec2.project(camera);
-          const ax = (_tmpVec2.x + 1) / 2 * W;
-          const ay = (-_tmpVec2.y + 1) / 2 * H;
-          const rect = label.getBoundingClientRect();
-          svgLine.setAttribute('x1', ax.toFixed(1));
-          svgLine.setAttribute('y1', ay.toFixed(1));
-          svgLine.setAttribute('x2', (rect.left + rect.width / 2).toFixed(1));
-          svgLine.setAttribute('y2', rect.top.toFixed(1));
-          svgLine.setAttribute('visibility', 'visible');
-        }
-      });
+    function arScreenPos(entity) {
+      entity.object3D.getWorldPosition(_arVec);
+      _arVec.project(sceneEl.camera);
+      const r = sceneEl.canvas.getBoundingClientRect();
+      return { x: (_arVec.x + 1) / 2 * r.width + r.left,
+               y: (-_arVec.y + 1) / 2 * r.height + r.top };
     }
 
-    // Run overlay update at ~30 fps
-    setInterval(updateOverlays, 33);
+    function dispatchArTap(cx, cy) {
+      for (const t of arTaps) {
+        if (!t.entity || !t.entity.object3D) continue;
+        const sp = arScreenPos(t.entity);
+        const dx = cx - sp.x, dy = cy - sp.y;
+        if (Math.sqrt(dx * dx + dy * dy) < t.radius) { t.fn(); return; }
+      }
+    }
+
+    let _lastTouch = 0;
+    document.addEventListener('touchend', e => {
+      _lastTouch = Date.now();
+      const t = e.changedTouches[0];
+      dispatchArTap(t.clientX, t.clientY);
+    });
+    document.addEventListener('click', e => {
+      if (Date.now() - _lastTouch < 500) return;
+      dispatchArTap(e.clientX, e.clientY);
+    });
 
     // ── Audio narration ──────────────────────────────────────────────────
     const AUDIO_TEXT = `SDE 4, the School of Design and Environment 4, is NUS's first net-zero energy building. ` +
@@ -658,36 +492,141 @@
       speakerEl.appendChild(label);
 
       targetEl.appendChild(speakerEl);
+      arTaps.push({ entity: speakerEl, radius: 70, fn: toggleAudio });
+    }
 
-      // Screen-space tap detection — project speaker 3D pos to 2D, check distance
-      function getSpeakerScreen() {
-        const worldPos = new THREE.Vector3();
-        speakerEl.object3D.getWorldPosition(worldPos);
-        worldPos.project(sceneEl.camera);
-        const rect = sceneEl.canvas.getBoundingClientRect();
-        return {
-          x: (worldPos.x + 1) / 2 * rect.width  + rect.left,
-          y: (-worldPos.y + 1) / 2 * rect.height + rect.top
-        };
-      }
+    // ── AR label cards + detail panel ────────────────────────────────────
+    let arDetailEl = null;
+    let arDetailTitleEl, arDetailValueEl, arDetailDescEl, arDetailBarEl, arDetailPctEl, arDetailAccentEl;
 
-      function handleTap(clientX, clientY) {
-        const sp = getSpeakerScreen();
-        const dx = clientX - sp.x, dy = clientY - sp.y;
-        if (Math.sqrt(dx*dx + dy*dy) < 70) toggleAudio();
-      }
+    const AR_LABEL_DEFS = [
+      { key: 'equipment', pos: '-0.55 -0.22 0.03', color: '#F5A623' },
+      { key: 'cooling',   pos: '0.0  -0.30 0.03', color: '#4A90D9' },
+      { key: 'lighting',  pos: '0.55 -0.22 0.03', color: '#7ED321' },
+    ];
 
-      let lastTouch = 0;
-      document.addEventListener('touchend', e => {
-        lastTouch = Date.now();
-        const t = e.changedTouches[0];
-        handleTap(t.clientX, t.clientY);
-      });
-      document.addEventListener('click', e => {
-        if (Date.now() - lastTouch < 500) return; // skip synthetic click after touch
-        handleTap(e.clientX, e.clientY);
+    function makeArLabels(targetEl) {
+      AR_LABEL_DEFS.forEach(({ key, pos, color }) => {
+        const d = DETAILS[key];
+        const card = document.createElement('a-entity');
+        card.setAttribute('position', pos);
+
+        const bg = document.createElement('a-plane');
+        bg.setAttribute('width', '0.26'); bg.setAttribute('height', '0.09');
+        bg.setAttribute('material', 'color:#111111; opacity:0.88; shader:flat; side:double');
+        card.appendChild(bg);
+
+        const bar = document.createElement('a-box');
+        bar.setAttribute('width', '0.007'); bar.setAttribute('height', '0.076'); bar.setAttribute('depth', '0.002');
+        bar.setAttribute('position', '-0.119 0 0.001');
+        bar.setAttribute('material', `color:${color}; shader:flat`);
+        card.appendChild(bar);
+
+        const title = document.createElement('a-text');
+        title.setAttribute('value', d.label.toUpperCase());
+        title.setAttribute('color', '#ffffff'); title.setAttribute('width', '0.21');
+        title.setAttribute('align', 'left'); title.setAttribute('position', '-0.102 0.018 0.002');
+        title.setAttribute('wrap-count', '22');
+        card.appendChild(title);
+
+        const sub = document.createElement('a-text');
+        sub.setAttribute('value', 'Tap for details');
+        sub.setAttribute('color', '#aaaaaa'); sub.setAttribute('width', '0.17');
+        sub.setAttribute('align', 'left'); sub.setAttribute('position', '-0.102 -0.014 0.002');
+        sub.setAttribute('wrap-count', '22');
+        card.appendChild(sub);
+
+        targetEl.appendChild(card);
+        arTaps.push({ entity: card, radius: 65, fn: () => showArDetail(key) });
       });
     }
+
+    function makeArDetail(targetEl) {
+      arDetailEl = document.createElement('a-entity');
+      arDetailEl.setAttribute('position', '0.08 0.04 0.06');
+      arDetailEl.setAttribute('visible', 'false');
+
+      const bg = document.createElement('a-plane');
+      bg.setAttribute('width', '0.65'); bg.setAttribute('height', '0.38');
+      bg.setAttribute('material', 'color:#0a0a12; opacity:0.95; shader:flat; side:double');
+      arDetailEl.appendChild(bg);
+
+      arDetailAccentEl = document.createElement('a-box');
+      arDetailAccentEl.setAttribute('width', '0.007'); arDetailAccentEl.setAttribute('height', '0.36'); arDetailAccentEl.setAttribute('depth', '0.002');
+      arDetailAccentEl.setAttribute('position', '-0.312 0 0.001');
+      arDetailAccentEl.setAttribute('material', 'color:#ffffff; shader:flat');
+      arDetailEl.appendChild(arDetailAccentEl);
+
+      arDetailTitleEl = document.createElement('a-text');
+      arDetailTitleEl.setAttribute('color', '#ffffff'); arDetailTitleEl.setAttribute('width', '0.54');
+      arDetailTitleEl.setAttribute('align', 'left'); arDetailTitleEl.setAttribute('position', '-0.295 0.155 0.002');
+      arDetailTitleEl.setAttribute('wrap-count', '28');
+      arDetailEl.appendChild(arDetailTitleEl);
+
+      arDetailValueEl = document.createElement('a-text');
+      arDetailValueEl.setAttribute('color', '#aaaaaa'); arDetailValueEl.setAttribute('width', '0.44');
+      arDetailValueEl.setAttribute('align', 'left'); arDetailValueEl.setAttribute('position', '-0.295 0.112 0.002');
+      arDetailValueEl.setAttribute('wrap-count', '28');
+      arDetailEl.appendChild(arDetailValueEl);
+
+      arDetailDescEl = document.createElement('a-text');
+      arDetailDescEl.setAttribute('color', '#cccccc'); arDetailDescEl.setAttribute('width', '0.58');
+      arDetailDescEl.setAttribute('align', 'left'); arDetailDescEl.setAttribute('baseline', 'top');
+      arDetailDescEl.setAttribute('position', '-0.295 0.072 0.002');
+      arDetailDescEl.setAttribute('wrap-count', '44');
+      arDetailEl.appendChild(arDetailDescEl);
+
+      // Progress bar bg
+      const barBg = document.createElement('a-box');
+      barBg.setAttribute('width', '0.58'); barBg.setAttribute('height', '0.012'); barBg.setAttribute('depth', '0.001');
+      barBg.setAttribute('position', '0.005 -0.135 0.002');
+      barBg.setAttribute('material', 'color:#333333; shader:flat');
+      arDetailEl.appendChild(barBg);
+
+      arDetailBarEl = document.createElement('a-box');
+      arDetailBarEl.setAttribute('height', '0.012'); arDetailBarEl.setAttribute('depth', '0.002');
+      arDetailBarEl.setAttribute('material', 'color:#ffffff; shader:flat');
+      arDetailEl.appendChild(arDetailBarEl);
+
+      arDetailPctEl = document.createElement('a-text');
+      arDetailPctEl.setAttribute('color', '#888888'); arDetailPctEl.setAttribute('width', '0.5');
+      arDetailPctEl.setAttribute('align', 'left'); arDetailPctEl.setAttribute('position', '-0.295 -0.155 0.002');
+      arDetailPctEl.setAttribute('wrap-count', '36');
+      arDetailEl.appendChild(arDetailPctEl);
+
+      // Close button
+      const closeBtn = document.createElement('a-entity');
+      closeBtn.setAttribute('position', '0.292 0.162 0.003');
+      const closeBg = document.createElement('a-circle');
+      closeBg.setAttribute('radius', '0.024'); closeBg.setAttribute('material', 'color:#333333; shader:flat');
+      closeBtn.appendChild(closeBg);
+      const closeTxt = document.createElement('a-text');
+      closeTxt.setAttribute('value', 'X'); closeTxt.setAttribute('color', '#ffffff');
+      closeTxt.setAttribute('align', 'center'); closeTxt.setAttribute('baseline', 'center');
+      closeTxt.setAttribute('position', '0 0 0.001'); closeTxt.setAttribute('width', '0.12');
+      closeBtn.appendChild(closeTxt);
+      arDetailEl.appendChild(closeBtn);
+
+      targetEl.appendChild(arDetailEl);
+      arTaps.push({ entity: closeBtn, radius: 55, fn: closeArDetail });
+    }
+
+    function showArDetail(key) {
+      const d = DETAILS[key];
+      arDetailTitleEl.setAttribute('value', d.label.toUpperCase());
+      arDetailValueEl.setAttribute('value', d.value);
+      arDetailDescEl.setAttribute('value', d.desc);
+      arDetailPctEl.setAttribute('value', `${d.pct}% of total energy use`);
+      arDetailAccentEl.setAttribute('material', `color:${d.color}; shader:flat`);
+      const barW = (d.pct / 100) * 0.58;
+      arDetailBarEl.setAttribute('width', String(barW.toFixed(3)));
+      arDetailBarEl.setAttribute('height', '0.012'); arDetailBarEl.setAttribute('depth', '0.002');
+      arDetailBarEl.setAttribute('position', `${(-0.295 + barW / 2).toFixed(3)} -0.135 0.002`);
+      arDetailBarEl.setAttribute('material', `color:${d.color}; shader:flat`);
+      arDetailEl.setAttribute('visible', 'true');
+    }
+
+    function closeArDetail() { arDetailEl.setAttribute('visible', 'false'); }
 
     // ── MindAR wiring ────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
@@ -715,7 +654,7 @@
         const el = document.getElementById(`target-${i}`);
         if (!el) continue;
         if (FRONT_TARGETS.has(i)) { makePinFor(el); }
-        if (i === 0) { makeSpeakerFor(el); makeCaption(el); }
+        if (i === 0) { makeSpeakerFor(el); makeCaption(el); makeArLabels(el); makeArDetail(el); }
         el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
         el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
       }
