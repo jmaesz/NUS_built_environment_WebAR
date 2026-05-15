@@ -227,6 +227,8 @@
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
+    <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
 
     <!-- Targets: 0=FRONT 1=TOP 2=LEFT 3=RIGHT 4=FRONT-LEFT 5=FRONT-RIGHT -->
     <!-- Target 0: FRONT -->
@@ -553,12 +555,28 @@
         [ 0.18,  -0.325,  0.11],
       ];
 
+      function fixTreeColors(tree) {
+        tree.addEventListener('model-loaded', () => {
+          tree.object3D.traverse(node => {
+            if (!node.isMesh || !node.material) return;
+            const mats = Array.isArray(node.material) ? node.material : [node.material];
+            mats.forEach(mat => {
+              [mat.map, mat.emissiveMap, mat.aoMap, mat.normalMap, mat.roughnessMap, mat.metalnessMap].forEach(tex => {
+                if (tex) { tex.colorSpace = THREE.SRGBColorSpace; tex.needsUpdate = true; }
+              });
+              mat.needsUpdate = true;
+            });
+          });
+        });
+      }
+
       function makeTreesFor(targetEl) {
         TREE_POSITIONS.forEach(([x, y, z]) => {
           const tree = document.createElement('a-gltf-model');
           tree.setAttribute('src', '/ar/trees.glb');
           tree.setAttribute('position', `${x} ${y} ${z}`);
-          tree.setAttribute('scale', '0.04 0.04 0.04');
+          tree.setAttribute('scale', '0.002 0.002 0.002');
+          fixTreeColors(tree);
           targetEl.appendChild(tree);
         });
       }
