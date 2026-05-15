@@ -393,11 +393,44 @@
     });
 
     // ── Thermal camera mode ──────────────────────────────────────────────
-    // Each building in scene-colored.glb has a unique hue (from color-buildings.mjs).
-    // We scan the live camera frame by pixel hue and remap to jet thermal colormap.
-    // Hue sectors (each 45°): red→orange→olive→green→cyan→blue→purple→pink
-    // Temperature values (0=cold/blue, 1=hot/red) assigned per sector for visual diversity
-    const HUE_TEMPS = [0.95, 0.80, 0.50, 0.35, 0.65, 0.20, 0.42, 0.72];
+    // Exact RGB colours from color-buildings.mjs output + assigned mock temperature.
+    // Only pixels that match one of these specific building colours get remapped.
+    // Everything else (white background, grey terrain) stays as natural camera colour.
+    const BUILDING_COLORS = [
+      { h: 0,   s: 0.72, v: 0.93, temp: 0.95 }, // Techno Edge  — red
+      { h: 210, s: 0.77, v: 0.86, temp: 0.38 }, // LT4          — sky blue
+      { h: 145, s: 0.69, v: 0.70, temp: 0.55 }, // Info Tech    — green
+      { h: 38,  s: 0.93, v: 0.95, temp: 0.78 }, // E5           — amber
+      { h: 270, s: 0.64, v: 0.86, temp: 0.50 }, // SDE1         — purple
+      { h: 340, s: 0.60, v: 0.95, temp: 0.68 }, // SDE2         — pink
+      { h: 180, s: 0.86, v: 0.74, temp: 0.85 }, // SDE4         — teal
+      { h: 28,  s: 0.83, v: 0.86, temp: 0.62 }, // EW1          — orange
+      { h: 100, s: 0.51, v: 0.55, temp: 0.45 }, // SDE3         — olive
+      { h: 240, s: 0.51, v: 0.82, temp: 0.35 }, // Raffles H1   — indigo
+      { h: 330, s: 0.72, v: 0.78, temp: 0.72 }, // Raffles Kuok — magenta
+      { h: 195, s: 0.76, v: 0.62, temp: 0.42 }, // Raffles H2   — steel blue
+      { h: 52,  s: 0.82, v: 0.85, temp: 0.82 }, // Raffles H3   — yellow
+      { h: 0,   s: 0.67, v: 0.60, temp: 0.30 }, // Raffles H4   — dark red
+      { h: 215, s: 0.69, v: 0.65, temp: 0.22 }, // Raffles H5   — navy
+      { h: 95,  s: 0.56, v: 0.80, temp: 0.58 }, // CFA Studio   — lime
+      { h: 33,  s: 0.72, v: 0.70, temp: 0.65 }, // E7           — brown
+      { h: 310, s: 0.31, v: 0.80, temp: 0.70 }, // E6           — lavender
+      { h: 155, s: 0.83, v: 0.60, temp: 0.32 }, // T-Lab        — emerald
+      { h: 22,  s: 0.89, v: 0.90, temp: 0.75 }, // E8           — burnt orange
+    ];
+
+    function matchBuilding(h, s, v) {
+      if (s < 0.20) return null; // unsaturated = background/terrain, skip
+      let best = null, bestDist = 0.30; // tolerance threshold
+      for (const b of BUILDING_COLORS) {
+        const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h)) / 180;
+        const ds = Math.abs(s - b.s);
+        const dv = Math.abs(v - b.v);
+        const dist = dh * 2.0 + ds * 0.8 + dv * 0.4;
+        if (dist < bestDist) { bestDist = dist; best = b; }
+      }
+      return best;
+    }
 
     function rgbToHsv(r, g, b) {
       const rr = r / 255, gg = g / 255, bb = b / 255;
@@ -434,15 +467,15 @@
         const d = img.data;
         for (let i = 0; i < d.length; i += 4) {
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
-          if (s >= 0.18 && v >= 0.12) {
-            // Saturated = coloured building → remap to thermal
-            const sector = Math.min(7, Math.floor(h / 45));
+          const bld = matchBuilding(h, s, v);
+          if (bld) {
+            // Pixel matches a specific building colour — remap to thermal
             const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
-            const temp = Math.max(0, Math.min(1, HUE_TEMPS[sector] + (lum - 0.5) * 0.12));
+            const temp = Math.max(0, Math.min(1, bld.temp + (lum - 0.5) * 0.12));
             const [tr, tg, tb] = jetColor(temp);
             d[i] = tr; d[i+1] = tg; d[i+2] = tb;
-            // else: leave pixel as-is (white background, grey terrain stay natural)
           }
+          // else: not a known building colour → leave pixel unchanged
         }
         thermalCtx.putImageData(img, 0, 0);
       }
