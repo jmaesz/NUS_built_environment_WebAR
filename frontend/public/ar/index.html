@@ -403,7 +403,7 @@
         }
         return lines;
       }
-      const boxH = +(countLines(AUDIO_TEXT) * LINE_H + PAD * 2).toFixed(3);
+      const boxH = +((countLines(AUDIO_TEXT) * LINE_H + PAD * 2) * (4 / 6)).toFixed(3);
 
       captionEl = document.createElement('a-entity');
       captionEl.setAttribute('position', '-0.88 0.325 0.02');
