@@ -567,11 +567,11 @@
     function makeSpeakerFor(targetEl) {
       // Container — left of building, same Y as pin
       speakerEl = document.createElement('a-entity');
-      speakerEl.setAttribute('position', '-0.58 0.325 0.02');
+      speakerEl.setAttribute('position', '-0.52 0.325 0.02');
 
       const model = document.createElement('a-gltf-model');
       model.setAttribute('src', '/ar/volume.glb');
-      model.setAttribute('scale', '0.05 0.05 0.05');
+      model.setAttribute('scale', '0.083 0.083 0.083');
       speakerEl.appendChild(model);
 
       // Label below
