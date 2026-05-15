@@ -578,28 +578,35 @@
       const label = document.createElement('a-text');
       label.setAttribute('value', "listen to building's detail");
       label.setAttribute('align', 'center');
-      label.setAttribute('color', '#ffffff');
+      label.setAttribute('color', '#000000');
       label.setAttribute('position', '0 -0.08 0.001');
       label.setAttribute('width', '0.5');
       speakerEl.appendChild(label);
 
       targetEl.appendChild(speakerEl);
 
-      // Direct Three.js raycasting on tap — bypasses A-Frame cursor issues in MindAR
-      const speakerMeshes = [];
-      model.addEventListener('model-loaded', () => {
-        speakerEl.object3D.traverse(n => { if (n.isMesh) speakerMeshes.push(n); });
-      });
-      sceneEl.canvas.addEventListener('click', evt => {
-        if (!speakerMeshes.length) return;
+      // Screen-space tap detection — project speaker 3D pos to 2D, check distance
+      function getSpeakerScreen() {
+        const worldPos = new THREE.Vector3();
+        speakerEl.object3D.getWorldPosition(worldPos);
+        worldPos.project(sceneEl.camera);
         const rect = sceneEl.canvas.getBoundingClientRect();
-        const mouse = new THREE.Vector2(
-          ((evt.clientX - rect.left) / rect.width) * 2 - 1,
-          -((evt.clientY - rect.top) / rect.height) * 2 + 1
-        );
-        const ray = new THREE.Raycaster();
-        ray.setFromCamera(mouse, sceneEl.camera);
-        if (ray.intersectObjects(speakerMeshes, true).length > 0) toggleAudio();
+        return {
+          x: (worldPos.x + 1) / 2 * rect.width  + rect.left,
+          y: (-worldPos.y + 1) / 2 * rect.height + rect.top
+        };
+      }
+
+      function handleTap(clientX, clientY) {
+        const sp = getSpeakerScreen();
+        const dx = clientX - sp.x, dy = clientY - sp.y;
+        if (Math.sqrt(dx*dx + dy*dy) < 70) toggleAudio();
+      }
+
+      document.addEventListener('click',    e => handleTap(e.clientX, e.clientY));
+      document.addEventListener('touchend', e => {
+        const t = e.changedTouches[0];
+        handleTap(t.clientX, t.clientY);
       });
     }
 
