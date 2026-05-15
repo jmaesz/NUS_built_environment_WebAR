@@ -400,12 +400,14 @@
     ];
 
     function matchBuilding(h, s, v) {
-      // Screen-rendered SDE4 teal is highly saturated (S≈0.86) and bright (V≈0.70+)
-      // Physical objects (pen cups, desk items) are duller — reject them with strict thresholds
-      if (s < 0.40 || v < 0.40) return null;
+      // Two-tier gate: shadowed teal stays saturated (S stays high) but gets dark (V drops).
+      // Physical dark objects are BOTH low-S and low-V — this rejects them.
+      const brightTeal = s >= 0.35 && v >= 0.35;   // normal lit surfaces
+      const shadowTeal = s >= 0.55 && v >= 0.15;   // shadowed overhang — still saturated, just dark
+      if (!brightTeal && !shadowTeal) return null;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
-        if (dh <= 24) return b; // ±24° catches slightly lit/shadowed roof faces
+        if (dh <= 24) return b;
       }
       return null;
     }
