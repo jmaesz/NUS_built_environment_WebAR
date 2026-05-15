@@ -440,6 +440,7 @@
     let thermalCanvas = null;
     let thermalCtx = null;
     let arCanvas = null; // set in loaded handler — avoids grabbing Chart.js canvas
+    let lockedMinY = -1, lockedMaxY = -1; // locked once on first detection, reset on toggle
 
     function thermalLoop() {
       if (!thermalActive || !thermalVideo || !thermalCanvas) return;
@@ -448,18 +449,23 @@
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
 
-        // Pass 1 — find the actual top/bottom Y of matched building pixels
-        // so the gradient is always normalized to the building's real extent in frame
-        let minY = THERMAL_H, maxY = 0;
-        for (let i = 0; i < d.length; i += 4) {
-          const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
-          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
-          const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
-          if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
+        // Pass 1 — find minY/maxY only if not yet locked
+        if (lockedMinY < 0) {
+          let minY = THERMAL_H, maxY = 0;
+          for (let i = 0; i < d.length; i += 4) {
+            const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
+            if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
+            const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+            if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
+          }
+          if (minY <= maxY) { lockedMinY = minY; lockedMaxY = maxY; } // lock on first valid frame
         }
-        const yRange = Math.max(maxY - minY, 1);
 
-        // Pass 2 — apply thermal colour; gradient spans exactly min→max Y of building
+        const useMinY = lockedMinY < 0 ? 0 : lockedMinY;
+        const useMaxY = lockedMaxY < 0 ? THERMAL_H : lockedMaxY;
+        const yRange = Math.max(useMaxY - useMinY, 1);
+
+        // Pass 2 — apply thermal colour using locked gradient
         for (let i = 0; i < d.length; i += 4) {
           const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
           d[i+3] = 0;
@@ -467,7 +473,7 @@
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
           if (matchBuilding(h, s, v)) {
             const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
-            const yNorm = (py - minY) / yRange; // 0 = top of building, 1 = bottom
+            const yNorm = (py - useMinY) / yRange; // 0 = top of building, 1 = bottom
             const posTemp = 0.90 - yNorm * 0.82; // top=red(0.90), bottom=blue(0.08)
             const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.20));
             const [tr, tg, tb] = jetColor(temp);
@@ -505,6 +511,7 @@
 
     function disableThermal() {
       thermalActive = false;
+      lockedMinY = -1; lockedMaxY = -1;
       if (thermalCanvas) thermalCanvas.style.display = 'none';
       document.getElementById('thermal-btn').classList.remove('active');
       document.getElementById('thermal-legend').classList.remove('visible');
