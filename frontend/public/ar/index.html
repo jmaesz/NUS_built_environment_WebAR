@@ -400,12 +400,12 @@
     ];
 
     function matchBuilding(h, s, v) {
-      // Screen-rendered SDE4 teal is highly saturated (S≈0.86) and bright (V≈0.70+)
-      // Physical objects (pen cups, desk items) are duller — reject them with strict thresholds
-      if (s < 0.40 || v < 0.40) return null;
+      // Roof faces are brightly lit → lower saturation (washed-out). Lower S gate to 0.22.
+      // Keep V gate to reject dark physical objects.
+      if (s < 0.22 || v < 0.35) return null;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
-        if (dh <= 24) return b; // ±24° catches slightly lit/shadowed roof faces
+        if (dh <= 30) return b; // ±30° catches lit/shadowed roof faces
       }
       return null;
     }
@@ -468,7 +468,9 @@
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
           if (matchBuilding(h, s, v)) {
             const yNorm = (py - minY) / yRange; // 0 = top (roof), 1 = bottom (shadow)
-            const t = 1 - yNorm;                // top→red(1.0), bottom→blue(0.0)
+            const tRaw = 1 - yNorm;             // top→red(1.0), bottom→blue(0.0)
+            const BANDS = 6;
+            const t = Math.round(tRaw * (BANDS - 1)) / (BANDS - 1); // quantize to 6 steps
             const [tr, tg, tb] = pcvColor(t);
             d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
           }
