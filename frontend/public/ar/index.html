@@ -551,41 +551,26 @@
     }
 
     let speakerEl = null;
+    let speakerCircle = null;
     let isSpeaking = false;
 
-    function updateSpeakerTexture(speaking) {
-      if (!speakerEl) return;
-      const canvas = document.createElement('canvas');
-      canvas.width = 128; canvas.height = 128;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = speaking ? '#E53935' : '#3949AB';
-      ctx.beginPath(); ctx.arc(64, 64, 62, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.moveTo(38, 48); ctx.lineTo(55, 48); ctx.lineTo(76, 30);
-      ctx.lineTo(76, 98); ctx.lineTo(55, 80); ctx.lineTo(38, 80);
-      ctx.closePath(); ctx.fill();
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 6; ctx.lineCap = 'round';
-      ctx.beginPath(); ctx.arc(84, 64, 16, -Math.PI/3, Math.PI/3); ctx.stroke();
-      ctx.beginPath(); ctx.arc(84, 64, 28, -Math.PI/3, Math.PI/3); ctx.stroke();
-      speakerEl.setAttribute('material', `src: ${canvas.toDataURL()}; shader: flat; transparent: true`);
+    function setSpeakerColor(speaking) {
+      if (!speakerCircle) return;
+      speakerCircle.setAttribute('material', `color: ${speaking ? '#E53935' : '#3949AB'}; shader: flat; side: double`);
     }
 
     function toggleAudio() {
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
-        isSpeaking = false;
-        updateSpeakerTexture(false);
-        return;
+        isSpeaking = false; setSpeakerColor(false); return;
       }
       const utter = new SpeechSynthesisUtterance(AUDIO_TEXT);
       utter.rate = 0.95;
       const trySpeak = () => {
         const v = pickFemaleVoice();
         if (v) utter.voice = v;
-        utter.onend = utter.onerror = () => { isSpeaking = false; updateSpeakerTexture(false); };
-        isSpeaking = true;
-        updateSpeakerTexture(true);
+        utter.onend = utter.onerror = () => { isSpeaking = false; setSpeakerColor(false); };
+        isSpeaking = true; setSpeakerColor(true);
         window.speechSynthesis.speak(utter);
       };
       if (window.speechSynthesis.getVoices().length) { trySpeak(); }
@@ -593,14 +578,40 @@
     }
 
     function makeSpeakerFor(targetEl) {
-      speakerEl = document.createElement('a-plane');
-      speakerEl.setAttribute('width', '0.06');
-      speakerEl.setAttribute('height', '0.06');
-      speakerEl.setAttribute('position', '-0.42 0.22 0.04');
+      // Container — sits to the LEFT of the building at same height as pin (Y=0.325)
+      speakerEl = document.createElement('a-entity');
+      speakerEl.setAttribute('position', '-0.58 0.325 0.02');
       speakerEl.setAttribute('class', 'ar-clickable');
+
+      // Blue disc background
+      speakerCircle = document.createElement('a-circle');
+      speakerCircle.setAttribute('radius', '0.04');
+      speakerCircle.setAttribute('segments', '32');
+      speakerCircle.setAttribute('material', 'color: #3949AB; shader: flat; side: double');
+      speakerEl.appendChild(speakerCircle);
+
+      // Speaker wave lines using thin boxes
+      [[-0.012, 0, 0.001, 0.006, 0.028, 0.001],
+       [ 0.006, 0, 0.001, 0.006, 0.036, 0.001],
+       [ 0.022, 0, 0.001, 0.006, 0.044, 0.001]].forEach(([x,y,z,w,h,d]) => {
+        const bar = document.createElement('a-box');
+        bar.setAttribute('position', `${x} ${y} ${z}`);
+        bar.setAttribute('width', `${w}`); bar.setAttribute('height', `${h}`); bar.setAttribute('depth', `${d}`);
+        bar.setAttribute('material', 'color: #ffffff; shader: flat');
+        speakerEl.appendChild(bar);
+      });
+
+      // Label below
+      const label = document.createElement('a-text');
+      label.setAttribute('value', 'LISTEN');
+      label.setAttribute('align', 'center');
+      label.setAttribute('color', '#ffffff');
+      label.setAttribute('position', '0 -0.058 0.001');
+      label.setAttribute('width', '0.38');
+      speakerEl.appendChild(label);
+
       speakerEl.addEventListener('click', toggleAudio);
       targetEl.appendChild(speakerEl);
-      updateSpeakerTexture(false);
     }
 
     // ── MindAR wiring ────────────────────────────────────────────────────
