@@ -546,6 +546,53 @@
 
     // ── MindAR wiring ────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
+      // Strip red boxes and grey anchor dots from every target
+      document.querySelectorAll('[id^="target-"] a-box, [id^="target-"] a-sphere').forEach(el => el.remove());
+
+      // ── 3D location pin on Target 3 (TOP) ──────────────────────────
+      const topTarget = document.getElementById('target-3');
+      if (topTarget) {
+        // Bobbing group
+        const pinGroup = document.createElement('a-entity');
+        pinGroup.setAttribute('animation', 'property: position; from: 0 0 0.08; to: 0 0 0.16; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
+
+        // Body sphere
+        const body = document.createElement('a-sphere');
+        body.setAttribute('radius', '0.09');
+        body.setAttribute('color', '#FF1744');
+        body.setAttribute('material', 'roughness:0.3;metalness:0.15');
+        pinGroup.appendChild(body);
+
+        // Dark inner sphere → simulates the hole
+        const hole = document.createElement('a-sphere');
+        hole.setAttribute('radius', '0.048');
+        hole.setAttribute('color', '#330000');
+        hole.setAttribute('position', '0 0 0.06');
+        hole.setAttribute('material', 'shader:flat');
+        pinGroup.appendChild(hole);
+
+        // Spike — tip points away from camera (-Z = into building surface)
+        const spike = document.createElement('a-cone');
+        spike.setAttribute('radius-top', '0.006');
+        spike.setAttribute('radius-bottom', '0.072');
+        spike.setAttribute('height', '0.14');
+        spike.setAttribute('color', '#CC0011');
+        spike.setAttribute('material', 'roughness:0.3;metalness:0.15');
+        spike.setAttribute('rotation', '-90 0 0');
+        spike.setAttribute('position', '0 0 -0.1');
+        pinGroup.appendChild(spike);
+
+        topTarget.appendChild(pinGroup);
+
+        // Soft shadow on the target surface
+        const shadow = document.createElement('a-circle');
+        shadow.setAttribute('radius', '0.07');
+        shadow.setAttribute('color', '#000000');
+        shadow.setAttribute('material', 'shader:flat;transparent:true;opacity:0.18');
+        shadow.setAttribute('position', '0 0 0.002');
+        topTarget.appendChild(shadow);
+      }
+
       for (let i = 0; i < 12; i++) {
         const el = document.getElementById(`target-${i}`);
         el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
