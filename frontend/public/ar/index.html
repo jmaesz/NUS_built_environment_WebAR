@@ -114,21 +114,6 @@
     #detail-bar-fill { height: 100%; border-radius: 3px; transition: width 0.75s cubic-bezier(0.4,0,0.2,1); width: 0%; }
     #detail-pct { font-size: 10px; color: rgba(255,255,255,0.38); letter-spacing: 0.06em; text-transform: uppercase; }
 
-    #audio-btn {
-      position: fixed; top: 56px; left: 16px; z-index: 1000;
-      display: flex; align-items: center; gap: 10px;
-      background: rgba(255,255,255,0.92); border-radius: 8px;
-      padding: 10px 14px; cursor: pointer;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
-      border: none; font-family: -apple-system, sans-serif;
-      transition: background 0.15s;
-    }
-    #audio-btn:active { background: rgba(220,230,255,0.97); }
-    #audio-btn svg { flex-shrink: 0; }
-    #audio-btn span { font-size: 13px; color: #222; font-weight: 500; }
-    #audio-btn.speaking svg { animation: pulse-speaker 0.6s ease-in-out infinite alternate; }
-    @keyframes pulse-speaker { from { opacity: 1; } to { opacity: 0.4; } }
-
     #maps-panel {
       position: fixed; bottom: 16px; right: 16px; z-index: 1000;
       width: 180px; border-radius: 12px; overflow: hidden;
@@ -160,14 +145,6 @@
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
-  <button id="audio-btn" onclick="toggleAudio()">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-      <path d="M3 9v6h4l5 5V4L7 9H3z" fill="#5C6BC0"/>
-      <path d="M16.5 12A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02z" fill="#5C6BC0"/>
-      <path d="M14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06C18.01 19.86 21 16.28 21 12c0-4.28-2.99-7.86-7-8.77z" fill="#5C6BC0"/>
-    </svg>
-    <span>click to listen to building details</span>
-  </button>
   <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
     <div id="maps-panel-img-wrap">
       <img src="/bg1.png" alt="SDE4">
@@ -249,7 +226,9 @@
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false">
+      <a-cursor raycaster="objects: .ar-clickable; far: 20" material="opacity: 0" geometry="primitive: ring; radiusInner: 0; radiusOuter: 0" fuse="false"></a-cursor>
+    </a-camera>
     <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
     <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
 
@@ -563,20 +542,65 @@
       `and a smart building management system that monitors and optimises energy use in real time. ` +
       `SDE 4 accommodates over 1,200 students and staff, and serves as a living laboratory for sustainable design research.`;
 
-    let ttsUtterance = null;
+    function pickFemaleVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      return voices.find(v => /samantha|victoria|karen|moira|tessa|fiona|zira|google uk english female|google us english/i.test(v.name))
+          || voices.find(v => v.lang.startsWith('en') && /female/i.test(v.name))
+          || voices.find(v => v.lang.startsWith('en'))
+          || voices[0] || null;
+    }
+
+    let speakerEl = null;
+    let isSpeaking = false;
+
+    function updateSpeakerTexture(speaking) {
+      if (!speakerEl) return;
+      const canvas = document.createElement('canvas');
+      canvas.width = 128; canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = speaking ? '#E53935' : '#3949AB';
+      ctx.beginPath(); ctx.arc(64, 64, 62, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(38, 48); ctx.lineTo(55, 48); ctx.lineTo(76, 30);
+      ctx.lineTo(76, 98); ctx.lineTo(55, 80); ctx.lineTo(38, 80);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 6; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(84, 64, 16, -Math.PI/3, Math.PI/3); ctx.stroke();
+      ctx.beginPath(); ctx.arc(84, 64, 28, -Math.PI/3, Math.PI/3); ctx.stroke();
+      speakerEl.setAttribute('material', `src: ${canvas.toDataURL()}; shader: flat; transparent: true`);
+    }
+
     function toggleAudio() {
-      const btn = document.getElementById('audio-btn');
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
-        btn.classList.remove('speaking');
+        isSpeaking = false;
+        updateSpeakerTexture(false);
         return;
       }
-      ttsUtterance = new SpeechSynthesisUtterance(AUDIO_TEXT);
-      ttsUtterance.rate = 0.95;
-      ttsUtterance.onend = () => btn.classList.remove('speaking');
-      ttsUtterance.onerror = () => btn.classList.remove('speaking');
-      btn.classList.add('speaking');
-      window.speechSynthesis.speak(ttsUtterance);
+      const utter = new SpeechSynthesisUtterance(AUDIO_TEXT);
+      utter.rate = 0.95;
+      const trySpeak = () => {
+        const v = pickFemaleVoice();
+        if (v) utter.voice = v;
+        utter.onend = utter.onerror = () => { isSpeaking = false; updateSpeakerTexture(false); };
+        isSpeaking = true;
+        updateSpeakerTexture(true);
+        window.speechSynthesis.speak(utter);
+      };
+      if (window.speechSynthesis.getVoices().length) { trySpeak(); }
+      else { window.speechSynthesis.onvoiceschanged = trySpeak; }
+    }
+
+    function makeSpeakerFor(targetEl) {
+      speakerEl = document.createElement('a-plane');
+      speakerEl.setAttribute('width', '0.06');
+      speakerEl.setAttribute('height', '0.06');
+      speakerEl.setAttribute('position', '-0.42 0.22 0.04');
+      speakerEl.setAttribute('class', 'ar-clickable');
+      speakerEl.addEventListener('click', toggleAudio);
+      targetEl.appendChild(speakerEl);
+      updateSpeakerTexture(false);
     }
 
     // ── MindAR wiring ────────────────────────────────────────────────────
@@ -605,6 +629,7 @@
         const el = document.getElementById(`target-${i}`);
         if (!el) continue;
         if (FRONT_TARGETS.has(i)) { makePinFor(el); }
+        if (i === 0) { makeSpeakerFor(el); }
         el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
         el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
       }
