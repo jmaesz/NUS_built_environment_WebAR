@@ -3,13 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>SDE4 AR</title>
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <title>SDE4 Thermal</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
+    body { width: 100vw; height: 100dvh; overflow: hidden; background: #000; font-family: -apple-system, sans-serif; }
+
+    #camera-video {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    #thermal-canvas {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: none; pointer-events: none;
+    }
 
     #back-btn {
       position: fixed; top: 16px; left: 16px; z-index: 1000;
@@ -17,67 +24,6 @@
       border: 1px solid rgba(255,255,255,0.25);
       padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
       cursor: pointer; border-radius: 4px; text-decoration: none;
-    }
-    #scan-hint {
-      position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
-      z-index: 1000; background: rgba(0,0,0,0.55); color: #fff;
-      padding: 11px 18px; font-size: 11px; letter-spacing: 0.1em;
-      border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
-    }
-
-    /* ── Chart panel ── */
-    #chart-panel {
-      position: fixed; top: 12px; right: 12px; z-index: 999;
-      width: 220px;
-      background: rgba(255,255,255,0.18);
-      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; padding: 14px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
-      opacity: 0; transform: translateX(16px);
-      transition: opacity 0.35s ease, transform 0.35s ease; pointer-events: none;
-    }
-    #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
-    #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
-    #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
-    #chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    #chart-container { position: relative; width: 95px; height: 95px; flex-shrink: 0; }
-    .legend { display: flex; flex-direction: column; gap: 7px; flex: 1; }
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-    .legend-label { font-size: 9px; color: #333; flex: 1; }
-    .legend-value { font-size: 9px; font-weight: 600; color: #111; }
-    .divider { height: 1px; background: rgba(0,0,0,0.12); margin: 8px 0; }
-    #total-row { display: flex; justify-content: space-between; align-items: center; }
-    #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
-    #total-value { font-size: 11px; font-weight: 700; color: #111; }
-
-
-    #maps-panel {
-      position: fixed; bottom: 16px; right: 16px; z-index: 1000;
-      width: 180px; border-radius: 12px; overflow: hidden;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
-      display: none; opacity: 0; transform: translateY(8px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-      -webkit-tap-highlight-color: transparent; text-decoration: none;
-    }
-    #maps-panel.visible { opacity: 1; transform: translateY(0); }
-    #maps-panel-img-wrap { position: relative; }
-    #maps-panel-img-wrap img { display: block; width: 100%; height: auto; }
-    #maps-panel-top {
-      position: absolute; top: 8px; left: 8px;
-      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
-      border-radius: 6px; padding: 4px 8px;
-      font-size: 12px; font-weight: 800; color: #fff; letter-spacing: 0.06em;
-    }
-    #maps-panel-bottom {
-      position: absolute; bottom: 0; left: 0; right: 0;
-      background: linear-gradient(transparent, rgba(0,0,0,0.72));
-      padding: 18px 10px 10px;
-    }
-    #maps-panel-addr-lbl { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.4; margin-bottom: 5px; }
-    #maps-panel-cta {
-      display: flex; align-items: center; gap: 4px;
-      font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em;
     }
 
     #thermal-btn {
@@ -88,6 +34,7 @@
       cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
     }
     #thermal-btn.active { background: rgba(220,60,20,0.85); color: #fff; border-color: #ff7043; }
+
     #thermal-legend {
       position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
       z-index: 1000; display: none; flex-direction: column; align-items: center; gap: 4px;
@@ -100,327 +47,59 @@
     }
     #thermal-legend-labels { display: flex; justify-content: space-between; width: 140px; }
     #thermal-legend-labels span { font-size: 9px; color: #ddd; letter-spacing: 0.05em; }
+
+    #hint {
+      position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; background: rgba(0,0,0,0.55); color: #fff;
+      padding: 11px 18px; font-size: 11px; letter-spacing: 0.1em;
+      border-radius: 4px; pointer-events: none; white-space: nowrap;
+    }
   </style>
 </head>
 <body>
+  <video id="camera-video" autoplay playsinline muted></video>
+  <canvas id="thermal-canvas"></canvas>
+
   <a href="/" id="back-btn">← BACK</a>
   <button id="thermal-btn" onclick="toggleThermal()">THERMAL</button>
   <div id="thermal-legend">
     <div id="thermal-legend-bar"></div>
     <div id="thermal-legend-labels"><span>COLD</span><span>HOT</span></div>
   </div>
-  <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
-    <div id="maps-panel-img-wrap">
-      <img src="/bg1.png" alt="SDE4">
-      <div id="maps-panel-top">SDE4</div>
-      <div id="maps-panel-bottom">
-        <div id="maps-panel-addr-lbl">NUS School of Design<br>and Environment 4</div>
-        <div id="maps-panel-cta">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-          Open in Google Maps
-        </div>
-      </div>
-    </div>
-  </a>
-  <div id="scan-hint">POINT CAMERA AT SDE4</div>
-
-  <!-- Chart panel -->
-  <div id="chart-panel">
-    <div id="chart-building-name">SDE4</div>
-    <div id="chart-subtitle">Energy Use Intensity</div>
-    <div id="chart-row">
-      <div id="chart-container"><canvas id="energy-chart"></canvas></div>
-      <div class="legend" id="legend"></div>
-    </div>
-    <div class="divider"></div>
-    <div id="total-row">
-      <span id="total-label">Total EUI</span>
-      <span id="total-value"></span>
-    </div>
-  </div>
-
-  <!-- Detail panel -->
-  <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 6; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0001;"
-    color-space="sRGB" renderer="colorManagement: true"
-    vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
-  >
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
-    <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
-
-    <!-- Targets: 0=FRONT 1=TOP 2=LEFT 3=RIGHT 4=FRONT-LEFT 5=FRONT-RIGHT -->
-    <!-- Target 0: FRONT -->
-    <a-entity id="target-0" mindar-image-target="targetIndex: 0">
-      <!-- Glowing red frame -->
-      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <!-- Anchor dots -->
-      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <!-- Diagonal annotation lines -->
-      <!-- Invisible marker entities for HTML label anchoring -->
-      <a-entity id="m-eq-0" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-0" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-0" position="0.85 -0.42 0.02"></a-entity>
-      <!-- 3D building volume overlay -->
-    </a-entity>
-
-    <!-- Target 1: FRONT -->
-    <a-entity id="target-1" mindar-image-target="targetIndex: 1">
-      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-1" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-1" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-1" position="0.85 -0.42 0.02"></a-entity>
-    </a-entity>
-
-    <!-- Target 2: LEFT -->
-    <a-entity id="target-2" mindar-image-target="targetIndex: 2">
-      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-2" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-2" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-2" position="0.85 -0.42 0.02"></a-entity>
-    </a-entity>
-
-    <!-- Target 3: TOP -->
-    <a-entity id="target-3" mindar-image-target="targetIndex: 3">
-      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-3" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-3" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-3" position="0.85 -0.42 0.02"></a-entity>
-    </a-entity>
-
-    <!-- Target 4: FRONT-LEFT -->
-    <a-entity id="target-4" mindar-image-target="targetIndex: 4">
-      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-4" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-4" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-4" position="0.85 -0.42 0.02"></a-entity>
-    </a-entity>
-
-    <!-- Target 5: FRONT-RIGHT -->
-    <a-entity id="target-5" mindar-image-target="targetIndex: 5">
-      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
-      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
-      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-5" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-5" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-5" position="0.85 -0.42 0.02"></a-entity>
-    </a-entity>
-
-
-  </a-scene>
+  <div id="hint">POINT CAMERA AT SDE4 MODEL</div>
 
   <script>
-    const DETAILS = {
-      equipment: {
-        label: 'Equipment', value: '32 kWh/m²/yr', pct: 37, color: '#F5A623',
-        desc: 'Computers, monitors, lab equipment and studio devices. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices.'
-      },
-      cooling: {
-        label: 'Cooling', value: '37 kWh/m²/yr', pct: 43, color: '#4A90D9',
-        desc: 'Hybrid cooling system combining chilled ceilings and natural ventilation reduces HVAC load by ~30% vs a conventional building. Over 50% of spaces are naturally ventilated.'
-      },
-      lighting: {
-        label: 'Lighting', value: '17 kWh/m²/yr', pct: 20, color: '#7ED321',
-        desc: 'Full LED with daylight-linked dimming sensors. South-facing shading fins and deep overhangs maximise natural daylight, cutting artificial lighting hours significantly.'
-      }
-    };
+    // ── Camera ───────────────────────────────────────────────────────────
+    const video = document.getElementById('camera-video');
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
+      .then(stream => { video.srcObject = stream; })
+      .catch(err => console.error('Camera error:', err));
 
-    const BUILDING_ENERGY = { total: 86, components: [
-      { label: 'Cooling', value: 37, color: '#4A90D9' },
-      { label: 'Equipment', value: 32, color: '#F5A623' },
-      { label: 'Lighting', value: 17, color: '#7ED321' },
-    ]};
-
-    const chartPanel  = document.getElementById('chart-panel');
-    const scanHint    = document.getElementById('scan-hint');
-    const mapsPanel   = document.getElementById('maps-panel');
-    let chartInstance = null;
-    let foundTargets  = new Set();
-    let mapsHideTimer = null;
-
-
-    // ── Chart ────────────────────────────────────────────────────────────
-    function showChart() {
-      if (!chartInstance) {
-        const { components, total } = BUILDING_ENERGY;
-        document.getElementById('total-value').textContent = total + ' kWh/m²/yr';
-        const legend = document.getElementById('legend');
-        legend.innerHTML = '';
-        components.forEach(c => {
-          legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span class="legend-label">${c.label}</span><span class="legend-value">${c.value} kWh</span></div>`;
-        });
-        const ctx = document.getElementById('energy-chart').getContext('2d');
-        chartInstance = new Chart(ctx, {
-          type: 'doughnut',
-          data: { labels: components.map(c=>c.label), datasets: [{ data: components.map(c=>c.value), backgroundColor: components.map(c=>c.color), borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' }] },
-          options: { cutout: '60%', plugins: { legend: { display: false } }, animation: { duration: 600 } }
-        });
-      }
-      chartPanel.classList.add('visible');
-      scanHint.style.opacity = '0';
-      if (mapsHideTimer) { clearTimeout(mapsHideTimer); mapsHideTimer = null; }
-      mapsPanel.style.display = 'block';
-      requestAnimationFrame(() => mapsPanel.classList.add('visible'));
-    }
-
-    function hideUI() {
-      if (foundTargets.size > 0) return;
-      chartPanel.classList.remove('visible');
-      closeDetail();
-      scanHint.style.opacity = '1';
-      mapsPanel.classList.remove('visible');
-      mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
-      ['equipment','cooling','lighting'].forEach(t => {
-        document.getElementById('ar-label-' + t).style.display = 'none';
-        const l = document.getElementById('line-' + t);
-        if (l) l.setAttribute('visibility', 'hidden');
-      });
-    }
-
-    // ── HTML label overlay — projects 3D marker world pos → screen px ───
-    const sceneEl = document.querySelector('a-scene');
-    // ── Global AR tap system ─────────────────────────────────────────────
-    const _arVec = new THREE.Vector3();
-    const arTaps = []; // { entity, radius, fn }
-
-    function arScreenPos(entity) {
-      entity.object3D.getWorldPosition(_arVec);
-      _arVec.project(sceneEl.camera);
-      const r = sceneEl.canvas.getBoundingClientRect();
-      return { x: (_arVec.x + 1) / 2 * r.width + r.left,
-               y: (-_arVec.y + 1) / 2 * r.height + r.top };
-    }
-
-    function dispatchArTap(cx, cy) {
-      for (const t of arTaps) {
-        if (!t.entity || !t.entity.object3D) continue;
-        const sp = arScreenPos(t.entity);
-        const dx = cx - sp.x, dy = cy - sp.y;
-        if (Math.sqrt(dx * dx + dy * dy) < t.radius) { t.fn(); return; }
-      }
-    }
-
-    let _lastTouch = 0;
-    document.addEventListener('touchend', e => {
-      _lastTouch = Date.now();
-      const t = e.changedTouches[0];
-      dispatchArTap(t.clientX, t.clientY);
-    });
-    document.addEventListener('click', e => {
-      if (Date.now() - _lastTouch < 500) return;
-      dispatchArTap(e.clientX, e.clientY);
-    });
-
-    // ── Thermal camera mode ──────────────────────────────────────────────
-    // Only SDE4's exact colour (rgb 26,189,189 → teal) gets thermal remapped.
-    // All other building colours stay as natural camera colours.
+    // ── Thermal ──────────────────────────────────────────────────────────
     const BUILDING_COLORS = [
-      { h: 180, s: 0.86, v: 0.74, temp: 0.85 }, // SDE4 — teal rgb(26,189,189)
+      { h: 180 }, // SDE4 — teal rgb(26,189,189)
     ];
 
     function matchBuilding(h, s, v) {
-      // Two-tier gate: shadowed teal stays saturated (S stays high) but gets dark (V drops).
-      // Physical dark objects are BOTH low-S and low-V — this rejects them.
-      const brightTeal = s >= 0.35 && v >= 0.35;   // normal lit surfaces
-      const shadowTeal = s >= 0.55 && v >= 0.15;   // shadowed overhang — still saturated, just dark
-      if (!brightTeal && !shadowTeal) return null;
+      const brightTeal = s >= 0.35 && v >= 0.35;
+      const shadowTeal = s >= 0.55 && v >= 0.15;
+      if (!brightTeal && !shadowTeal) return false;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
-        if (dh <= 24) return b;
+        if (dh <= 24) return true;
       }
-      return null;
+      return false;
     }
 
     function rgbToHsv(r, g, b) {
-      const rr = r / 255, gg = g / 255, bb = b / 255;
-      const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb), d = max - min;
-      const s = max === 0 ? 0 : d / max;
+      const rr = r/255, gg = g/255, bb = b/255;
+      const max = Math.max(rr,gg,bb), min = Math.min(rr,gg,bb), d = max-min;
+      const s = max === 0 ? 0 : d/max;
       let h = 0;
       if (d !== 0) {
-        if (max === rr)      h = ((gg - bb) / d % 6 + 6) % 6;
-        else if (max === gg) h = (bb - rr) / d + 2;
-        else                 h = (rr - gg) / d + 4;
+        if (max === rr)      h = ((gg-bb)/d % 6 + 6) % 6;
+        else if (max === gg) h = (bb-rr)/d + 2;
+        else                 h = (rr-gg)/d + 4;
         h *= 60;
       }
       return [h, s, max];
@@ -428,37 +107,44 @@
 
     function jetColor(t) {
       const c = v => Math.round(255 * Math.max(0, Math.min(1, v)));
-      return [c(1.5 - Math.abs(4*t - 3)), c(1.5 - Math.abs(4*t - 2)), c(1.5 - Math.abs(4*t - 1))];
+      return [c(1.5-Math.abs(4*t-3)), c(1.5-Math.abs(4*t-2)), c(1.5-Math.abs(4*t-1))];
     }
 
     const THERMAL_W = 640, THERMAL_H = 480;
     const T_X0 = Math.round(THERMAL_W * 0.10), T_X1 = Math.round(THERMAL_W * 0.90);
     const T_Y0 = Math.round(THERMAL_H * 0.05), T_Y1 = Math.round(THERMAL_H * 0.75);
-    let thermalActive = false;
-    let thermalVideo = null;
-    let thermalAnimId = null;
-    let thermalCanvas = null;
-    let thermalCtx = null;
-    let arCanvas = null; // set in loaded handler — avoids grabbing Chart.js canvas
-    let lockedMinY = -1, lockedMaxY = -1; // locked once on first detection, reset on toggle
+
+    let thermalActive = false, thermalAnimId = null;
+    let thermalCanvas = null, thermalCtx = null;
+    let lockedMinY = -1, lockedMaxY = -1;
+
+    function setupThermalCanvas() {
+      if (thermalCanvas) return true;
+      if (video.readyState < 1) return false;
+      thermalCanvas = document.getElementById('thermal-canvas');
+      thermalCanvas.width = THERMAL_W;
+      thermalCanvas.height = THERMAL_H;
+      thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
+      return true;
+    }
 
     function thermalLoop() {
-      if (!thermalActive || !thermalVideo || !thermalCanvas) return;
-      if (thermalVideo.readyState >= 2) {
-        thermalCtx.drawImage(thermalVideo, 0, 0, THERMAL_W, THERMAL_H);
+      if (!thermalActive || !thermalCanvas) return;
+      if (video.readyState >= 2) {
+        thermalCtx.drawImage(video, 0, 0, THERMAL_W, THERMAL_H);
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
 
-        // Pass 1 — find minY/maxY only if not yet locked
+        // Pass 1 — lock minY/maxY on first valid frame
         if (lockedMinY < 0) {
           let minY = THERMAL_H, maxY = 0;
           for (let i = 0; i < d.length; i += 4) {
-            const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
+            const px = (i>>2) % THERMAL_W, py = Math.floor((i>>2) / THERMAL_W);
             if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
-            const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
-            if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
+            const [h,s,v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+            if (matchBuilding(h,s,v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
           }
-          if (minY <= maxY) { lockedMinY = minY; lockedMaxY = maxY; } // lock on first valid frame
+          if (minY <= maxY) { lockedMinY = minY; lockedMaxY = maxY; }
         }
 
         const useMinY = lockedMinY < 0 ? 0 : lockedMinY;
@@ -467,17 +153,17 @@
 
         // Pass 2 — apply thermal colour using locked gradient
         for (let i = 0; i < d.length; i += 4) {
-          const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
+          const px = (i>>2) % THERMAL_W, py = Math.floor((i>>2) / THERMAL_W);
           d[i+3] = 0;
           if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
-          const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
-          if (matchBuilding(h, s, v)) {
-            const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
-            const yNorm = (py - useMinY) / yRange; // 0 = top of building, 1 = bottom
-            const posTemp = 0.90 - yNorm * 0.82; // top=red(0.90), bottom=blue(0.08)
-            const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.20));
-            const [tr, tg, tb] = jetColor(temp);
-            d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
+          const [h,s,v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+          if (matchBuilding(h,s,v)) {
+            const lum = (d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114) / 255;
+            const yNorm = (py - useMinY) / yRange;
+            const posTemp = 0.90 - yNorm * 0.82;
+            const temp = Math.max(0, Math.min(1, posTemp + (lum-0.5)*0.20));
+            const [tr,tg,tb] = jetColor(temp);
+            d[i]=tr; d[i+1]=tg; d[i+2]=tb; d[i+3]=255;
           }
         }
         thermalCtx.putImageData(img, 0, 0);
@@ -485,25 +171,10 @@
       thermalAnimId = requestAnimationFrame(thermalLoop);
     }
 
-    function setupThermalCanvas() {
-      if (thermalCanvas) return true;
-      thermalVideo = document.querySelector('video');
-      if (!thermalVideo || !arCanvas) return false;
-      const aframeCanvas = arCanvas;
-      thermalCanvas = document.createElement('canvas');
-      thermalCanvas.width = THERMAL_W;
-      thermalCanvas.height = THERMAL_H;
-      thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;image-rendering:pixelated;pointer-events:none;';
-      aframeCanvas.parentNode.insertBefore(thermalCanvas, aframeCanvas);
-      thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
-      return true;
-    }
-
     function enableThermal() {
-      if (!setupThermalCanvas()) { console.warn('Thermal: video or canvas not ready yet'); return; }
+      if (!setupThermalCanvas()) { console.warn('Camera not ready'); return; }
       thermalActive = true;
       thermalCanvas.style.display = 'block';
-      // Video stays visible — canvas is transparent overlay, only matched pixels painted
       document.getElementById('thermal-btn').classList.add('active');
       document.getElementById('thermal-legend').classList.add('visible');
       thermalAnimId = requestAnimationFrame(thermalLoop);
@@ -521,303 +192,6 @@
     function toggleThermal() {
       if (thermalActive) disableThermal(); else enableThermal();
     }
-
-    // ── Audio narration ──────────────────────────────────────────────────
-    const AUDIO_TEXT = `SDE 4, the School of Design and Environment 4, is NUS's first net-zero energy building. ` +
-      `Completed in 2019, the building was designed by Serie Architects and Multiply Architects. ` +
-      `It features a highly insulated building envelope, extensive rooftop solar panels that generate around 500 kilowatt-hours per day, ` +
-      `and a smart building management system that monitors and optimises energy use in real time. ` +
-      `SDE 4 accommodates over 1,200 students and staff, and serves as a living laboratory for sustainable design research.`;
-
-    function pickFemaleVoice() {
-      const voices = window.speechSynthesis.getVoices();
-      return voices.find(v => /samantha|victoria|karen|moira|tessa|fiona|zira|google uk english female|google us english/i.test(v.name))
-          || voices.find(v => v.lang.startsWith('en') && /female/i.test(v.name))
-          || voices.find(v => v.lang.startsWith('en'))
-          || voices[0] || null;
-    }
-
-    let speakerEl = null;
-    let captionEl = null;
-    let captionTxt = null;
-    let typewriterTimer = null;
-
-    function hideCaption() {
-      if (captionEl) captionEl.setAttribute('visible', 'false');
-      if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
-    }
-
-    function makeCaption(targetEl) {
-      const WRAP = 36, LINE_H = 0.038, PAD = 0.04;
-
-      // Count wrapped lines for full text to size box tightly
-      function countLines(text) {
-        let lines = 1, col = 0;
-        for (const w of text.split(' ')) {
-          if (col > 0 && col + 1 + w.length > WRAP) { lines++; col = w.length; }
-          else { col += (col ? 1 : 0) + w.length; }
-        }
-        return lines;
-      }
-      const boxH = +((countLines(AUDIO_TEXT) * LINE_H + PAD * 2) * (4 / 6)).toFixed(3);
-
-      captionEl = document.createElement('a-entity');
-      captionEl.setAttribute('position', '-0.88 0.325 0.02');
-      captionEl.setAttribute('visible', 'false');
-
-      const bg = document.createElement('a-plane');
-      bg.setAttribute('width', '0.52');
-      bg.setAttribute('height', String(boxH));
-      bg.setAttribute('material', 'color: #000000; opacity: 0.9; shader: flat; side: double');
-      captionEl.appendChild(bg);
-
-      captionTxt = document.createElement('a-text');
-      captionTxt.setAttribute('value', '');
-      captionTxt.setAttribute('width', '0.46');
-      captionTxt.setAttribute('color', '#ffffff');
-      captionTxt.setAttribute('align', 'center');
-      captionTxt.setAttribute('baseline', 'top');
-      captionTxt.setAttribute('position', `0 ${+(boxH / 2 - PAD).toFixed(3)} 0.002`);
-      captionTxt.setAttribute('wrap-count', String(WRAP));
-      captionEl.appendChild(captionTxt);
-
-      targetEl.appendChild(captionEl);
-    }
-
-    function startTypewriter(utter) {
-      const words = AUDIO_TEXT.split(' ');
-      let wordIdx = 0;
-      let usedBoundary = false;
-
-      captionTxt.setAttribute('value', '');
-
-      // Use speech boundary events when available (Android/desktop)
-      utter.onboundary = evt => {
-        if (evt.name !== 'word') return;
-        usedBoundary = true;
-        if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
-        const end = evt.charIndex + (evt.charLength || 1);
-        captionTxt.setAttribute('value', AUDIO_TEXT.substring(0, end));
-      };
-
-      // Fallback timer for iOS Safari (no onboundary support) ~155 WPM
-      typewriterTimer = setInterval(() => {
-        if (usedBoundary) { clearInterval(typewriterTimer); typewriterTimer = null; return; }
-        if (wordIdx >= words.length) { clearInterval(typewriterTimer); typewriterTimer = null; return; }
-        wordIdx++;
-        captionTxt.setAttribute('value', words.slice(0, wordIdx).join(' '));
-      }, 390);
-    }
-
-    function toggleAudio() {
-      if (window.speechSynthesis.speaking) {
-        window.speechSynthesis.cancel();
-        hideCaption(); return;
-      }
-      const utter = new SpeechSynthesisUtterance(AUDIO_TEXT);
-      utter.rate = 0.95;
-      const trySpeak = () => {
-        const v = pickFemaleVoice();
-        if (v) utter.voice = v;
-        utter.onend = utter.onerror = hideCaption;
-        captionEl.setAttribute('visible', 'true');
-        startTypewriter(utter);
-        window.speechSynthesis.speak(utter);
-      };
-      if (window.speechSynthesis.getVoices().length) { trySpeak(); }
-      else { window.speechSynthesis.onvoiceschanged = trySpeak; }
-    }
-
-    function makeSpeakerFor(targetEl) {
-      // Container — left of building, same Y as pin
-      speakerEl = document.createElement('a-entity');
-      speakerEl.setAttribute('position', '-0.52 0.325 0.02');
-
-      const model = document.createElement('a-gltf-model');
-      model.setAttribute('src', '/ar/volume.glb');
-      model.setAttribute('scale', '0.083 0.083 0.083');
-      speakerEl.appendChild(model);
-
-      // Label below
-      const label = document.createElement('a-text');
-      label.setAttribute('value', "listen to building's detail");
-      label.setAttribute('align', 'center');
-      label.setAttribute('color', '#000000');
-      label.setAttribute('position', '0 -0.08 0.001');
-      label.setAttribute('width', '0.5');
-      speakerEl.appendChild(label);
-
-      targetEl.appendChild(speakerEl);
-      arTaps.push({ entity: speakerEl, radius: 70, fn: toggleAudio });
-    }
-
-    // ── AR label cards + detail panel ────────────────────────────────────
-    let arDetailEl = null;
-    let arDetailTitleEl, arDetailValueEl, arDetailDescEl, arDetailBarEl, arDetailPctEl, arDetailAccentEl;
-
-    const AR_LABEL_DEFS = [
-      { key: 'equipment', pos: '-0.55 -0.25 0.03', color: '#F5A623' },
-      { key: 'cooling',   pos: ' 0.00 -0.25 0.03', color: '#4A90D9' },
-      { key: 'lighting',  pos: ' 0.55 -0.25 0.03', color: '#7ED321' },
-    ];
-
-    function makeArLabels(targetEl) {
-      AR_LABEL_DEFS.forEach(({ key, pos, color }) => {
-        const d = DETAILS[key];
-        const card = document.createElement('a-entity');
-        card.setAttribute('position', pos);
-
-        const bg = document.createElement('a-plane');
-        bg.setAttribute('width', '0.26'); bg.setAttribute('height', '0.09');
-        bg.setAttribute('material', 'color:#111111; opacity:0.88; shader:flat; side:double');
-        card.appendChild(bg);
-
-        const bar = document.createElement('a-box');
-        bar.setAttribute('width', '0.007'); bar.setAttribute('height', '0.076'); bar.setAttribute('depth', '0.002');
-        bar.setAttribute('position', '-0.119 0 0.001');
-        bar.setAttribute('material', `color:${color}; shader:flat`);
-        card.appendChild(bar);
-
-        const title = document.createElement('a-text');
-        title.setAttribute('value', d.label.toUpperCase());
-        title.setAttribute('color', '#ffffff'); title.setAttribute('width', '0.21');
-        title.setAttribute('align', 'center'); title.setAttribute('position', '0 0.018 0.002');
-        title.setAttribute('wrap-count', '22');
-        card.appendChild(title);
-
-        const sub = document.createElement('a-text');
-        sub.setAttribute('value', 'Tap for details');
-        sub.setAttribute('color', '#aaaaaa'); sub.setAttribute('width', '0.17');
-        sub.setAttribute('align', 'center'); sub.setAttribute('position', '0 -0.014 0.002');
-        sub.setAttribute('wrap-count', '22');
-        card.appendChild(sub);
-
-        targetEl.appendChild(card);
-        arTaps.push({ entity: card, radius: 65, fn: () => showArDetail(key) });
-      });
-    }
-
-    function makeArDetail(targetEl) {
-      arDetailEl = document.createElement('a-entity');
-      arDetailEl.setAttribute('position', '0.08 0.04 0.06');
-      arDetailEl.setAttribute('visible', 'false');
-
-      const bg = document.createElement('a-plane');
-      bg.setAttribute('width', '0.65'); bg.setAttribute('height', '0.38');
-      bg.setAttribute('material', 'color:#0a0a12; opacity:0.95; shader:flat; side:double');
-      arDetailEl.appendChild(bg);
-
-      arDetailAccentEl = document.createElement('a-box');
-      arDetailAccentEl.setAttribute('width', '0.007'); arDetailAccentEl.setAttribute('height', '0.36'); arDetailAccentEl.setAttribute('depth', '0.002');
-      arDetailAccentEl.setAttribute('position', '-0.312 0 0.001');
-      arDetailAccentEl.setAttribute('material', 'color:#ffffff; shader:flat');
-      arDetailEl.appendChild(arDetailAccentEl);
-
-      arDetailTitleEl = document.createElement('a-text');
-      arDetailTitleEl.setAttribute('color', '#ffffff'); arDetailTitleEl.setAttribute('width', '0.54');
-      arDetailTitleEl.setAttribute('align', 'center'); arDetailTitleEl.setAttribute('position', '0 0.155 0.002');
-      arDetailTitleEl.setAttribute('wrap-count', '28');
-      arDetailEl.appendChild(arDetailTitleEl);
-
-      arDetailValueEl = document.createElement('a-text');
-      arDetailValueEl.setAttribute('color', '#aaaaaa'); arDetailValueEl.setAttribute('width', '0.44');
-      arDetailValueEl.setAttribute('align', 'center'); arDetailValueEl.setAttribute('position', '0 0.112 0.002');
-      arDetailValueEl.setAttribute('wrap-count', '28');
-      arDetailEl.appendChild(arDetailValueEl);
-
-      arDetailDescEl = document.createElement('a-text');
-      arDetailDescEl.setAttribute('color', '#cccccc'); arDetailDescEl.setAttribute('width', '0.58');
-      arDetailDescEl.setAttribute('align', 'left'); arDetailDescEl.setAttribute('baseline', 'top');
-      arDetailDescEl.setAttribute('align', 'center'); arDetailDescEl.setAttribute('position', '0 0.072 0.002');
-      arDetailDescEl.setAttribute('wrap-count', '44');
-      arDetailEl.appendChild(arDetailDescEl);
-
-      // Progress bar bg
-      const barBg = document.createElement('a-box');
-      barBg.setAttribute('width', '0.58'); barBg.setAttribute('height', '0.012'); barBg.setAttribute('depth', '0.001');
-      barBg.setAttribute('position', '0.005 -0.135 0.002');
-      barBg.setAttribute('material', 'color:#333333; shader:flat');
-      arDetailEl.appendChild(barBg);
-
-      arDetailBarEl = document.createElement('a-box');
-      arDetailBarEl.setAttribute('height', '0.012'); arDetailBarEl.setAttribute('depth', '0.002');
-      arDetailBarEl.setAttribute('material', 'color:#ffffff; shader:flat');
-      arDetailEl.appendChild(arDetailBarEl);
-
-      arDetailPctEl = document.createElement('a-text');
-      arDetailPctEl.setAttribute('color', '#888888'); arDetailPctEl.setAttribute('width', '0.5');
-      arDetailPctEl.setAttribute('align', 'center'); arDetailPctEl.setAttribute('position', '0 -0.155 0.002');
-      arDetailPctEl.setAttribute('wrap-count', '36');
-      arDetailEl.appendChild(arDetailPctEl);
-
-      // Close button
-      const closeBtn = document.createElement('a-entity');
-      closeBtn.setAttribute('position', '0.292 0.162 0.003');
-      const closeBg = document.createElement('a-circle');
-      closeBg.setAttribute('radius', '0.024'); closeBg.setAttribute('material', 'color:#333333; shader:flat');
-      closeBtn.appendChild(closeBg);
-      const closeTxt = document.createElement('a-text');
-      closeTxt.setAttribute('value', 'X'); closeTxt.setAttribute('color', '#ffffff');
-      closeTxt.setAttribute('align', 'center'); closeTxt.setAttribute('baseline', 'center');
-      closeTxt.setAttribute('position', '0 0 0.001'); closeTxt.setAttribute('width', '0.12');
-      closeBtn.appendChild(closeTxt);
-      arDetailEl.appendChild(closeBtn);
-
-      targetEl.appendChild(arDetailEl);
-      arTaps.push({ entity: closeBtn, radius: 55, fn: closeArDetail });
-    }
-
-    function showArDetail(key) {
-      const d = DETAILS[key];
-      arDetailTitleEl.setAttribute('value', d.label.toUpperCase());
-      arDetailValueEl.setAttribute('value', d.value);
-      arDetailDescEl.setAttribute('value', d.desc);
-      arDetailPctEl.setAttribute('value', `${d.pct}% of total energy use`);
-      arDetailAccentEl.setAttribute('material', `color:${d.color}; shader:flat`);
-      const barW = (d.pct / 100) * 0.58;
-      arDetailBarEl.setAttribute('width', String(barW.toFixed(3)));
-      arDetailBarEl.setAttribute('height', '0.012'); arDetailBarEl.setAttribute('depth', '0.002');
-      arDetailBarEl.setAttribute('position', `${(-0.295 + barW / 2).toFixed(3)} -0.135 0.002`);
-      arDetailBarEl.setAttribute('material', `color:${d.color}; shader:flat`);
-      arDetailEl.setAttribute('visible', 'true');
-    }
-
-    function closeArDetail() { arDetailEl.setAttribute('visible', 'false'); }
-
-    // ── MindAR wiring ────────────────────────────────────────────────────
-    sceneEl.addEventListener('loaded', () => {
-      // Strip any remaining red boxes / anchor dots
-      document.querySelectorAll('[id^="target-"] a-box, [id^="target-"] a-sphere').forEach(el => el.remove());
-
-      // Store the A-Frame/Three.js renderer canvas so thermal setup uses the right one
-      arCanvas = sceneEl.canvas;
-
-      // ── Location pin: built once, added to all front-facing targets ──
-      // From a front target (vertical wall), Y = up.
-      // Building height ≈ 0.65 MindAR units → pin sits at Y=0.65 above center.
-      // Z=0.05 floats it slightly in front of the wall so it's visible.
-      const PIN_Y = 0.27;
-      const FRONT_TARGETS = new Set([0, 4, 5]); // FRONT, FRONT-LEFT, FRONT-RIGHT
-
-
-      function makePinFor(targetEl) {
-        const pin = document.createElement('a-gltf-model');
-        pin.setAttribute('src', '/ar/map_pin.glb');
-        pin.setAttribute('scale', '0.167 0.167 0.167');
-        pin.setAttribute('position', `0 ${PIN_Y} 0`);
-        pin.setAttribute('animation', 'property: position; from: 0 ' + PIN_Y + ' 0; to: 0 ' + (PIN_Y + 0.06) + ' 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
-        targetEl.appendChild(pin);
-      }
-
-      for (let i = 0; i < 6; i++) {
-        const el = document.getElementById(`target-${i}`);
-        if (!el) continue;
-        if (FRONT_TARGETS.has(i)) { makePinFor(el); }
-        if (i === 0) { makeSpeakerFor(el); makeCaption(el); makeArLabels(el); makeArDetail(el); }
-        el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
-        el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
-      }
-    });
   </script>
 </body>
 </html>
