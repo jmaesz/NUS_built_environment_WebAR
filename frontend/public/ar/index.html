@@ -393,30 +393,10 @@
     });
 
     // ── Thermal camera mode ──────────────────────────────────────────────
-    // Exact RGB colours from color-buildings.mjs output + assigned mock temperature.
-    // Only pixels that match one of these specific building colours get remapped.
-    // Everything else (white background, grey terrain) stays as natural camera colour.
+    // Only SDE4's exact colour (rgb 26,189,189 → teal) gets thermal remapped.
+    // All other building colours stay as natural camera colours.
     const BUILDING_COLORS = [
-      { h: 0,   s: 0.72, v: 0.93, temp: 0.95 }, // Techno Edge  — red
-      { h: 210, s: 0.77, v: 0.86, temp: 0.38 }, // LT4          — sky blue
-      { h: 145, s: 0.69, v: 0.70, temp: 0.55 }, // Info Tech    — green
-      { h: 38,  s: 0.93, v: 0.95, temp: 0.78 }, // E5           — amber
-      { h: 270, s: 0.64, v: 0.86, temp: 0.50 }, // SDE1         — purple
-      { h: 340, s: 0.60, v: 0.95, temp: 0.68 }, // SDE2         — pink
-      { h: 180, s: 0.86, v: 0.74, temp: 0.85 }, // SDE4         — teal
-      { h: 28,  s: 0.83, v: 0.86, temp: 0.62 }, // EW1          — orange
-      { h: 100, s: 0.51, v: 0.55, temp: 0.45 }, // SDE3         — olive
-      { h: 240, s: 0.51, v: 0.82, temp: 0.35 }, // Raffles H1   — indigo
-      { h: 330, s: 0.72, v: 0.78, temp: 0.72 }, // Raffles Kuok — magenta
-      { h: 195, s: 0.76, v: 0.62, temp: 0.42 }, // Raffles H2   — steel blue
-      { h: 52,  s: 0.82, v: 0.85, temp: 0.82 }, // Raffles H3   — yellow
-      { h: 0,   s: 0.67, v: 0.60, temp: 0.30 }, // Raffles H4   — dark red
-      { h: 215, s: 0.69, v: 0.65, temp: 0.22 }, // Raffles H5   — navy
-      { h: 95,  s: 0.56, v: 0.80, temp: 0.58 }, // CFA Studio   — lime
-      { h: 33,  s: 0.72, v: 0.70, temp: 0.65 }, // E7           — brown
-      { h: 310, s: 0.31, v: 0.80, temp: 0.70 }, // E6           — lavender
-      { h: 155, s: 0.83, v: 0.60, temp: 0.32 }, // T-Lab        — emerald
-      { h: 22,  s: 0.89, v: 0.90, temp: 0.75 }, // E8           — burnt orange
+      { h: 180, s: 0.86, v: 0.74, temp: 0.85 }, // SDE4 — teal rgb(26,189,189)
     ];
 
     function matchBuilding(h, s, v) {
