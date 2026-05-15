@@ -431,7 +431,10 @@
       return [c(1.5 - Math.abs(4*t - 3)), c(1.5 - Math.abs(4*t - 2)), c(1.5 - Math.abs(4*t - 1))];
     }
 
-    const THERMAL_W = 160, THERMAL_H = 120;
+    const THERMAL_W = 480, THERMAL_H = 360;
+    // Only process the inner region — keeps thermal off the real-world surroundings
+    const T_X0 = Math.round(THERMAL_W * 0.15), T_X1 = Math.round(THERMAL_W * 0.85);
+    const T_Y0 = Math.round(THERMAL_H * 0.10), T_Y1 = Math.round(THERMAL_H * 0.90);
     let thermalActive = false;
     let thermalVideo = null;
     let thermalAnimId = null;
@@ -447,15 +450,25 @@
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
         for (let i = 0; i < d.length; i += 4) {
+          const px = (i >> 2) % THERMAL_W;
+          const py = Math.floor((i >> 2) / THERMAL_W);
+          // Outside center region → always transparent (real-world surroundings ignored)
+          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) {
+            d[i+3] = 0; continue;
+          }
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
           const bld = matchBuilding(h, s, v);
           if (bld) {
             const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
-            const temp = Math.max(0, Math.min(1, bld.temp + (lum - 0.5) * 0.12));
+            // Vertical gradient: top of building = hot (red), bottom = cold (blue)
+            const yNorm = (py - T_Y0) / (T_Y1 - T_Y0);
+            const posTemp = 0.95 - yNorm * 0.68; // 0.95 at top → 0.27 at bottom
+            // Luminance adds local variation (lighter patches = hotter surface)
+            const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.22));
             const [tr, tg, tb] = jetColor(temp);
-            d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255; // opaque thermal
+            d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
           } else {
-            d[i+3] = 0; // transparent — full-res video shows through underneath
+            d[i+3] = 0;
           }
         }
         thermalCtx.putImageData(img, 0, 0);
