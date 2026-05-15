@@ -87,7 +87,7 @@
       padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
       cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
     }
-    #thermal-btn.active { background: rgba(20,140,60,0.85); color: #fff; border-color: #22c55e; }
+    #thermal-btn.active { background: rgba(220,60,20,0.85); color: #fff; border-color: #ff7043; }
     #thermal-legend {
       position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
       z-index: 1000; display: none; flex-direction: column; align-items: center; gap: 4px;
@@ -96,7 +96,7 @@
     #thermal-legend.visible { display: flex; }
     #thermal-legend-bar {
       width: 140px; height: 10px; border-radius: 3px;
-      background: linear-gradient(to right, #0000ff, #00ff00, #ff0000);
+      background: linear-gradient(to right, #00008b, #00bfff, #00ff00, #ffff00, #ff4500, #8b0000);
     }
     #thermal-legend-labels { display: flex; justify-content: space-between; width: 140px; }
     #thermal-legend-labels span { font-size: 9px; color: #ddd; letter-spacing: 0.05em; }
@@ -107,7 +107,7 @@
   <button id="thermal-btn" onclick="toggleThermal()">THERMAL</button>
   <div id="thermal-legend">
     <div id="thermal-legend-bar"></div>
-    <div id="thermal-legend-labels"><span>SHADOW</span><span>ROOF</span></div>
+    <div id="thermal-legend-labels"><span>COLD</span><span>HOT</span></div>
   </div>
   <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
     <div id="maps-panel-img-wrap">
@@ -424,12 +424,9 @@
       return [h, s, max];
     }
 
-    // CloudCompare PCV Blue→Green→Red colourmap
-    function pcvColor(t) {
-      t = Math.max(0, Math.min(1, t));
+    function jetColor(t) {
       const c = v => Math.round(255 * Math.max(0, Math.min(1, v)));
-      if (t < 0.5) { const s = t * 2; return [0, c(s), c(1 - s)]; }   // blue→green
-      else { const s = (t - 0.5) * 2; return [c(s), c(1 - s), 0]; }   // green→red
+      return [c(1.5 - Math.abs(4*t - 3)), c(1.5 - Math.abs(4*t - 2)), c(1.5 - Math.abs(4*t - 1))];
     }
 
     const THERMAL_W = 640, THERMAL_H = 480;
@@ -467,9 +464,11 @@
           if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
           if (matchBuilding(h, s, v)) {
-            const yNorm = (py - minY) / yRange; // 0 = top (roof), 1 = bottom (shadow)
-            const t = 1 - yNorm;                // top→red(1.0), bottom→blue(0.0)
-            const [tr, tg, tb] = pcvColor(t);
+            const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
+            const yNorm = (py - minY) / yRange; // 0 = top of building, 1 = bottom
+            const posTemp = 0.90 - yNorm * 0.82; // top=red(0.90), bottom=blue(0.08)
+            const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.20));
+            const [tr, tg, tb] = jetColor(temp);
             d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
           }
         }
