@@ -227,7 +227,6 @@
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
     <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-    <a-entity cursor="rayOrigin: mouse" raycaster="objects: .ar-clickable; far: 20"></a-entity>
     <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
     <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
 
@@ -257,7 +256,6 @@
       <a-entity id="m-co-0" position="0.05 -0.65 0.02"></a-entity>
       <a-entity id="m-li-0" position="0.85 -0.42 0.02"></a-entity>
       <!-- 3D building volume overlay -->
-      <a-gltf-model src="/ar/volume.glb" position="0.001 -0.048 0.170" rotation="-75.0 16.4 5.0" scale="0.9823 0.9823 0.9823"></a-gltf-model>
     </a-entity>
 
     <!-- Target 1: FRONT -->
@@ -571,32 +569,38 @@
       speakerEl = document.createElement('a-entity');
       speakerEl.setAttribute('position', '-0.58 0.325 0.02');
 
-      // volume.glb at 1/3 of the main overlay scale (0.9823/3 ≈ 0.327)
       const model = document.createElement('a-gltf-model');
       model.setAttribute('src', '/ar/volume.glb');
-      model.setAttribute('scale', '0.327 0.327 0.327');
+      model.setAttribute('scale', '0.05 0.05 0.05');
       speakerEl.appendChild(model);
-
-      // Invisible hit-box for reliable touch raycasting
-      const hit = document.createElement('a-box');
-      hit.setAttribute('width', '0.14');
-      hit.setAttribute('height', '0.14');
-      hit.setAttribute('depth', '0.14');
-      hit.setAttribute('material', 'opacity: 0; transparent: true');
-      hit.setAttribute('class', 'ar-clickable');
-      speakerEl.appendChild(hit);
 
       // Label below
       const label = document.createElement('a-text');
-      label.setAttribute('value', 'LISTEN');
+      label.setAttribute('value', "listen to building's detail");
       label.setAttribute('align', 'center');
       label.setAttribute('color', '#ffffff');
-      label.setAttribute('position', '0 -0.1 0.001');
-      label.setAttribute('width', '0.42');
+      label.setAttribute('position', '0 -0.08 0.001');
+      label.setAttribute('width', '0.5');
       speakerEl.appendChild(label);
 
-      hit.addEventListener('click', toggleAudio);
       targetEl.appendChild(speakerEl);
+
+      // Direct Three.js raycasting on tap — bypasses A-Frame cursor issues in MindAR
+      const speakerMeshes = [];
+      model.addEventListener('model-loaded', () => {
+        speakerEl.object3D.traverse(n => { if (n.isMesh) speakerMeshes.push(n); });
+      });
+      sceneEl.canvas.addEventListener('click', evt => {
+        if (!speakerMeshes.length) return;
+        const rect = sceneEl.canvas.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+          ((evt.clientX - rect.left) / rect.width) * 2 - 1,
+          -((evt.clientY - rect.top) / rect.height) * 2 + 1
+        );
+        const ray = new THREE.Raycaster();
+        ray.setFromCamera(mouse, sceneEl.camera);
+        if (ray.intersectObjects(speakerMeshes, true).length > 0) toggleAudio();
+      });
     }
 
     // ── MindAR wiring ────────────────────────────────────────────────────
