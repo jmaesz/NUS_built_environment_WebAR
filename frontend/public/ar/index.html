@@ -450,11 +450,25 @@
       thermalAnimId = requestAnimationFrame(thermalLoop);
     }
 
+    function setupThermalCanvas() {
+      if (thermalCanvas) return true;
+      thermalVideo = document.querySelector('video');
+      const aframeCanvas = document.querySelector('canvas');
+      if (!thermalVideo || !aframeCanvas) return false;
+      thermalCanvas = document.createElement('canvas');
+      thermalCanvas.width = THERMAL_W;
+      thermalCanvas.height = THERMAL_H;
+      thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;image-rendering:pixelated;pointer-events:none;';
+      aframeCanvas.parentNode.insertBefore(thermalCanvas, aframeCanvas);
+      thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
+      return true;
+    }
+
     function enableThermal() {
-      if (!thermalCanvas) return;
+      if (!setupThermalCanvas()) { console.warn('Thermal: video or canvas not ready yet'); return; }
       thermalActive = true;
       thermalCanvas.style.display = 'block';
-      if (thermalVideo) thermalVideo.style.opacity = '0';
+      thermalVideo.style.opacity = '0';
       document.getElementById('thermal-btn').classList.add('active');
       document.getElementById('thermal-legend').classList.add('visible');
       thermalAnimId = requestAnimationFrame(thermalLoop);
@@ -739,20 +753,6 @@
     sceneEl.addEventListener('loaded', () => {
       // Strip any remaining red boxes / anchor dots
       document.querySelectorAll('[id^="target-"] a-box, [id^="target-"] a-sphere').forEach(el => el.remove());
-
-      // ── Thermal canvas setup ──
-      // Insert processing canvas between MindAR's video and A-Frame's canvas
-      // so that when visible it replaces the camera background while 3D overlays remain
-      thermalVideo = document.querySelector('video');
-      const aframeCanvas = sceneEl.renderer.domElement;
-      if (thermalVideo && aframeCanvas) {
-        thermalCanvas = document.createElement('canvas');
-        thermalCanvas.width = THERMAL_W;
-        thermalCanvas.height = THERMAL_H;
-        thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;image-rendering:pixelated;object-fit:cover;';
-        aframeCanvas.parentNode.insertBefore(thermalCanvas, aframeCanvas);
-        thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
-      }
 
       // ── Location pin: built once, added to all front-facing targets ──
       // From a front target (vertical wall), Y = up.
