@@ -549,32 +549,62 @@
 
     let speakerEl = null;
     let captionEl = null;
+    let captionTxt = null;
+    let typewriterTimer = null;
 
-    function showCaption() { if (captionEl) captionEl.setAttribute('visible', 'true'); }
-    function hideCaption() { if (captionEl) captionEl.setAttribute('visible', 'false'); }
+    function hideCaption() {
+      if (captionEl) captionEl.setAttribute('visible', 'false');
+      if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
+    }
 
     function makeCaption(targetEl) {
+      // Positioned to the LEFT of the speaker button (-0.52), same Y
       captionEl = document.createElement('a-entity');
-      captionEl.setAttribute('position', '0.05 0.08 0.04');
+      captionEl.setAttribute('position', '-0.88 0.325 0.02');
       captionEl.setAttribute('visible', 'false');
 
       const bg = document.createElement('a-plane');
-      bg.setAttribute('width', '0.82');
-      bg.setAttribute('height', '0.30');
+      bg.setAttribute('width', '0.52');
+      bg.setAttribute('height', '0.28');
       bg.setAttribute('material', 'color: #1e3c32; opacity: 0.9; shader: flat; side: double');
       captionEl.appendChild(bg);
 
-      const txt = document.createElement('a-text');
-      txt.setAttribute('value', AUDIO_TEXT);
-      txt.setAttribute('width', '0.74');
-      txt.setAttribute('color', '#ffffff');
-      txt.setAttribute('align', 'left');
-      txt.setAttribute('baseline', 'top');
-      txt.setAttribute('position', '-0.36 0.13 0.002');
-      txt.setAttribute('wrap-count', '52');
-      captionEl.appendChild(txt);
+      captionTxt = document.createElement('a-text');
+      captionTxt.setAttribute('value', '');
+      captionTxt.setAttribute('width', '0.46');
+      captionTxt.setAttribute('color', '#ffffff');
+      captionTxt.setAttribute('align', 'left');
+      captionTxt.setAttribute('baseline', 'top');
+      captionTxt.setAttribute('position', '-0.22 0.12 0.002');
+      captionTxt.setAttribute('wrap-count', '36');
+      captionEl.appendChild(captionTxt);
 
       targetEl.appendChild(captionEl);
+    }
+
+    function startTypewriter(utter) {
+      const words = AUDIO_TEXT.split(' ');
+      let wordIdx = 0;
+      let usedBoundary = false;
+
+      captionTxt.setAttribute('value', '');
+
+      // Use speech boundary events when available (Android/desktop)
+      utter.onboundary = evt => {
+        if (evt.name !== 'word') return;
+        usedBoundary = true;
+        if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
+        const end = evt.charIndex + (evt.charLength || 1);
+        captionTxt.setAttribute('value', AUDIO_TEXT.substring(0, end));
+      };
+
+      // Fallback timer for iOS Safari (no onboundary support) ~155 WPM
+      typewriterTimer = setInterval(() => {
+        if (usedBoundary) { clearInterval(typewriterTimer); typewriterTimer = null; return; }
+        if (wordIdx >= words.length) { clearInterval(typewriterTimer); typewriterTimer = null; return; }
+        wordIdx++;
+        captionTxt.setAttribute('value', words.slice(0, wordIdx).join(' '));
+      }, 390);
     }
 
     function toggleAudio() {
@@ -588,7 +618,8 @@
         const v = pickFemaleVoice();
         if (v) utter.voice = v;
         utter.onend = utter.onerror = hideCaption;
-        showCaption();
+        captionEl.setAttribute('visible', 'true');
+        startTypewriter(utter);
         window.speechSynthesis.speak(utter);
       };
       if (window.speechSynthesis.getVoices().length) { trySpeak(); }
