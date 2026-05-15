@@ -115,7 +115,7 @@
 
   <!-- Detail panel -->
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 6; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0005;"
+    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 6; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0001;"
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
@@ -419,9 +419,9 @@
       captionTxt.setAttribute('value', '');
       captionTxt.setAttribute('width', '0.46');
       captionTxt.setAttribute('color', '#ffffff');
-      captionTxt.setAttribute('align', 'left');
+      captionTxt.setAttribute('align', 'center');
       captionTxt.setAttribute('baseline', 'top');
-      captionTxt.setAttribute('position', `-0.22 ${+(boxH / 2 - PAD).toFixed(3)} 0.002`);
+      captionTxt.setAttribute('position', `0 ${+(boxH / 2 - PAD).toFixed(3)} 0.002`);
       captionTxt.setAttribute('wrap-count', String(WRAP));
       captionEl.appendChild(captionTxt);
 
@@ -525,14 +525,14 @@
         const title = document.createElement('a-text');
         title.setAttribute('value', d.label.toUpperCase());
         title.setAttribute('color', '#ffffff'); title.setAttribute('width', '0.21');
-        title.setAttribute('align', 'left'); title.setAttribute('position', '-0.102 0.018 0.002');
+        title.setAttribute('align', 'center'); title.setAttribute('position', '0 0.018 0.002');
         title.setAttribute('wrap-count', '22');
         card.appendChild(title);
 
         const sub = document.createElement('a-text');
         sub.setAttribute('value', 'Tap for details');
         sub.setAttribute('color', '#aaaaaa'); sub.setAttribute('width', '0.17');
-        sub.setAttribute('align', 'left'); sub.setAttribute('position', '-0.102 -0.014 0.002');
+        sub.setAttribute('align', 'center'); sub.setAttribute('position', '0 -0.014 0.002');
         sub.setAttribute('wrap-count', '22');
         card.appendChild(sub);
 
@@ -559,20 +559,20 @@
 
       arDetailTitleEl = document.createElement('a-text');
       arDetailTitleEl.setAttribute('color', '#ffffff'); arDetailTitleEl.setAttribute('width', '0.54');
-      arDetailTitleEl.setAttribute('align', 'left'); arDetailTitleEl.setAttribute('position', '-0.295 0.155 0.002');
+      arDetailTitleEl.setAttribute('align', 'center'); arDetailTitleEl.setAttribute('position', '0 0.155 0.002');
       arDetailTitleEl.setAttribute('wrap-count', '28');
       arDetailEl.appendChild(arDetailTitleEl);
 
       arDetailValueEl = document.createElement('a-text');
       arDetailValueEl.setAttribute('color', '#aaaaaa'); arDetailValueEl.setAttribute('width', '0.44');
-      arDetailValueEl.setAttribute('align', 'left'); arDetailValueEl.setAttribute('position', '-0.295 0.112 0.002');
+      arDetailValueEl.setAttribute('align', 'center'); arDetailValueEl.setAttribute('position', '0 0.112 0.002');
       arDetailValueEl.setAttribute('wrap-count', '28');
       arDetailEl.appendChild(arDetailValueEl);
 
       arDetailDescEl = document.createElement('a-text');
       arDetailDescEl.setAttribute('color', '#cccccc'); arDetailDescEl.setAttribute('width', '0.58');
       arDetailDescEl.setAttribute('align', 'left'); arDetailDescEl.setAttribute('baseline', 'top');
-      arDetailDescEl.setAttribute('position', '-0.295 0.072 0.002');
+      arDetailDescEl.setAttribute('align', 'center'); arDetailDescEl.setAttribute('position', '0 0.072 0.002');
       arDetailDescEl.setAttribute('wrap-count', '44');
       arDetailEl.appendChild(arDetailDescEl);
 
@@ -590,7 +590,7 @@
 
       arDetailPctEl = document.createElement('a-text');
       arDetailPctEl.setAttribute('color', '#888888'); arDetailPctEl.setAttribute('width', '0.5');
-      arDetailPctEl.setAttribute('align', 'left'); arDetailPctEl.setAttribute('position', '-0.295 -0.155 0.002');
+      arDetailPctEl.setAttribute('align', 'center'); arDetailPctEl.setAttribute('position', '0 -0.155 0.002');
       arDetailPctEl.setAttribute('wrap-count', '36');
       arDetailEl.appendChild(arDetailPctEl);
 
