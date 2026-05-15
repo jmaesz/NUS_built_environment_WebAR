@@ -538,39 +538,15 @@
       // From a front target (vertical wall), Y = up.
       // Building height ≈ 0.65 MindAR units → pin sits at Y=0.65 above center.
       // Z=0.05 floats it slightly in front of the wall so it's visible.
-      const PIN_Y = 0.65;   // tune this after testing
+      const PIN_Y = 0.325;  // half building height
       const FRONT_TARGETS = new Set([0, 4, 5]); // FRONT, FRONT-LEFT, FRONT-RIGHT
 
       function makePinFor(targetEl) {
-        const pinGroup = document.createElement('a-entity');
-        pinGroup.setAttribute('position', `0 ${PIN_Y} 0.05`);
-        pinGroup.setAttribute('animation', 'property: position; from: 0 ' + PIN_Y + ' 0.04; to: 0 ' + PIN_Y + ' 0.10; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
-
-        const body = document.createElement('a-sphere');
-        body.setAttribute('radius', '0.09');
-        body.setAttribute('color', '#FF1744');
-        body.setAttribute('material', 'roughness:0.3;metalness:0.15');
-        pinGroup.appendChild(body);
-
-        const hole = document.createElement('a-sphere');
-        hole.setAttribute('radius', '0.048');
-        hole.setAttribute('color', '#330000');
-        hole.setAttribute('position', '0 0 0.065');
-        hole.setAttribute('material', 'shader:flat');
-        pinGroup.appendChild(hole);
-
-        // Spike points down (-Y) into the building roof/top
-        const spike = document.createElement('a-cone');
-        spike.setAttribute('radius-top', '0.006');
-        spike.setAttribute('radius-bottom', '0.072');
-        spike.setAttribute('height', '0.14');
-        spike.setAttribute('color', '#CC0011');
-        spike.setAttribute('material', 'roughness:0.3;metalness:0.15');
-        spike.setAttribute('rotation', '180 0 0');
-        spike.setAttribute('position', '0 -0.1 0');
-        pinGroup.appendChild(spike);
-
-        targetEl.appendChild(pinGroup);
+        const pin = document.createElement('a-gltf-model');
+        pin.setAttribute('src', '/ar/map_pin.glb');
+        pin.setAttribute('position', `0 ${PIN_Y} 0`);
+        pin.setAttribute('animation', 'property: position; from: 0 ' + PIN_Y + ' 0; to: 0 ' + (PIN_Y + 0.06) + ' 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
+        targetEl.appendChild(pin);
       }
 
       for (let i = 0; i < 6; i++) {
