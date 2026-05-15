@@ -25,19 +25,6 @@
       border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
     }
 
-    /* ── Caption box ── */
-    #caption-box {
-      position: fixed; top: 24px; left: 16px; right: 16px; z-index: 1001;
-      background: rgba(30, 60, 50, 0.88); color: #fff;
-      font-size: 15px; line-height: 1.65; font-weight: 400;
-      padding: 18px 20px; border-radius: 14px;
-      pointer-events: none;
-      display: none; opacity: 0;
-      transition: opacity 0.35s ease;
-      max-width: 480px;
-    }
-    #caption-box.visible { display: block; opacity: 1; }
-
     /* ── Chart panel ── */
     #chart-panel {
       position: fixed; top: 12px; right: 12px; z-index: 999;
@@ -158,7 +145,6 @@
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
-  <div id="caption-box"></div>
   <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
     <div id="maps-panel-img-wrap">
       <img src="/bg1.png" alt="SDE4">
@@ -562,16 +548,33 @@
     }
 
     let speakerEl = null;
-    const captionBox = document.getElementById('caption-box');
+    let captionEl = null;
 
-    function showCaption() {
-      captionBox.textContent = AUDIO_TEXT;
-      captionBox.style.display = 'block';
-      requestAnimationFrame(() => captionBox.classList.add('visible'));
-    }
-    function hideCaption() {
-      captionBox.classList.remove('visible');
-      setTimeout(() => { captionBox.style.display = 'none'; }, 350);
+    function showCaption() { if (captionEl) captionEl.setAttribute('visible', 'true'); }
+    function hideCaption() { if (captionEl) captionEl.setAttribute('visible', 'false'); }
+
+    function makeCaption(targetEl) {
+      captionEl = document.createElement('a-entity');
+      captionEl.setAttribute('position', '0.05 0.08 0.04');
+      captionEl.setAttribute('visible', 'false');
+
+      const bg = document.createElement('a-plane');
+      bg.setAttribute('width', '0.82');
+      bg.setAttribute('height', '0.30');
+      bg.setAttribute('material', 'color: #1e3c32; opacity: 0.9; shader: flat; side: double');
+      captionEl.appendChild(bg);
+
+      const txt = document.createElement('a-text');
+      txt.setAttribute('value', AUDIO_TEXT);
+      txt.setAttribute('width', '0.74');
+      txt.setAttribute('color', '#ffffff');
+      txt.setAttribute('align', 'left');
+      txt.setAttribute('baseline', 'top');
+      txt.setAttribute('position', '-0.36 0.13 0.002');
+      txt.setAttribute('wrap-count', '52');
+      captionEl.appendChild(txt);
+
+      targetEl.appendChild(captionEl);
     }
 
     function toggleAudio() {
@@ -669,7 +672,7 @@
         const el = document.getElementById(`target-${i}`);
         if (!el) continue;
         if (FRONT_TARGETS.has(i)) { makePinFor(el); }
-        if (i === 0) { makeSpeakerFor(el); }
+        if (i === 0) { makeSpeakerFor(el); makeCaption(el); }
         el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
         el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
       }
