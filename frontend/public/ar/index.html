@@ -461,8 +461,11 @@
           if (minY <= maxY) { lockedMinY = minY; lockedMaxY = maxY; } // lock on first valid frame
         }
 
-        const useMinY = lockedMinY < 0 ? 0 : lockedMinY;
-        const useMaxY = lockedMaxY < 0 ? THERMAL_H : lockedMaxY;
+        const rawMinY = lockedMinY < 0 ? 0 : lockedMinY;
+        const rawMaxY = lockedMaxY < 0 ? THERMAL_H : lockedMaxY;
+        const buildingH = rawMaxY - rawMinY;
+        const useMinY = Math.max(0, rawMinY - Math.round(buildingH * 0.18));
+        const useMaxY = rawMaxY;
         const yRange = Math.max(useMaxY - useMinY, 1);
 
         // Pass 2 — apply thermal colour using locked gradient
