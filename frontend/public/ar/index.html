@@ -106,8 +106,14 @@
     }
 
     /* ── Landscape layout overrides ── */
+    /*
+      Rotating 90° CW around top-right: visual top lands at (css-top - panel-width).
+      To keep visual top at 12px → css-top = 12 + 220 = 232px.
+      Rotating 90° CW around bottom-right: visual right edge overshoots by panel-height.
+      To keep visual right at 12px → css-right = 12 + maps-height ≈ 12 + 180 = 192px.
+    */
     body.landscape #chart-panel {
-      top: 12px; bottom: auto;
+      top: 232px; bottom: auto;
       right: 12px; left: auto;
       width: 220px;
       transform-origin: top right;
@@ -117,11 +123,12 @@
     }
     body.landscape #chart-panel.visible {
       opacity: 1; pointer-events: auto;
+      transform: rotate(90deg);
     }
 
     body.landscape #maps-panel {
       bottom: 12px; top: auto;
-      right: 12px; left: auto;
+      right: 192px; left: auto;
       width: 180px;
       transform-origin: bottom right;
       transform: rotate(90deg);
