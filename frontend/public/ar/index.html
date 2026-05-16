@@ -105,37 +105,28 @@
       border-color: rgba(255,255,255,0.6);
     }
 
-    /* ── Landscape layout overrides ── */
-    /*
-      Rotating 90° CW around top-right: visual top lands at (css-top - panel-width).
-      To keep visual top at 12px → css-top = 12 + 220 = 232px.
-      Rotating 90° CW around bottom-right: visual right edge overshoots by panel-height.
-      To keep visual right at 12px → css-right = 12 + maps-height ≈ 12 + 180 = 192px.
-    */
+    /* ── Landscape layout overrides — no rotation, just reposition ── */
     body.landscape #chart-panel {
-      top: 232px; bottom: auto;
+      top: 12px; bottom: auto;
       right: 12px; left: auto;
       width: 220px;
-      transform-origin: top right;
-      transform: rotate(90deg);
-      transition: opacity 0.35s ease;
+      transform: translateX(16px);   /* hidden slide-in from right */
+      transition: opacity 0.35s ease, transform 0.35s ease;
       opacity: 0; pointer-events: none;
     }
     body.landscape #chart-panel.visible {
-      opacity: 1; pointer-events: auto;
-      transform: rotate(90deg);
+      opacity: 1; transform: translateX(0); pointer-events: auto;
     }
 
     body.landscape #maps-panel {
       bottom: 12px; top: auto;
-      right: 192px; left: auto;
-      width: 180px;
-      transform-origin: bottom right;
-      transform: rotate(90deg);
-      transition: opacity 0.3s ease;
+      right: 12px; left: auto;
+      width: 180px; height: auto;
+      transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
     }
     body.landscape #maps-panel.visible {
-      opacity: 1; transform: rotate(90deg);
+      opacity: 1; transform: translateY(0);
     }
   </style>
 </head>
