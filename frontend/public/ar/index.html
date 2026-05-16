@@ -440,7 +440,6 @@
     let thermalCanvas = null;
     let thermalCtx = null;
     let arCanvas = null; // set in loaded handler — avoids grabbing Chart.js canvas
-    let lockedMinY = -1, lockedMaxY = -1; // locked once on first detection, reset on toggle
 
     function thermalLoop() {
       if (!thermalActive || !thermalVideo || !thermalCanvas) return;
@@ -453,26 +452,20 @@
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
 
-        // Pass 1 — find minY/maxY only if not yet locked
-        if (lockedMinY < 0) {
-          let minY = THERMAL_H, maxY = 0;
-          for (let i = 0; i < d.length; i += 4) {
-            const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
-            if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
-            const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
-            if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
-          }
-          if (minY <= maxY) { lockedMinY = minY; lockedMaxY = maxY; } // lock on first valid frame
+        // Pass 1 — find building extent in this frame
+        let minY = THERMAL_H, maxY = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
+          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
+          const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+          if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
         }
-
-        const rawMinY = lockedMinY < 0 ? 0 : lockedMinY;
-        const rawMaxY = lockedMaxY < 0 ? THERMAL_H : lockedMaxY;
-        const buildingH = rawMaxY - rawMinY;
-        const useMinY = Math.max(0, rawMinY - Math.round(buildingH * 0.18));
-        const useMaxY = rawMaxY;
+        const buildingH = minY <= maxY ? maxY - minY : 0;
+        const useMinY = Math.max(0, minY - Math.round(buildingH * 0.18));
+        const useMaxY = minY <= maxY ? maxY : THERMAL_H;
         const yRange = Math.max(useMaxY - useMinY, 1);
 
-        // Pass 2 — apply thermal colour using locked gradient
+        // Pass 2 — apply thermal colour relative to this frame's building extent
         for (let i = 0; i < d.length; i += 4) {
           const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
           d[i+3] = 0;
@@ -523,7 +516,6 @@
 
     function disableThermal() {
       thermalActive = false;
-      lockedMinY = -1; lockedMaxY = -1;
       if (thermalCanvas) thermalCanvas.style.display = 'none';
       document.getElementById('thermal-btn').classList.remove('active');
       document.getElementById('thermal-legend').classList.remove('visible');
