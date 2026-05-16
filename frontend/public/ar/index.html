@@ -82,15 +82,15 @@
 
     #thermal-btn {
       position: fixed; top: 16px; left: 90px; z-index: 1000;
-      background: rgba(0,0,0,0.55); color: #b8ff30;
-      border: 1px solid rgba(184,255,48,0.4);
+      background: rgba(0,0,0,0.55); color: #00e0a0;
+      border: 1px solid rgba(0,224,160,0.4);
       padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
       cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
     }
     #thermal-btn.active {
-      background: #b8ff30; color: #000;
-      border-color: #b8ff30;
-      box-shadow: 0 0 12px rgba(184,255,48,0.7);
+      background: #00e0a0; color: #000;
+      border-color: #00e0a0;
+      box-shadow: 0 0 12px rgba(0,224,160,0.7);
     }
   </style>
 </head>
@@ -417,7 +417,7 @@
     function jetColor(t) {
       // scale #32ff50 green brightness by t — shadows darker, lit areas bright
       const b = 0.45 + t * 0.55;
-      return [Math.round(184 * b), Math.round(255 * b), Math.round(48 * b)]; // #b8ff30 yellow-green
+      return [Math.round(0 * b), Math.round(224 * b), Math.round(160 * b)]; // #00e0a0 bluish-green
     }
 
     // Set at canvas creation time to match actual screen — avoids aspect ratio distortion
@@ -471,7 +471,7 @@
         }
         thermalCtx.putImageData(img, 0, 0);
       }
-      thermalAnimId = setTimeout(thermalLoop, 80); // ~12fps — reduces CPU load on mobile
+      thermalAnimId = setTimeout(thermalLoop, 33); // ~12fps — reduces CPU load on mobile
     }
 
     function setupThermalCanvas() {
@@ -499,7 +499,7 @@
       thermalCanvas.style.display = 'block';
       // Video stays visible — canvas is transparent overlay, only matched pixels painted
       document.getElementById('thermal-btn').classList.add('active');
-      thermalAnimId = setTimeout(thermalLoop, 80);
+      thermalAnimId = setTimeout(thermalLoop, 33);
     }
 
     function disableThermal() {
