@@ -379,7 +379,7 @@
 
     function matchBuilding(h, s, v) {
       // E7 chartreuse: hue ~73°, no other building within 40° of this range
-      if (s < 0.30 || s > 0.90 || v < 0.35) return null;
+      if (s < 0.45 || s > 0.88 || v < 0.40) return null;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
         if (dh <= 14) return b;
