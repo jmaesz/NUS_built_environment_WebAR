@@ -382,7 +382,7 @@
       if (s < 0.42 || s > 0.52 || v < 0.42 || v > 0.86) return null;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
-        if (dh <= 6) return b;
+        if (dh <= 12) return b;
       }
       return null;
     }
