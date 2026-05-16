@@ -524,19 +524,17 @@
     }
 
     let speakerEl = null;
-    let captionEl = null;
-    let captionTxt = null;
+    const captionEls = [], captionTxts = [];
     let typewriterTimer = null;
 
     function hideCaption() {
-      if (captionEl) captionEl.setAttribute('visible', 'false');
+      if (captionEls[activeTarget]) captionEls[activeTarget].setAttribute('visible', 'false');
       if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
     }
 
-    function makeCaption(targetEl) {
+    function makeCaption(targetEl, idx) {
       const WRAP = 36, LINE_H = 0.038, PAD = 0.04;
 
-      // Count wrapped lines for full text to size box tightly
       function countLines(text) {
         let lines = 1, col = 0;
         for (const w of text.split(' ')) {
@@ -547,51 +545,52 @@
       }
       const boxH = +((countLines(AUDIO_TEXT) * LINE_H + PAD * 2) * (4 / 6)).toFixed(3);
 
-      captionEl = document.createElement('a-entity');
-      captionEl.setAttribute('position', '-0.88 0.325 0.02');
-      captionEl.setAttribute('visible', 'false');
+      const el = document.createElement('a-entity');
+      el.setAttribute('position', '-0.88 0.325 0.02');
+      el.setAttribute('visible', 'false');
 
       const bg = document.createElement('a-plane');
       bg.setAttribute('width', '0.52');
       bg.setAttribute('height', String(boxH));
       bg.setAttribute('material', 'color: #000000; opacity: 0.9; shader: flat; side: double');
-      captionEl.appendChild(bg);
+      el.appendChild(bg);
 
-      captionTxt = document.createElement('a-text');
-      captionTxt.setAttribute('value', '');
-      captionTxt.setAttribute('width', '0.46');
-      captionTxt.setAttribute('color', '#ffffff');
-      captionTxt.setAttribute('align', 'center');
-      captionTxt.setAttribute('baseline', 'top');
-      captionTxt.setAttribute('position', `0 ${+(boxH / 2 - PAD).toFixed(3)} 0.002`);
-      captionTxt.setAttribute('wrap-count', String(WRAP));
-      captionEl.appendChild(captionTxt);
+      const txt = document.createElement('a-text');
+      txt.setAttribute('value', '');
+      txt.setAttribute('width', '0.46');
+      txt.setAttribute('color', '#ffffff');
+      txt.setAttribute('align', 'center');
+      txt.setAttribute('baseline', 'top');
+      txt.setAttribute('position', `0 ${+(boxH / 2 - PAD).toFixed(3)} 0.002`);
+      txt.setAttribute('wrap-count', String(WRAP));
+      el.appendChild(txt);
 
-      targetEl.appendChild(captionEl);
+      targetEl.appendChild(el);
+      captionEls[idx] = el;
+      captionTxts[idx] = txt;
     }
 
     function startTypewriter(utter) {
       const words = AUDIO_TEXT.split(' ');
       let wordIdx = 0;
       let usedBoundary = false;
+      const txt = captionTxts[activeTarget];
 
-      captionTxt.setAttribute('value', '');
+      txt.setAttribute('value', '');
 
-      // Use speech boundary events when available (Android/desktop)
       utter.onboundary = evt => {
         if (evt.name !== 'word') return;
         usedBoundary = true;
         if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
         const end = evt.charIndex + (evt.charLength || 1);
-        captionTxt.setAttribute('value', AUDIO_TEXT.substring(0, end));
+        txt.setAttribute('value', AUDIO_TEXT.substring(0, end));
       };
 
-      // Fallback timer for iOS Safari (no onboundary support) ~155 WPM
       typewriterTimer = setInterval(() => {
         if (usedBoundary) { clearInterval(typewriterTimer); typewriterTimer = null; return; }
         if (wordIdx >= words.length) { clearInterval(typewriterTimer); typewriterTimer = null; return; }
         wordIdx++;
-        captionTxt.setAttribute('value', words.slice(0, wordIdx).join(' '));
+        txt.setAttribute('value', words.slice(0, wordIdx).join(' '));
       }, 390);
     }
 
@@ -606,7 +605,7 @@
         const v = pickFemaleVoice();
         if (v) utter.voice = v;
         utter.onend = utter.onerror = hideCaption;
-        captionEl.setAttribute('visible', 'true');
+        if (captionEls[activeTarget]) captionEls[activeTarget].setAttribute('visible', 'true');
         startTypewriter(utter);
         window.speechSynthesis.speak(utter);
       };
@@ -814,7 +813,7 @@
         if (!el) continue;
         if (FRONT_TARGETS.has(i)) { makePinFor(el); }
         if (i === 0 || i === 1 || i === 3) { makeSpeakerFor(el); }
-        makeCaption(el);
+        makeCaption(el, i);
         makeArLabels(el);
         makeArDetail(el, i);
         el.addEventListener('targetFound', () => { foundTargets.add(i); activeTarget = i; showChart(); });
