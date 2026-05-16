@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>SDE4 AR</title>
+  <title>Campus AR</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -51,7 +51,6 @@
     #total-row { display: flex; justify-content: space-between; align-items: center; }
     #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
     #total-value { font-size: 11px; font-weight: 700; color: #111; }
-
 
     #maps-panel {
       position: fixed; bottom: 16px; right: 16px; z-index: 1000;
@@ -102,7 +101,7 @@
       border: 1px solid rgba(255,255,255,0.3);
       padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
       cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
-      display: none; /* hidden by default, shown on phone only */
+      display: none;
     }
     #orient-btn.active {
       background: rgba(255,255,255,0.18); color: #fff;
@@ -112,10 +111,6 @@
       #orient-btn { display: block; }
     }
 
-    /* ── Landscape layout ──
-       Phone held landscape CW: portrait bottom-left → landscape top-right,
-       portrait bottom-right → landscape bottom-right.
-       rotate(90deg) around center makes text readable in landscape. ── */
     body.landscape #chart-panel {
       top: auto; bottom: 12px;
       right: 12px; left: auto;
@@ -128,7 +123,6 @@
     body.landscape #chart-panel.visible {
       opacity: 1; transform: rotate(90deg); pointer-events: auto;
     }
-
     body.landscape #maps-panel {
       bottom: 12px; top: auto;
       left: 12px; right: auto;
@@ -146,9 +140,9 @@
   <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
   <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
   <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
-  <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
+  <a id="maps-panel" href="#" target="_blank" rel="noopener">
     <div id="maps-panel-img-wrap">
-      <img src="/bg1.png" alt="SDE4">
+      <img src="/bg1.png" alt="Building">
       <div id="maps-panel-top">SDE4</div>
       <div id="maps-panel-bottom">
         <div id="maps-panel-addr-lbl">NUS School of Design<br>and Environment 4</div>
@@ -159,7 +153,7 @@
       </div>
     </div>
   </a>
-  <div id="scan-hint">POINT CAMERA AT SDE4</div>
+  <div id="scan-hint">POINT CAMERA AT SDE4 OR E7</div>
 
   <!-- Chart panel -->
   <div id="chart-panel">
@@ -176,9 +170,8 @@
     </div>
   </div>
 
-  <!-- Detail panel -->
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-combined.mind; maxTrack: 6; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0001;"
+    mindar-image="imageTargetSrc: /ar/targets-all.mind; maxTrack: 10; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; filterMinCF: 0.0001; filterBeta: 0.0001;"
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
@@ -186,10 +179,8 @@
     <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
     <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
 
-    <!-- Targets: 0=FRONT 1=TOP 2=LEFT 3=RIGHT 4=FRONT-LEFT 5=FRONT-RIGHT -->
-    <!-- Target 0: FRONT -->
+    <!-- SDE4 targets: 0=FRONT 1=FRONT-ALT 2=LEFT 3=TOP 4=FRONT-LEFT 5=FRONT-RIGHT -->
     <a-entity id="target-0" mindar-image-target="targetIndex: 0">
-      <!-- Glowing red frame -->
       <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
@@ -202,19 +193,11 @@
       <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
       <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
       <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
-      <!-- Anchor dots -->
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <!-- Diagonal annotation lines -->
-      <!-- Invisible marker entities for HTML label anchoring -->
-      <a-entity id="m-eq-0" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-0" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-0" position="0.85 -0.42 0.02"></a-entity>
-      <!-- 3D building volume overlay -->
     </a-entity>
 
-    <!-- Target 1: FRONT -->
     <a-entity id="target-1" mindar-image-target="targetIndex: 1">
       <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
@@ -231,12 +214,8 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-1" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-1" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-1" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
-    <!-- Target 2: LEFT -->
     <a-entity id="target-2" mindar-image-target="targetIndex: 2">
       <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
@@ -253,12 +232,8 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-2" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-2" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-2" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
-    <!-- Target 3: TOP -->
     <a-entity id="target-3" mindar-image-target="targetIndex: 3">
       <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
@@ -275,12 +250,8 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-3" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-3" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-3" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
-    <!-- Target 4: FRONT-LEFT -->
     <a-entity id="target-4" mindar-image-target="targetIndex: 4">
       <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
@@ -297,12 +268,8 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-4" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-4" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-4" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
-    <!-- Target 5: FRONT-RIGHT -->
     <a-entity id="target-5" mindar-image-target="targetIndex: 5">
       <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
       <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
@@ -319,48 +286,205 @@
       <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
       <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
-      <a-entity id="m-eq-5" position="-0.85 -0.55 0.02"></a-entity>
-      <a-entity id="m-co-5" position="0.05 -0.65 0.02"></a-entity>
-      <a-entity id="m-li-5" position="0.85 -0.42 0.02"></a-entity>
     </a-entity>
 
+    <!-- E7 targets: 6–9 -->
+    <a-entity id="target-6" mindar-image-target="targetIndex: 6">
+      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+    </a-entity>
+
+    <a-entity id="target-7" mindar-image-target="targetIndex: 7">
+      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+    </a-entity>
+
+    <a-entity id="target-8" mindar-image-target="targetIndex: 8">
+      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+    </a-entity>
+
+    <a-entity id="target-9" mindar-image-target="targetIndex: 9">
+      <a-box position="0 0.13 0.008"  width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.008" width="0.94" height="0.022" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.008" width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0.46 0 0.008"  width="0.022" height="0.28" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.18;transparent:true"></a-box>
+      <a-box position="0 0.13 0.009"  width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 -0.13 0.009" width="0.93" height="0.013" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="-0.46 0 0.009" width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0.46 0 0.009"  width="0.013" height="0.27" depth="0.001" material="color:#FF2200;shader:flat;opacity:0.38;transparent:true"></a-box>
+      <a-box position="0 0.13 0.01"   width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0 -0.13 0.01"  width="0.92" height="0.007" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="-0.46 0 0.01"  width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-box position="0.46 0 0.01"   width="0.007" height="0.26" depth="0.001" material="color:#FF3311;shader:flat"></a-box>
+      <a-sphere position="-0.22 -0.06 0.013" radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.05 -0.09 0.013"  radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+      <a-sphere position="0.26 0.02 0.013"   radius="0.009" material="color:#cccccc;shader:flat"></a-sphere>
+    </a-entity>
 
   </a-scene>
 
   <script>
-    const DETAILS = {
-      equipment: {
-        label: 'Equipment', value: '32 kWh/m²/yr', pct: 37, color: '#F5A623',
-        desc: 'Computers, monitors, lab equipment and studio devices. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices.'
+    // ── Building data ────────────────────────────────────────────────────
+    const BUILDING_DATA = {
+      sde4: {
+        name: 'SDE4',
+        details: {
+          equipment: {
+            label: 'Equipment', value: '32 kWh/m²/yr', pct: 37, color: '#F5A623',
+            desc: 'Computers, monitors, lab equipment and studio devices. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices.'
+          },
+          cooling: {
+            label: 'Cooling', value: '37 kWh/m²/yr', pct: 43, color: '#4A90D9',
+            desc: 'Hybrid cooling system combining chilled ceilings and natural ventilation reduces HVAC load by ~30% vs a conventional building. Over 50% of spaces are naturally ventilated.'
+          },
+          lighting: {
+            label: 'Lighting', value: '17 kWh/m²/yr', pct: 20, color: '#7ED321',
+            desc: 'Full LED with daylight-linked dimming sensors. South-facing shading fins and deep overhangs maximise natural daylight, cutting artificial lighting hours significantly.'
+          },
+        },
+        energy: { total: 86, components: [
+          { label: 'Cooling',   value: 37, color: '#4A90D9' },
+          { label: 'Equipment', value: 32, color: '#F5A623' },
+          { label: 'Lighting',  value: 17, color: '#7ED321' },
+        ]},
+        audio: `SDE 4, the School of Design and Environment 4, is NUS's first net-zero energy building. ` +
+          `Completed in 2019, the building was designed by Serie Architects and Multiply Architects. ` +
+          `It features a highly insulated building envelope, extensive rooftop solar panels that generate around 500 kilowatt-hours per day, ` +
+          `and a smart building management system that monitors and optimises energy use in real time. ` +
+          `SDE 4 accommodates over 1,200 students and staff, and serves as a living laboratory for sustainable design research.`,
+        map: {
+          href: 'https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9',
+          img: '/bg1.png',
+          label: 'SDE4',
+          addr: 'NUS School of Design<br>and Environment 4',
+        },
+        thermal: {
+          matchFn(h, s, v) {
+            const brightTeal = s >= 0.35 && v >= 0.35;
+            const shadowTeal = s >= 0.55 && v >= 0.15;
+            if (!brightTeal && !shadowTeal) return null;
+            const dh = Math.min(Math.abs(h - 180), 360 - Math.abs(h - 180));
+            return dh <= 24 ? true : null;
+          }
+        },
       },
-      cooling: {
-        label: 'Cooling', value: '37 kWh/m²/yr', pct: 43, color: '#4A90D9',
-        desc: 'Hybrid cooling system combining chilled ceilings and natural ventilation reduces HVAC load by ~30% vs a conventional building. Over 50% of spaces are naturally ventilated.'
+      e7: {
+        name: 'E7',
+        details: {
+          equipment: {
+            label: 'Equipment', value: '45 kWh/m²/yr', pct: 39, color: '#F5A623',
+            desc: 'Research-grade lab instruments, computers, and fabrication machinery drive equipment loads. Scheduled power-down policies and smart metering per lab reduce idle consumption significantly.'
+          },
+          cooling: {
+            label: 'Cooling', value: '51 kWh/m²/yr', pct: 44, color: '#4A90D9',
+            desc: 'Central chilled water plant serves design studios and workshops. Variable air volume systems with CO₂-based demand control ventilation keep cooling efficient even at high occupancy.'
+          },
+          lighting: {
+            label: 'Lighting', value: '20 kWh/m²/yr', pct: 17, color: '#7ED321',
+            desc: 'Full LED luminaires with occupancy and daylight sensors. Glazed facades and light shelves channel natural light deep into studios, reducing daytime artificial lighting by up to 40%.'
+          },
+        },
+        energy: { total: 116, components: [
+          { label: 'Cooling',   value: 51, color: '#4A90D9' },
+          { label: 'Equipment', value: 45, color: '#F5A623' },
+          { label: 'Lighting',  value: 20, color: '#7ED321' },
+        ]},
+        audio: `E7, the Engineering Design Innovation Centre, is NUS's hub for interdisciplinary engineering and design. ` +
+          `Completed in 2017, the building houses design studios, fabrication labs, and collaborative maker spaces spanning seven floors. ` +
+          `Its energy strategy focuses on efficient cooling of high-density lab spaces, smart occupancy-based lighting control, ` +
+          `and equipment scheduling to reduce standby loads from research instrumentation. ` +
+          `With a total energy use intensity of 116 kilowatt-hours per square metre per year, ` +
+          `E7 benchmarks well against comparable research and innovation facilities in the tropics.`,
+        map: {
+          href: 'https://www.google.com/maps/@1.2982098,103.7735302,3a,60y,335.7h,121.97t/data=!3m7!1e1!3m5!1sXFb-k00z4PHquq1iZ72P4A!2e0!6shttps:%2F%2Fstreetviewpixels-pa.googleapis.com%2Fv1%2Fthumbnail%3Fcb_client%3Dmaps_sv.tactile%26w%3D900%26h%3D600%26pitch%3D-31.967876075460552%26panoid%3DXFb-k00z4PHquq1iZ72P4A%26yaw%3D335.7045079829682!7i16384!8i8192?entry=ttu&g_ep=EgoyMDI2MDUxMy4wIKXMDSoASAFQAw%3D%3D',
+          img: '/bg4.png',
+          label: 'E7',
+          addr: 'NUS Engineering Design<br>Innovation Centre',
+        },
+        thermal: {
+          matchFn(h, s, v) {
+            if (s < 0.45 || s > 0.88 || v < 0.40) return null;
+            const dh = Math.min(Math.abs(h - 73), 360 - Math.abs(h - 73));
+            return dh <= 14 ? true : null;
+          }
+        },
       },
-      lighting: {
-        label: 'Lighting', value: '17 kWh/m²/yr', pct: 20, color: '#7ED321',
-        desc: 'Full LED with daylight-linked dimming sensors. South-facing shading fins and deep overhangs maximise natural daylight, cutting artificial lighting hours significantly.'
-      }
     };
 
-    const BUILDING_ENERGY = { total: 86, components: [
-      { label: 'Cooling', value: 37, color: '#4A90D9' },
-      { label: 'Equipment', value: 32, color: '#F5A623' },
-      { label: 'Lighting', value: 17, color: '#7ED321' },
-    ]};
+    function getBuildingKey(idx) {
+      return idx < 6 ? 'sde4' : 'e7';
+    }
 
+    // ── UI elements ──────────────────────────────────────────────────────
     const chartPanel  = document.getElementById('chart-panel');
     const scanHint    = document.getElementById('scan-hint');
     const mapsPanel   = document.getElementById('maps-panel');
-    let chartInstance = null;
-    let foundTargets  = new Set();
-    let mapsHideTimer = null;
+    const mapsPanelImg   = document.querySelector('#maps-panel-img-wrap img');
+    const mapsPanelTop   = document.getElementById('maps-panel-top');
+    const mapsPanelAddr  = document.getElementById('maps-panel-addr-lbl');
 
+    let chartInstance    = null;
+    let currentBuildingKey = null;
+    let foundTargets     = new Set();
+    let mapsHideTimer    = null;
 
-    // ── Chart ────────────────────────────────────────────────────────────
+    // ── Chart + maps ─────────────────────────────────────────────────────
     function showChart() {
+      const key  = getBuildingKey(activeTarget);
+      const data = BUILDING_DATA[key];
+
+      if (key !== currentBuildingKey) {
+        if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+        currentBuildingKey = key;
+        document.getElementById('chart-building-name').textContent = data.name;
+        mapsPanel.href = data.map.href;
+        mapsPanelImg.src = data.map.img;
+        mapsPanelTop.textContent = data.map.label;
+        mapsPanelAddr.innerHTML = data.map.addr;
+      }
+
       if (!chartInstance) {
-        const { components, total } = BUILDING_ENERGY;
+        const { components, total } = data.energy;
         document.getElementById('total-value').textContent = total + ' kWh/m²/yr';
         const legend = document.getElementById('legend');
         legend.innerHTML = '';
@@ -374,6 +498,7 @@
           options: { cutout: '60%', plugins: { legend: { display: false } }, animation: { duration: 600 } }
         });
       }
+
       chartPanel.classList.add('visible');
       scanHint.style.opacity = '0';
       if (mapsHideTimer) { clearTimeout(mapsHideTimer); mapsHideTimer = null; }
@@ -390,11 +515,10 @@
       mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
     }
 
-    // ── HTML label overlay — projects 3D marker world pos → screen px ───
-    const sceneEl = document.querySelector('a-scene');
     // ── Global AR tap system ─────────────────────────────────────────────
-    const _arVec = new THREE.Vector3();
-    const arTaps = []; // { entity, radius, fn }
+    const sceneEl = document.querySelector('a-scene');
+    const _arVec  = new THREE.Vector3();
+    const arTaps  = [];
 
     function arScreenPos(entity) {
       entity.object3D.getWorldPosition(_arVec);
@@ -425,23 +549,9 @@
     });
 
     // ── Thermal camera mode ──────────────────────────────────────────────
-    // Only SDE4's exact colour (rgb 26,189,189 → teal) gets thermal remapped.
-    // All other building colours stay as natural camera colours.
-    const BUILDING_COLORS = [
-      { h: 180, s: 0.86, v: 0.74, temp: 0.85 }, // SDE4 — teal rgb(26,189,189)
-    ];
-
     function matchBuilding(h, s, v) {
-      // Two-tier gate: shadowed teal stays saturated (S stays high) but gets dark (V drops).
-      // Physical dark objects are BOTH low-S and low-V — this rejects them.
-      const brightTeal = s >= 0.35 && v >= 0.35;   // normal lit surfaces
-      const shadowTeal = s >= 0.55 && v >= 0.15;   // shadowed overhang — still saturated, just dark
-      if (!brightTeal && !shadowTeal) return null;
-      for (const b of BUILDING_COLORS) {
-        const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
-        if (dh <= 24) return b;
-      }
-      return null;
+      const key = activeTarget >= 0 ? getBuildingKey(activeTarget) : 'sde4';
+      return BUILDING_DATA[key].thermal.matchFn(h, s, v);
     }
 
     function rgbToHsv(r, g, b) {
@@ -459,25 +569,22 @@
     }
 
     function jetColor(t) {
-      // scale #32ff50 green brightness by t — shadows darker, lit areas bright
       const b = 0.45 + t * 0.55;
-      return [Math.round(0 * b), Math.round(224 * b), Math.round(160 * b)]; // #00e0a0 bluish-green
+      return [Math.round(0 * b), Math.round(224 * b), Math.round(160 * b)];
     }
 
-    // Set at canvas creation time to match actual screen — avoids aspect ratio distortion
     let THERMAL_W = 640, THERMAL_H = 480;
     let T_X0, T_X1, T_Y0, T_Y1;
-    let thermalActive = false;
-    let thermalVideo = null;
-    let thermalAnimId = null;
-    let thermalCanvas = null;
-    let thermalCtx = null;
-    let arCanvas = null; // set in loaded handler — avoids grabbing Chart.js canvas
+    let thermalActive  = false;
+    let thermalVideo   = null;
+    let thermalAnimId  = null;
+    let thermalCanvas  = null;
+    let thermalCtx     = null;
+    let arCanvas       = null;
 
     function thermalLoop() {
       if (!thermalActive || !thermalVideo || !thermalCanvas) return;
       if (thermalVideo.readyState >= 2) {
-        // Apply object-fit:cover crop to match exactly what MindAR shows on screen
         const vw = thermalVideo.videoWidth || THERMAL_W, vh = thermalVideo.videoHeight || THERMAL_H;
         const cvScale = Math.max(THERMAL_W / vw, THERMAL_H / vh);
         const csw = THERMAL_W / cvScale, csh = THERMAL_H / cvScale;
@@ -485,7 +592,6 @@
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
 
-        // Pass 1 — find building extent in this frame
         let minY = THERMAL_H, maxY = 0;
         for (let i = 0; i < d.length; i += 4) {
           const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
@@ -494,11 +600,10 @@
           if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
         }
         const buildingH = minY <= maxY ? maxY - minY : 0;
-        const useMinY = Math.max(0, minY - Math.round(buildingH * 0.18));
-        const useMaxY = minY <= maxY ? maxY : THERMAL_H;
-        const yRange = Math.max(useMaxY - useMinY, 1);
+        const useMinY   = Math.max(0, minY - Math.round(buildingH * 0.18));
+        const useMaxY   = minY <= maxY ? maxY : THERMAL_H;
+        const yRange    = Math.max(useMaxY - useMinY, 1);
 
-        // Pass 2 — apply thermal colour relative to this frame's building extent
         for (let i = 0; i < d.length; i += 4) {
           const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
           d[i+3] = 0;
@@ -506,33 +611,29 @@
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
           if (matchBuilding(h, s, v)) {
             const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
-            const yNorm = (py - useMinY) / yRange; // 0 = top of building, 1 = bottom
-            const posTemp = 0.90 - yNorm * 0.82; // top=red(0.90), bottom=blue(0.08)
-            const temp = Math.max(0, Math.min(1, lum)); // brightness drives shade of green
+            const temp = Math.max(0, Math.min(1, lum));
             const [tr, tg, tb] = jetColor(temp);
             d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
           }
         }
         thermalCtx.putImageData(img, 0, 0);
       }
-      thermalAnimId = requestAnimationFrame(thermalLoop); // ~12fps — reduces CPU load on mobile
+      thermalAnimId = requestAnimationFrame(thermalLoop);
     }
 
     function setupThermalCanvas() {
       if (thermalCanvas) return true;
       thermalVideo = document.querySelector('video');
       if (!thermalVideo || !arCanvas) return false;
-      const aframeCanvas = arCanvas;
-      // Match canvas pixels to actual screen size — 1:1 mapping, no aspect distortion
       THERMAL_W = window.innerWidth;
       THERMAL_H = window.innerHeight;
       T_X0 = Math.round(THERMAL_W * 0.05); T_X1 = Math.round(THERMAL_W * 0.95);
       T_Y0 = Math.round(THERMAL_H * 0.02); T_Y1 = Math.round(THERMAL_H * 0.78);
       thermalCanvas = document.createElement('canvas');
-      thermalCanvas.width = THERMAL_W;
+      thermalCanvas.width  = THERMAL_W;
       thermalCanvas.height = THERMAL_H;
       thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;pointer-events:none;';
-      aframeCanvas.parentNode.insertBefore(thermalCanvas, aframeCanvas);
+      arCanvas.parentNode.insertBefore(thermalCanvas, arCanvas);
       thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
       return true;
     }
@@ -541,7 +642,6 @@
       if (!setupThermalCanvas()) { console.warn('Thermal: video or canvas not ready yet'); return; }
       thermalActive = true;
       thermalCanvas.style.display = 'block';
-      // Video stays visible — canvas is transparent overlay, only matched pixels painted
       document.getElementById('thermal-btn').classList.add('active');
       thermalAnimId = requestAnimationFrame(thermalLoop);
     }
@@ -567,12 +667,6 @@
     }
 
     // ── Audio narration ──────────────────────────────────────────────────
-    const AUDIO_TEXT = `SDE 4, the School of Design and Environment 4, is NUS's first net-zero energy building. ` +
-      `Completed in 2019, the building was designed by Serie Architects and Multiply Architects. ` +
-      `It features a highly insulated building envelope, extensive rooftop solar panels that generate around 500 kilowatt-hours per day, ` +
-      `and a smart building management system that monitors and optimises energy use in real time. ` +
-      `SDE 4 accommodates over 1,200 students and staff, and serves as a living laboratory for sustainable design research.`;
-
     function pickFemaleVoice() {
       const voices = window.speechSynthesis.getVoices();
       return voices.find(v => /samantha|victoria|karen|moira|tessa|fiona|zira|google uk english female|google us english/i.test(v.name))
@@ -581,7 +675,6 @@
           || voices[0] || null;
     }
 
-    let speakerEl = null;
     const captionEls = [], captionTxts = [];
     let typewriterTimer = null;
 
@@ -590,9 +683,8 @@
       if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
     }
 
-    function makeCaption(targetEl, idx) {
+    function makeCaption(targetEl, idx, audioText) {
       const WRAP = 36, LINE_H = 0.038, PAD = 0.04;
-
       function countLines(text) {
         let lines = 1, col = 0;
         for (const w of text.split(' ')) {
@@ -601,7 +693,7 @@
         }
         return lines;
       }
-      const boxH = +((countLines(AUDIO_TEXT) * LINE_H + PAD * 2) * (4 / 6)).toFixed(3);
+      const boxH = +((countLines(audioText) * LINE_H + PAD * 2) * (4 / 6)).toFixed(3);
 
       const el = document.createElement('a-entity');
       el.setAttribute('position', '-0.88 0.325 0.02');
@@ -628,12 +720,11 @@
       captionTxts[idx] = txt;
     }
 
-    function startTypewriter(utter) {
-      const words = AUDIO_TEXT.split(' ');
+    function startTypewriter(utter, audioText) {
+      const words = audioText.split(' ');
       let wordIdx = 0;
       let usedBoundary = false;
       const txt = captionTxts[activeTarget];
-
       txt.setAttribute('value', '');
 
       utter.onboundary = evt => {
@@ -641,7 +732,7 @@
         usedBoundary = true;
         if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
         const end = evt.charIndex + (evt.charLength || 1);
-        txt.setAttribute('value', AUDIO_TEXT.substring(0, end));
+        txt.setAttribute('value', audioText.substring(0, end));
       };
 
       typewriterTimer = setInterval(() => {
@@ -653,18 +744,19 @@
     }
 
     function toggleAudio() {
+      const audioText = BUILDING_DATA[getBuildingKey(activeTarget)].audio;
       if (window.speechSynthesis.speaking) {
         window.speechSynthesis.cancel();
         hideCaption(); return;
       }
-      const utter = new SpeechSynthesisUtterance(AUDIO_TEXT);
+      const utter = new SpeechSynthesisUtterance(audioText);
       utter.rate = 0.95;
       const trySpeak = () => {
         const v = pickFemaleVoice();
         if (v) utter.voice = v;
         utter.onend = utter.onerror = hideCaption;
         if (captionEls[activeTarget]) captionEls[activeTarget].setAttribute('visible', 'true');
-        startTypewriter(utter);
+        startTypewriter(utter, audioText);
         window.speechSynthesis.speak(utter);
       };
       if (window.speechSynthesis.getVoices().length) { trySpeak(); }
@@ -672,8 +764,7 @@
     }
 
     function makeSpeakerFor(targetEl) {
-      // Container — left of building, same Y as pin
-      speakerEl = document.createElement('a-entity');
+      const speakerEl = document.createElement('a-entity');
       speakerEl.setAttribute('position', '-0.52 0.325 0.02');
 
       const model = document.createElement('a-gltf-model');
@@ -681,7 +772,6 @@
       model.setAttribute('scale', '0.083 0.083 0.083');
       speakerEl.appendChild(model);
 
-      // Label below
       const label = document.createElement('a-text');
       label.setAttribute('value', "listen to building's detail");
       label.setAttribute('align', 'center');
@@ -707,7 +797,6 @@
 
     function makeArLabels(targetEl) {
       AR_LABEL_DEFS.forEach(({ key, pos, color }) => {
-        const d = DETAILS[key];
         const card = document.createElement('a-entity');
         card.setAttribute('position', pos);
 
@@ -723,7 +812,7 @@
         card.appendChild(bar);
 
         const title = document.createElement('a-text');
-        title.setAttribute('value', d.label.toUpperCase());
+        title.setAttribute('value', key.toUpperCase());
         title.setAttribute('color', '#ffffff'); title.setAttribute('width', '0.21');
         title.setAttribute('align', 'center'); title.setAttribute('position', '0 0.018 0.002');
         title.setAttribute('wrap-count', '22');
@@ -771,12 +860,11 @@
 
       const descEl = document.createElement('a-text');
       descEl.setAttribute('color', '#cccccc'); descEl.setAttribute('width', '0.58');
-      descEl.setAttribute('align', 'left'); descEl.setAttribute('baseline', 'top');
-      descEl.setAttribute('align', 'center'); descEl.setAttribute('position', '0 0.072 0.002');
+      descEl.setAttribute('align', 'center'); descEl.setAttribute('baseline', 'top');
+      descEl.setAttribute('position', '0 0.072 0.002');
       descEl.setAttribute('wrap-count', '44');
       detailEl.appendChild(descEl);
 
-      // Progress bar bg
       const barBg = document.createElement('a-box');
       barBg.setAttribute('width', '0.58'); barBg.setAttribute('height', '0.012'); barBg.setAttribute('depth', '0.001');
       barBg.setAttribute('position', '0.005 -0.135 0.002');
@@ -794,7 +882,6 @@
       pctEl.setAttribute('wrap-count', '36');
       detailEl.appendChild(pctEl);
 
-      // Close button
       const closeBtn = document.createElement('a-entity');
       closeBtn.setAttribute('position', '0.292 0.162 0.003');
       const closeBg = document.createElement('a-circle');
@@ -808,20 +895,20 @@
       detailEl.appendChild(closeBtn);
 
       targetEl.appendChild(detailEl);
-      arDetailEls[idx] = detailEl;
-      arDetailTitleEls[idx] = titleEl;
-      arDetailValueEls[idx] = valueEl;
-      arDetailDescEls[idx] = descEl;
-      arDetailBarEls[idx] = barEl;
-      arDetailPctEls[idx] = pctEl;
-      arDetailAccentEls[idx] = accentEl;
+      arDetailEls[idx]        = detailEl;
+      arDetailTitleEls[idx]   = titleEl;
+      arDetailValueEls[idx]   = valueEl;
+      arDetailDescEls[idx]    = descEl;
+      arDetailBarEls[idx]     = barEl;
+      arDetailPctEls[idx]     = pctEl;
+      arDetailAccentEls[idx]  = accentEl;
       arTaps.push({ entity: closeBtn, radius: 55, fn: closeArDetail });
     }
 
     function showArDetail(key) {
       const i = activeTarget;
       if (i < 0 || !arDetailEls[i]) return;
-      const d = DETAILS[key];
+      const d = BUILDING_DATA[getBuildingKey(i)].details[key];
       arDetailTitleEls[i].setAttribute('value', d.label.toUpperCase());
       arDetailValueEls[i].setAttribute('value', d.value);
       arDetailDescEls[i].setAttribute('value', d.desc);
@@ -843,19 +930,15 @@
 
     // ── MindAR wiring ────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
-      // Strip any remaining red boxes / anchor dots
       document.querySelectorAll('[id^="target-"] a-box, [id^="target-"] a-sphere').forEach(el => el.remove());
 
-      // Store the A-Frame/Three.js renderer canvas so thermal setup uses the right one
       arCanvas = sceneEl.canvas;
 
-      // ── Location pin: built once, added to all front-facing targets ──
-      // From a front target (vertical wall), Y = up.
-      // Building height ≈ 0.65 MindAR units → pin sits at Y=0.65 above center.
-      // Z=0.05 floats it slightly in front of the wall so it's visible.
       const PIN_Y = 0.27;
-      const FRONT_TARGETS = new Set([0, 1, 3, 4, 5]); // FRONT, FRONT-ALT, TOP, FRONT-LEFT, FRONT-RIGHT
-
+      // SDE4: all except target 2 (LEFT view); E7: all 4 targets (6–9)
+      const FRONT_TARGETS  = new Set([0, 1, 3, 4, 5, 6, 7, 8, 9]);
+      // SDE4: 0,1,3; E7: 6,7,9
+      const SPEAKER_TARGETS = new Set([0, 1, 3, 6, 7, 9]);
 
       function makePinFor(targetEl) {
         const pin = document.createElement('a-gltf-model');
@@ -866,12 +949,14 @@
         targetEl.appendChild(pin);
       }
 
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 10; i++) {
         const el = document.getElementById(`target-${i}`);
         if (!el) continue;
-        if (FRONT_TARGETS.has(i)) { makePinFor(el); }
-        if (i === 0 || i === 1 || i === 3) { makeSpeakerFor(el); }
-        makeCaption(el, i);
+        const bKey = getBuildingKey(i);
+        const audioText = BUILDING_DATA[bKey].audio;
+        if (FRONT_TARGETS.has(i))  { makePinFor(el); }
+        if (SPEAKER_TARGETS.has(i)) { makeSpeakerFor(el); }
+        makeCaption(el, i, audioText);
         makeArLabels(el);
         makeArDetail(el, i);
         el.addEventListener('targetFound', () => { foundTargets.add(i); activeTarget = i; showChart(); });

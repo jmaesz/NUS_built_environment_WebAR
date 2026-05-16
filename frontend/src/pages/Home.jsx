@@ -151,11 +151,7 @@ export default function Home() {
 
           <div className="home-cta-row">
             <button className="home-cta" onClick={() => window.location.href = '/ar/index.html'}>
-              SDE4 AR
-              <span className="cta-arrow">→</span>
-            </button>
-            <button className="home-cta" onClick={() => window.location.href = '/ar/e7/index.html'}>
-              E7 AR
+              LAUNCH AR
               <span className="cta-arrow">→</span>
             </button>
           </div>
