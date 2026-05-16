@@ -187,6 +187,11 @@
   text-align: justify;
 }
 
+.home-cta-row {
+  display: flex;
+  gap: 8px;
+}
+
 .home-cta {
   display: flex;
   align-items: center;
