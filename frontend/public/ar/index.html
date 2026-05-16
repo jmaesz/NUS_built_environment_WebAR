@@ -471,7 +471,7 @@
         }
         thermalCtx.putImageData(img, 0, 0);
       }
-      thermalAnimId = setTimeout(thermalLoop, 33); // ~12fps — reduces CPU load on mobile
+      thermalAnimId = requestAnimationFrame(thermalLoop); // ~12fps — reduces CPU load on mobile
     }
 
     function setupThermalCanvas() {
@@ -499,14 +499,14 @@
       thermalCanvas.style.display = 'block';
       // Video stays visible — canvas is transparent overlay, only matched pixels painted
       document.getElementById('thermal-btn').classList.add('active');
-      thermalAnimId = setTimeout(thermalLoop, 33);
+      thermalAnimId = requestAnimationFrame(thermalLoop);
     }
 
     function disableThermal() {
       thermalActive = false;
       if (thermalCanvas) thermalCanvas.style.display = 'none';
       document.getElementById('thermal-btn').classList.remove('active');
-      if (thermalAnimId) { clearTimeout(thermalAnimId); thermalAnimId = null; }
+      if (thermalAnimId) { cancelAnimationFrame(thermalAnimId); thermalAnimId = null; }
     }
 
     function toggleThermal() {
