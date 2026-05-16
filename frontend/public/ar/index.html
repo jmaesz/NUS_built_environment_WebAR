@@ -96,7 +96,7 @@
     #thermal-legend.visible { display: flex; }
     #thermal-legend-bar {
       width: 140px; height: 10px; border-radius: 3px;
-      background: linear-gradient(to right, #0000ff, #00ffff, #00ff00);
+      background: #64beef;
     }
     #thermal-legend-labels { display: flex; justify-content: space-between; width: 140px; }
     #thermal-legend-labels span { font-size: 9px; color: #ddd; letter-spacing: 0.05em; }
@@ -427,9 +427,7 @@
     }
 
     function jetColor(t) {
-      const c = v => Math.round(255 * Math.max(0, Math.min(1, v)));
-      // blue → cyan → green
-      return [c(0), c(t), c(1 - t)];
+      return [100, 190, 255]; // light blue
     }
 
     // Set at canvas creation time to match actual screen — avoids aspect ratio distortion
