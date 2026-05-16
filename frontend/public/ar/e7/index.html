@@ -378,8 +378,9 @@
     ];
 
     function matchBuilding(h, s, v) {
-      // E7 tan: hue ~38°, saturation measured very consistently 0.46–0.49
-      if (s < 0.42 || s > 0.52 || v < 0.42 || v > 0.86) return null;
+      // E7 tan: hue ~38°, saturation 0.35–0.60, not too dark
+      // Tight gates to avoid vivid oranges, yellows, skin tones
+      if (s < 0.35 || s > 0.60 || v < 0.40) return null;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
         if (dh <= 12) return b;
