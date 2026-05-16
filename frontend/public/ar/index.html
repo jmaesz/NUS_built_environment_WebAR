@@ -470,10 +470,22 @@
             if (px > maxX) maxX = px;
           }
         }
+        // Robust building bottom: 75th-percentile of per-column bottoms
+        // (discards outlier detections from keyboards, signs, etc.)
+        let robustMaxY = rawMaxY;
+        if (rawMinY <= rawMaxY) {
+          const bots = [];
+          for (let x = minX; x <= maxX; x++) { if (colBot[x] >= 0) bots.push(colBot[x]); }
+          if (bots.length >= 4) {
+            bots.sort((a, b) => a - b);
+            robustMaxY = bots[Math.floor(bots.length * 0.75)];
+          }
+        }
+
         // EMA on gradient bounds — damps colour shift from small camera movements
         if (rawMinY <= rawMaxY) {
-          if (smMinY < 0) { smMinY = rawMinY; smMaxY = rawMaxY; }
-          else { smMinY = 0.85 * smMinY + 0.15 * rawMinY; smMaxY = 0.85 * smMaxY + 0.15 * rawMaxY; }
+          if (smMinY < 0) { smMinY = rawMinY; smMaxY = robustMaxY; }
+          else { smMinY = 0.85 * smMinY + 0.15 * rawMinY; smMaxY = 0.85 * smMaxY + 0.15 * robustMaxY; }
         }
 
         // Clear canvas
@@ -482,12 +494,14 @@
         if (smMinY >= 0 && minX <= maxX) {
           const buildingH = smMaxY - smMinY;
           const useMinY = Math.max(0, smMinY - buildingH * 0.18);
-          const yRange = Math.max(smMaxY - useMinY, 1);
+          const clipMaxY = Math.round(smMaxY);
+          const yRange = Math.max(clipMaxY - useMinY, 1);
 
-          // Pass 2 — fill each detected column top-to-bottom (no gaps = smooth look)
+          // Pass 2 — fill each detected column, clipped to building bottom
           for (let x = minX; x <= maxX; x++) {
-            if (colBot[x] < 0) continue;
-            for (let y = colTop[x]; y <= colBot[x]; y++) {
+            if (colBot[x] < 0 || colTop[x] > clipMaxY) continue; // skip out-of-building columns
+            const fillBot = Math.min(colBot[x], clipMaxY);
+            for (let y = colTop[x]; y <= fillBot; y++) {
               const i = (y * THERMAL_W + x) * 4;
               const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
               const yNorm = (y - useMinY) / yRange;
