@@ -105,28 +105,33 @@
       border-color: rgba(255,255,255,0.6);
     }
 
-    /* ── Landscape layout: chart bottom-left, map bottom-right ── */
+    /* ── Landscape layout ──
+       Phone held landscape CW: portrait bottom-left → landscape top-right,
+       portrait bottom-right → landscape bottom-right.
+       rotate(90deg) around center makes text readable in landscape. ── */
     body.landscape #chart-panel {
       top: auto; bottom: 12px;
       left: 12px; right: auto;
       width: 260px;
-      transform: translateX(-16px);
-      transition: opacity 0.35s ease, transform 0.35s ease;
+      transform-origin: center;
+      transform: rotate(90deg);
+      transition: opacity 0.35s ease;
       opacity: 0; pointer-events: none;
     }
     body.landscape #chart-panel.visible {
-      opacity: 1; transform: translateX(0); pointer-events: auto;
+      opacity: 1; transform: rotate(90deg); pointer-events: auto;
     }
 
     body.landscape #maps-panel {
       bottom: 12px; top: auto;
       right: 12px; left: auto;
       width: 180px; height: auto;
-      transform: translateY(8px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transform-origin: center;
+      transform: rotate(90deg);
+      transition: opacity 0.3s ease;
     }
     body.landscape #maps-panel.visible {
-      opacity: 1; transform: translateY(0);
+      opacity: 1; transform: rotate(90deg);
     }
   </style>
 </head>
