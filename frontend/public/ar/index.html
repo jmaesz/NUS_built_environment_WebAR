@@ -335,15 +335,10 @@
     function hideUI() {
       if (foundTargets.size > 0) return;
       chartPanel.classList.remove('visible');
-      closeDetail();
+      closeArDetail();
       scanHint.style.opacity = '1';
       mapsPanel.classList.remove('visible');
       mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
-      ['equipment','cooling','lighting'].forEach(t => {
-        document.getElementById('ar-label-' + t).style.display = 'none';
-        const l = document.getElementById('line-' + t);
-        if (l) l.setAttribute('visibility', 'hidden');
-      });
     }
 
     // ── HTML label overlay — projects 3D marker world pos → screen px ───
@@ -643,8 +638,9 @@
     }
 
     // ── AR label cards + detail panel ────────────────────────────────────
-    let arDetailEl = null;
-    let arDetailTitleEl, arDetailValueEl, arDetailDescEl, arDetailBarEl, arDetailPctEl, arDetailAccentEl;
+    let activeTarget = -1;
+    const arDetailEls = [], arDetailTitleEls = [], arDetailValueEls = [];
+    const arDetailDescEls = [], arDetailBarEls = [], arDetailPctEls = [], arDetailAccentEls = [];
 
     const AR_LABEL_DEFS = [
       { key: 'equipment', pos: '-0.55 -0.25 0.03', color: '#F5A623' },
@@ -688,58 +684,58 @@
       });
     }
 
-    function makeArDetail(targetEl) {
-      arDetailEl = document.createElement('a-entity');
-      arDetailEl.setAttribute('position', '0.08 0.04 0.06');
-      arDetailEl.setAttribute('visible', 'false');
+    function makeArDetail(targetEl, idx) {
+      const detailEl = document.createElement('a-entity');
+      detailEl.setAttribute('position', '0.08 0.04 0.06');
+      detailEl.setAttribute('visible', 'false');
 
       const bg = document.createElement('a-plane');
       bg.setAttribute('width', '0.65'); bg.setAttribute('height', '0.38');
       bg.setAttribute('material', 'color:#0a0a12; opacity:0.95; shader:flat; side:double');
-      arDetailEl.appendChild(bg);
+      detailEl.appendChild(bg);
 
-      arDetailAccentEl = document.createElement('a-box');
-      arDetailAccentEl.setAttribute('width', '0.007'); arDetailAccentEl.setAttribute('height', '0.36'); arDetailAccentEl.setAttribute('depth', '0.002');
-      arDetailAccentEl.setAttribute('position', '-0.312 0 0.001');
-      arDetailAccentEl.setAttribute('material', 'color:#ffffff; shader:flat');
-      arDetailEl.appendChild(arDetailAccentEl);
+      const accentEl = document.createElement('a-box');
+      accentEl.setAttribute('width', '0.007'); accentEl.setAttribute('height', '0.36'); accentEl.setAttribute('depth', '0.002');
+      accentEl.setAttribute('position', '-0.312 0 0.001');
+      accentEl.setAttribute('material', 'color:#ffffff; shader:flat');
+      detailEl.appendChild(accentEl);
 
-      arDetailTitleEl = document.createElement('a-text');
-      arDetailTitleEl.setAttribute('color', '#ffffff'); arDetailTitleEl.setAttribute('width', '0.54');
-      arDetailTitleEl.setAttribute('align', 'center'); arDetailTitleEl.setAttribute('position', '0 0.155 0.002');
-      arDetailTitleEl.setAttribute('wrap-count', '28');
-      arDetailEl.appendChild(arDetailTitleEl);
+      const titleEl = document.createElement('a-text');
+      titleEl.setAttribute('color', '#ffffff'); titleEl.setAttribute('width', '0.54');
+      titleEl.setAttribute('align', 'center'); titleEl.setAttribute('position', '0 0.155 0.002');
+      titleEl.setAttribute('wrap-count', '28');
+      detailEl.appendChild(titleEl);
 
-      arDetailValueEl = document.createElement('a-text');
-      arDetailValueEl.setAttribute('color', '#aaaaaa'); arDetailValueEl.setAttribute('width', '0.44');
-      arDetailValueEl.setAttribute('align', 'center'); arDetailValueEl.setAttribute('position', '0 0.112 0.002');
-      arDetailValueEl.setAttribute('wrap-count', '28');
-      arDetailEl.appendChild(arDetailValueEl);
+      const valueEl = document.createElement('a-text');
+      valueEl.setAttribute('color', '#aaaaaa'); valueEl.setAttribute('width', '0.44');
+      valueEl.setAttribute('align', 'center'); valueEl.setAttribute('position', '0 0.112 0.002');
+      valueEl.setAttribute('wrap-count', '28');
+      detailEl.appendChild(valueEl);
 
-      arDetailDescEl = document.createElement('a-text');
-      arDetailDescEl.setAttribute('color', '#cccccc'); arDetailDescEl.setAttribute('width', '0.58');
-      arDetailDescEl.setAttribute('align', 'left'); arDetailDescEl.setAttribute('baseline', 'top');
-      arDetailDescEl.setAttribute('align', 'center'); arDetailDescEl.setAttribute('position', '0 0.072 0.002');
-      arDetailDescEl.setAttribute('wrap-count', '44');
-      arDetailEl.appendChild(arDetailDescEl);
+      const descEl = document.createElement('a-text');
+      descEl.setAttribute('color', '#cccccc'); descEl.setAttribute('width', '0.58');
+      descEl.setAttribute('align', 'left'); descEl.setAttribute('baseline', 'top');
+      descEl.setAttribute('align', 'center'); descEl.setAttribute('position', '0 0.072 0.002');
+      descEl.setAttribute('wrap-count', '44');
+      detailEl.appendChild(descEl);
 
       // Progress bar bg
       const barBg = document.createElement('a-box');
       barBg.setAttribute('width', '0.58'); barBg.setAttribute('height', '0.012'); barBg.setAttribute('depth', '0.001');
       barBg.setAttribute('position', '0.005 -0.135 0.002');
       barBg.setAttribute('material', 'color:#333333; shader:flat');
-      arDetailEl.appendChild(barBg);
+      detailEl.appendChild(barBg);
 
-      arDetailBarEl = document.createElement('a-box');
-      arDetailBarEl.setAttribute('height', '0.012'); arDetailBarEl.setAttribute('depth', '0.002');
-      arDetailBarEl.setAttribute('material', 'color:#ffffff; shader:flat');
-      arDetailEl.appendChild(arDetailBarEl);
+      const barEl = document.createElement('a-box');
+      barEl.setAttribute('height', '0.012'); barEl.setAttribute('depth', '0.002');
+      barEl.setAttribute('material', 'color:#ffffff; shader:flat');
+      detailEl.appendChild(barEl);
 
-      arDetailPctEl = document.createElement('a-text');
-      arDetailPctEl.setAttribute('color', '#888888'); arDetailPctEl.setAttribute('width', '0.5');
-      arDetailPctEl.setAttribute('align', 'center'); arDetailPctEl.setAttribute('position', '0 -0.155 0.002');
-      arDetailPctEl.setAttribute('wrap-count', '36');
-      arDetailEl.appendChild(arDetailPctEl);
+      const pctEl = document.createElement('a-text');
+      pctEl.setAttribute('color', '#888888'); pctEl.setAttribute('width', '0.5');
+      pctEl.setAttribute('align', 'center'); pctEl.setAttribute('position', '0 -0.155 0.002');
+      pctEl.setAttribute('wrap-count', '36');
+      detailEl.appendChild(pctEl);
 
       // Close button
       const closeBtn = document.createElement('a-entity');
@@ -752,28 +748,41 @@
       closeTxt.setAttribute('align', 'center'); closeTxt.setAttribute('baseline', 'center');
       closeTxt.setAttribute('position', '0 0 0.001'); closeTxt.setAttribute('width', '0.12');
       closeBtn.appendChild(closeTxt);
-      arDetailEl.appendChild(closeBtn);
+      detailEl.appendChild(closeBtn);
 
-      targetEl.appendChild(arDetailEl);
+      targetEl.appendChild(detailEl);
+      arDetailEls[idx] = detailEl;
+      arDetailTitleEls[idx] = titleEl;
+      arDetailValueEls[idx] = valueEl;
+      arDetailDescEls[idx] = descEl;
+      arDetailBarEls[idx] = barEl;
+      arDetailPctEls[idx] = pctEl;
+      arDetailAccentEls[idx] = accentEl;
       arTaps.push({ entity: closeBtn, radius: 55, fn: closeArDetail });
     }
 
     function showArDetail(key) {
+      const i = activeTarget;
+      if (i < 0 || !arDetailEls[i]) return;
       const d = DETAILS[key];
-      arDetailTitleEl.setAttribute('value', d.label.toUpperCase());
-      arDetailValueEl.setAttribute('value', d.value);
-      arDetailDescEl.setAttribute('value', d.desc);
-      arDetailPctEl.setAttribute('value', `${d.pct}% of total energy use`);
-      arDetailAccentEl.setAttribute('material', `color:${d.color}; shader:flat`);
+      arDetailTitleEls[i].setAttribute('value', d.label.toUpperCase());
+      arDetailValueEls[i].setAttribute('value', d.value);
+      arDetailDescEls[i].setAttribute('value', d.desc);
+      arDetailPctEls[i].setAttribute('value', `${d.pct}% of total energy use`);
+      arDetailAccentEls[i].setAttribute('material', `color:${d.color}; shader:flat`);
       const barW = (d.pct / 100) * 0.58;
-      arDetailBarEl.setAttribute('width', String(barW.toFixed(3)));
-      arDetailBarEl.setAttribute('height', '0.012'); arDetailBarEl.setAttribute('depth', '0.002');
-      arDetailBarEl.setAttribute('position', `${(-0.295 + barW / 2).toFixed(3)} -0.135 0.002`);
-      arDetailBarEl.setAttribute('material', `color:${d.color}; shader:flat`);
-      arDetailEl.setAttribute('visible', 'true');
+      arDetailBarEls[i].setAttribute('width', String(barW.toFixed(3)));
+      arDetailBarEls[i].setAttribute('height', '0.012'); arDetailBarEls[i].setAttribute('depth', '0.002');
+      arDetailBarEls[i].setAttribute('position', `${(-0.295 + barW / 2).toFixed(3)} -0.135 0.002`);
+      arDetailBarEls[i].setAttribute('material', `color:${d.color}; shader:flat`);
+      arDetailEls[i].setAttribute('visible', 'true');
     }
 
-    function closeArDetail() { arDetailEl.setAttribute('visible', 'false'); }
+    function closeArDetail() {
+      if (activeTarget >= 0 && arDetailEls[activeTarget]) {
+        arDetailEls[activeTarget].setAttribute('visible', 'false');
+      }
+    }
 
     // ── MindAR wiring ────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
@@ -804,8 +813,11 @@
         const el = document.getElementById(`target-${i}`);
         if (!el) continue;
         if (FRONT_TARGETS.has(i)) { makePinFor(el); }
-        if (i === 0) { makeSpeakerFor(el); makeCaption(el); makeArLabels(el); makeArDetail(el); }
-        el.addEventListener('targetFound', () => { foundTargets.add(i); showChart(); });
+        if (i === 0) { makeSpeakerFor(el); }
+        makeCaption(el);
+        makeArLabels(el);
+        makeArDetail(el, i);
+        el.addEventListener('targetFound', () => { foundTargets.add(i); activeTarget = i; showChart(); });
         el.addEventListener('targetLost',  () => { foundTargets.delete(i); hideUI(); });
       }
     });
