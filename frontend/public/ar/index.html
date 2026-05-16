@@ -445,7 +445,11 @@
     function thermalLoop() {
       if (!thermalActive || !thermalVideo || !thermalCanvas) return;
       if (thermalVideo.readyState >= 2) {
-        thermalCtx.drawImage(thermalVideo, 0, 0, THERMAL_W, THERMAL_H);
+        // Apply object-fit:cover crop to match exactly what MindAR shows on screen
+        const vw = thermalVideo.videoWidth || THERMAL_W, vh = thermalVideo.videoHeight || THERMAL_H;
+        const cvScale = Math.max(THERMAL_W / vw, THERMAL_H / vh);
+        const csw = THERMAL_W / cvScale, csh = THERMAL_H / cvScale;
+        thermalCtx.drawImage(thermalVideo, (vw - csw) / 2, (vh - csh) / 2, csw, csh, 0, 0, THERMAL_W, THERMAL_H);
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
 
@@ -496,7 +500,7 @@
       // Match canvas pixels to actual screen size — 1:1 mapping, no aspect distortion
       THERMAL_W = window.innerWidth;
       THERMAL_H = window.innerHeight;
-      T_X0 = Math.round(THERMAL_W * 0.02); T_X1 = Math.round(THERMAL_W * 0.98);
+      T_X0 = Math.round(THERMAL_W * 0.15); T_X1 = Math.round(THERMAL_W * 0.85);
       T_Y0 = Math.round(THERMAL_H * 0.02); T_Y1 = Math.round(THERMAL_H * 0.78);
       thermalCanvas = document.createElement('canvas');
       thermalCanvas.width = THERMAL_W;
