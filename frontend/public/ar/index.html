@@ -96,7 +96,7 @@
 </head>
 <body>
   <a href="/" id="back-btn">← BACK</a>
-  <button id="thermal-btn" onclick="toggleThermal()">THERMAL</button>
+  <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
   <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
     <div id="maps-panel-img-wrap">
       <img src="/bg1.png" alt="SDE4">
@@ -416,7 +416,7 @@
 
     function jetColor(t) {
       // scale #32ff50 green brightness by t — shadows darker, lit areas bright
-      const b = 0.25 + t * 0.75;
+      const b = 0.45 + t * 0.55;
       return [Math.round(184 * b), Math.round(255 * b), Math.round(48 * b)]; // #b8ff30 yellow-green
     }
 
@@ -471,7 +471,7 @@
         }
         thermalCtx.putImageData(img, 0, 0);
       }
-      thermalAnimId = requestAnimationFrame(thermalLoop);
+      thermalAnimId = setTimeout(thermalLoop, 80); // ~12fps — reduces CPU load on mobile
     }
 
     function setupThermalCanvas() {
@@ -499,14 +499,14 @@
       thermalCanvas.style.display = 'block';
       // Video stays visible — canvas is transparent overlay, only matched pixels painted
       document.getElementById('thermal-btn').classList.add('active');
-      thermalAnimId = requestAnimationFrame(thermalLoop);
+      thermalAnimId = setTimeout(thermalLoop, 80);
     }
 
     function disableThermal() {
       thermalActive = false;
       if (thermalCanvas) thermalCanvas.style.display = 'none';
       document.getElementById('thermal-btn').classList.remove('active');
-      if (thermalAnimId) { cancelAnimationFrame(thermalAnimId); thermalAnimId = null; }
+      if (thermalAnimId) { clearTimeout(thermalAnimId); thermalAnimId = null; }
     }
 
     function toggleThermal() {
