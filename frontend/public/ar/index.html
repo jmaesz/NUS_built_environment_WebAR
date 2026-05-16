@@ -427,7 +427,9 @@
     }
 
     function jetColor(t) {
-      return [50, 255, 80]; // #32ff50 bright green, flat
+      // scale #32ff50 green brightness by t — shadows darker, lit areas bright
+      const b = 0.25 + t * 0.75;
+      return [Math.round(50 * b), Math.round(255 * b), Math.round(80 * b)];
     }
 
     // Set at canvas creation time to match actual screen — avoids aspect ratio distortion
@@ -474,7 +476,7 @@
             const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
             const yNorm = (py - useMinY) / yRange; // 0 = top of building, 1 = bottom
             const posTemp = 0.90 - yNorm * 0.82; // top=red(0.90), bottom=blue(0.08)
-            const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.20));
+            const temp = Math.max(0, Math.min(1, lum)); // brightness drives shade of green
             const [tr, tg, tb] = jetColor(temp);
             d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
           }
