@@ -374,16 +374,15 @@
 
     // ── Thermal camera mode ──────────────────────────────────────────────
     const BUILDING_COLORS = [
-      { h: 180, s: 0.86, v: 0.74, temp: 0.85 }, // E7 — teal/concrete facade
+      { h: 38, s: 0.46, v: 0.72, temp: 0.85 }, // E7 — sandy tan/beige facade
     ];
 
     function matchBuilding(h, s, v) {
-      const brightTeal = s >= 0.35 && v >= 0.35;
-      const shadowTeal = s >= 0.55 && v >= 0.15;
-      if (!brightTeal && !shadowTeal) return null;
+      // E7 is a warm sandy tan: hue ~38°, moderate saturation
+      if (s < 0.25 || v < 0.35) return null;
       for (const b of BUILDING_COLORS) {
         const dh = Math.min(Math.abs(h - b.h), 360 - Math.abs(h - b.h));
-        if (dh <= 24) return b;
+        if (dh <= 20) return b;
       }
       return null;
     }
