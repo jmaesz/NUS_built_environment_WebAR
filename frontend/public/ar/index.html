@@ -440,6 +440,8 @@
     let thermalCanvas = null;
     let thermalCtx = null;
     let arCanvas = null; // set in loaded handler — avoids grabbing Chart.js canvas
+    let smMinY = -1, smMaxY = -1; // EMA-smoothed gradient bounds
+    let colTop = null, colBot = null; // per-column teal extents (pre-allocated)
 
     function thermalLoop() {
       if (!thermalActive || !thermalVideo || !thermalCanvas) return;
@@ -452,32 +454,49 @@
         const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
         const d = img.data;
 
-        // Pass 1 — find building extent in this frame
-        let minY = THERMAL_H, maxY = 0;
+        // Pass 1 — per-column teal extents + overall bounds
+        colTop.fill(THERMAL_H); colBot.fill(-1);
+        let rawMinY = THERMAL_H, rawMaxY = 0, minX = THERMAL_W, maxX = 0;
         for (let i = 0; i < d.length; i += 4) {
           const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
-          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
-          const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
-          if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
-        }
-        const buildingH = minY <= maxY ? maxY - minY : 0;
-        const useMinY = Math.max(0, minY - Math.round(buildingH * 0.18));
-        const useMaxY = minY <= maxY ? maxY : THERMAL_H;
-        const yRange = Math.max(useMaxY - useMinY, 1);
-
-        // Pass 2 — apply thermal colour relative to this frame's building extent
-        for (let i = 0; i < d.length; i += 4) {
-          const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
-          d[i+3] = 0;
           if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
           const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
           if (matchBuilding(h, s, v)) {
-            const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
-            const yNorm = (py - useMinY) / yRange; // 0 = top of building, 1 = bottom
-            const posTemp = 0.90 - yNorm * 0.82; // top=red(0.90), bottom=blue(0.08)
-            const temp = Math.max(0, Math.min(1, posTemp + (lum - 0.5) * 0.20));
-            const [tr, tg, tb] = jetColor(temp);
-            d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
+            if (py < colTop[px]) colTop[px] = py;
+            if (py > colBot[px]) colBot[px] = py;
+            if (py < rawMinY) rawMinY = py;
+            if (py > rawMaxY) rawMaxY = py;
+            if (px < minX) minX = px;
+            if (px > maxX) maxX = px;
+          }
+        }
+        // EMA on gradient bounds — damps colour shift from small camera movements
+        if (rawMinY <= rawMaxY) {
+          if (smMinY < 0) { smMinY = rawMinY; smMaxY = rawMaxY; }
+          else { smMinY = 0.85 * smMinY + 0.15 * rawMinY; smMaxY = 0.85 * smMaxY + 0.15 * rawMaxY; }
+        }
+
+        // Clear canvas
+        for (let i = 3; i < d.length; i += 4) d[i] = 0;
+
+        if (smMinY >= 0 && minX <= maxX) {
+          const buildingH = smMaxY - smMinY;
+          const useMinY = Math.max(0, smMinY - buildingH * 0.18);
+          const yRange = Math.max(smMaxY - useMinY, 1);
+
+          // Pass 2 — fill each detected column top-to-bottom (no gaps = smooth look)
+          for (let x = minX; x <= maxX; x++) {
+            if (colBot[x] < 0) continue;
+            for (let y = colTop[x]; y <= colBot[x]; y++) {
+              const i = (y * THERMAL_W + x) * 4;
+              const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
+              const yNorm = (y - useMinY) / yRange;
+              // 60% vertical position + 40% brightness — brightness component is angle-independent
+              const posTemp = 0.90 - yNorm * 0.82;
+              const temp = Math.max(0, Math.min(1, posTemp * 0.6 + lum * 0.4));
+              const [tr, tg, tb] = jetColor(temp);
+              d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 230;
+            }
           }
         }
         thermalCtx.putImageData(img, 0, 0);
@@ -495,10 +514,13 @@
       THERMAL_H = window.innerHeight;
       T_X0 = Math.round(THERMAL_W * 0.15); T_X1 = Math.round(THERMAL_W * 0.85);
       T_Y0 = Math.round(THERMAL_H * 0.02); T_Y1 = Math.round(THERMAL_H * 0.78);
+      colTop = new Int32Array(THERMAL_W);
+      colBot = new Int32Array(THERMAL_W);
+      smMinY = -1; smMaxY = -1;
       thermalCanvas = document.createElement('canvas');
       thermalCanvas.width = THERMAL_W;
       thermalCanvas.height = THERMAL_H;
-      thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;pointer-events:none;';
+      thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;pointer-events:none;filter:blur(3px);';
       aframeCanvas.parentNode.insertBefore(thermalCanvas, aframeCanvas);
       thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
       return true;
@@ -516,6 +538,7 @@
 
     function disableThermal() {
       thermalActive = false;
+      smMinY = -1; smMaxY = -1;
       if (thermalCanvas) thermalCanvas.style.display = 'none';
       document.getElementById('thermal-btn').classList.remove('active');
       document.getElementById('thermal-legend').classList.remove('visible');
