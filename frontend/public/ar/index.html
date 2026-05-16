@@ -797,7 +797,7 @@
       // Building height ≈ 0.65 MindAR units → pin sits at Y=0.65 above center.
       // Z=0.05 floats it slightly in front of the wall so it's visible.
       const PIN_Y = 0.27;
-      const FRONT_TARGETS = new Set([0, 4, 5]); // FRONT, FRONT-LEFT, FRONT-RIGHT
+      const FRONT_TARGETS = new Set([0, 3, 4, 5]); // FRONT, TOP, FRONT-LEFT, FRONT-RIGHT
 
 
       function makePinFor(targetEl) {
@@ -813,7 +813,7 @@
         const el = document.getElementById(`target-${i}`);
         if (!el) continue;
         if (FRONT_TARGETS.has(i)) { makePinFor(el); }
-        if (i === 0) { makeSpeakerFor(el); }
+        if (i === 0 || i === 3) { makeSpeakerFor(el); }
         makeCaption(el);
         makeArLabels(el);
         makeArDetail(el, i);
