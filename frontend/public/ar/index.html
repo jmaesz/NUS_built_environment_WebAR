@@ -107,16 +107,28 @@
 
     /* ── Landscape layout overrides ── */
     body.landscape #chart-panel {
-      top: auto; bottom: 12px;
-      right: auto; left: 12px;
-      width: 200px;
-      transform: translateX(-16px);
+      top: 12px; bottom: auto;
+      right: 12px; left: auto;
+      width: 220px;
+      transform-origin: top right;
+      transform: rotate(90deg);
+      transition: opacity 0.35s ease;
+      opacity: 0; pointer-events: none;
     }
-    body.landscape #chart-panel.visible { transform: translateX(0); }
+    body.landscape #chart-panel.visible {
+      opacity: 1; pointer-events: auto;
+    }
 
     body.landscape #maps-panel {
-      bottom: 12px; right: 12px;
-      width: 155px;
+      bottom: 12px; top: auto;
+      right: 12px; left: auto;
+      width: 180px;
+      transform-origin: bottom right;
+      transform: rotate(90deg);
+      transition: opacity 0.3s ease;
+    }
+    body.landscape #maps-panel.visible {
+      opacity: 1; transform: rotate(90deg);
     }
   </style>
 </head>
