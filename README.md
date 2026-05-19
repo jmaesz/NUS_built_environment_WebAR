@@ -10,7 +10,7 @@ Point your camera at SDE4 or E7 to instantly surface energy use breakdowns, gree
 
 ![Landing page](docs/landing-page.jpg)
 
-![AR experience](docs/ar-experience.jpg)
+![AR experience](docs/ar-experience.png)
 
 ---
 
