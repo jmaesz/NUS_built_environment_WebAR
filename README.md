@@ -10,8 +10,6 @@ A no-download WebAR experience that surfaces real campus energy data through you
 
 ![Landing page](docs/landing-page.png)
 
-![AR experience](docs/ar-experience.png)
-
 ---
 
 ## Features
@@ -71,9 +69,12 @@ frontend/
       Home.jsx            # Landing page
       Home.css
 docs/                     # README screenshots
-compile-mind.js           # Build script: compile/merge .mind target files
-crop-markers.js           # Build script: crop individual marker PNGs from a sheet
-crop_markers.py           # Build script: Python version of crop-markers
+scripts/
+  compile-mind.js         # Compile/merge .mind target files
+  crop-markers.js         # Crop individual marker PNGs from a sheet (JS)
+  crop_markers.py         # Crop individual marker PNGs from a sheet (Python)
+  color-buildings.mjs     # Recolour building GLB models
+  split-buildings.mjs     # Split scene GLB into individual building files
 ```
 
 ---
