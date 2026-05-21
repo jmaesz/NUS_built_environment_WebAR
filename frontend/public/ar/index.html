@@ -455,13 +455,16 @@
     }
 
     let _lastTouch = 0;
+    const _uiLayer = document.getElementById('ui-layer');
     document.addEventListener('touchend', e => {
       _lastTouch = Date.now();
+      if (_uiLayer && _uiLayer.contains(e.target)) return;
       const t = e.changedTouches[0];
       dispatchArTap(t.clientX, t.clientY);
     });
     document.addEventListener('click', e => {
       if (Date.now() - _lastTouch < 500) return;
+      if (_uiLayer && _uiLayer.contains(e.target)) return;
       dispatchArTap(e.clientX, e.clientY);
     });
 
@@ -716,7 +719,7 @@
         sub.setAttribute('position', '0 -0.028 0.002'); sub.setAttribute('wrap-count', '22');
         card.appendChild(sub);
         targetEl.appendChild(card);
-        arTaps.push({ entity: card, radius: 65, targetIdx: idx, fn: () => showArDetail(key, idx) });
+        arTaps.push({ entity: card, radius: 120, targetIdx: idx, fn: () => showArDetail(key, idx) });
       });
     }
 
