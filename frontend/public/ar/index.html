@@ -99,50 +99,17 @@
     }
 
     #thermal-btn { display: none; }
-    #orient-btn {
-      position: fixed; top: 100px; left: 16px; z-index: 1000;
-      width: 100px; text-align: center;
-      background: rgba(0,0,0,0.55); color: #fff;
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
-      cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
-      display: none;
-    }
-    #orient-btn.active { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.6); }
-    @media (max-width: 768px) { #orient-btn { display: block; } }
+    #orient-btn  { display: none; }
 
-    body.landscape #chart-panel {
-      top: auto; bottom: -400px; right: 12px; left: auto; width: 260px;
-      transform-origin: center; transform: rotate(90deg);
-      transition: opacity 0.35s ease, bottom 0.3s ease; opacity: 0; pointer-events: none;
+    @media (orientation: landscape) {
+      #chart-panel { top: 0; right: 8px; width: 200px; }
+      #maps-panel  { bottom: 8px; right: 8px; }
     }
-    body.landscape #chart-panel.visible { opacity: 1; bottom: 12px; transform: rotate(90deg); pointer-events: auto; }
-    body.landscape #chart-panel.collapsed { bottom: -400px; }
-    body.landscape #maps-panel {
-      bottom: -400px; top: auto; left: 12px; right: auto; width: 180px; height: auto;
-      transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease, bottom 0.3s ease;
-    }
-    body.landscape #maps-panel.visible { opacity: 1; bottom: 12px; transform: rotate(90deg); }
-    body.landscape #maps-panel.collapsed { bottom: -400px; }
-
-    .landscape-handle {
-      display: none; position: fixed; bottom: 0; z-index: 1002;
-      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.9);
-      border: 1px solid rgba(255,255,255,0.25); border-bottom: none;
-      border-radius: 6px 6px 0 0;
-      padding: 6px 14px; font-size: 10px; letter-spacing: 0.06em; cursor: pointer;
-      font-family: -apple-system, sans-serif;
-    }
-    body.landscape #chart-handle { right: 20px; }
-    body.landscape #maps-handle  { left:  20px; }
-    body.landscape #chart-handle.visible { display: block; }
-    body.landscape #maps-handle.visible  { display: block; }
   </style>
 </head>
 <body>
   <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
   <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
-  <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
 
   <a id="maps-panel" href="#" target="_blank" rel="noopener">
     <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
@@ -162,8 +129,6 @@
   </a>
 
   <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
-  <button id="chart-handle" class="landscape-handle" onclick="toggleCollapse('chart')">▲ CHART</button>
-  <button id="maps-handle"  class="landscape-handle" onclick="toggleCollapse('maps')">▲ MAP</button>
 
   <div id="chart-panel">
     <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
@@ -571,22 +536,11 @@
     }
     function toggleThermal() { if (thermalActive) disableThermal(); else enableThermal(); }
 
-    let isLandscape = false;
     function toggleCollapse(which) {
       const panel = document.getElementById(which === 'chart' ? 'chart-panel' : 'maps-panel');
       const chevron = document.getElementById(which + '-chevron');
-      const handle = document.getElementById(which + '-handle');
       const collapsed = panel.classList.toggle('collapsed');
       if (chevron) chevron.textContent = collapsed ? '›' : '‹';
-      if (handle) handle.classList.toggle('visible', collapsed);
-    }
-
-    function toggleOrient() {
-      isLandscape = !isLandscape;
-      document.body.classList.toggle('landscape', isLandscape);
-      const btn = document.getElementById('orient-btn');
-      btn.textContent = isLandscape ? '⇄ PORTRAIT' : '⇄ LANDSCAPE';
-      btn.classList.toggle('active', isLandscape);
     }
 
     // ─── Audio ────────────────────────────────────────────────────────────────
