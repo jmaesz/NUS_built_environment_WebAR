@@ -43,14 +43,14 @@
     .panel-tab {
       width: 22px; flex-shrink: 0; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.28); border-right: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.28); border-left: 1px solid rgba(255,255,255,0.3);
       font-size: 15px; color: rgba(255,255,255,0.85); user-select: none;
       transition: background 0.15s;
     }
     .panel-tab:hover { background: rgba(0,0,0,0.42); }
     #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0; }
     #chart-panel.collapsed #chart-content { visibility: hidden; }
-    #chart-panel.collapsed #chart-tab { border-right: none; }
+    #chart-panel.collapsed #chart-tab { border-left: none; }
     #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
     #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
     #chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -78,7 +78,7 @@
     #maps-panel.collapsed { width: 22px; }
     #maps-content { flex: 1; overflow: hidden; min-width: 0; }
     #maps-panel.collapsed #maps-content { visibility: hidden; }
-    #maps-panel.collapsed #maps-tab { border-right: none; }
+    #maps-panel.collapsed #maps-tab { border-left: none; }
     #maps-panel-img-wrap { position: relative; height: 110px; background: #1a1a2e; }
     #maps-panel-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
     #maps-panel-top {
@@ -132,7 +132,6 @@
   <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
 
   <a id="maps-panel" href="#" target="_blank" rel="noopener">
-    <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
     <div id="maps-content">
       <div id="maps-panel-img-wrap">
         <img id="maps-panel-img" src="" alt="Building" style="display:none">
@@ -146,12 +145,12 @@
         </div>
       </div>
     </div>
+    <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
   </a>
 
   <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
 
   <div id="chart-panel">
-    <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
     <div id="chart-content">
       <div id="chart-building-name">—</div>
       <div id="chart-subtitle">Annual Energy Use</div>
@@ -165,6 +164,7 @@
         <span id="total-value"></span>
       </div>
     </div>
+    <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
   </div>
 
   <a-scene
