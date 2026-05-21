@@ -101,10 +101,19 @@
     #thermal-btn { display: none; }
     #orient-btn  { display: none; }
 
-    @media (orientation: landscape) {
-      #chart-panel { top: 0; right: 8px; width: 200px; }
-      #maps-panel  { bottom: 8px; right: 8px; }
+    body.landscape #chart-panel {
+      top: auto; bottom: 12px; right: 0; left: auto; width: 260px;
+      transform-origin: center; transform: rotate(90deg);
+      transition: opacity 0.35s ease, width 0.25s ease; opacity: 0; pointer-events: none;
     }
+    body.landscape #chart-panel.visible { opacity: 1; transform: rotate(90deg); pointer-events: auto; }
+    body.landscape #chart-panel.collapsed { width: 22px; }
+    body.landscape #maps-panel {
+      bottom: 12px; top: auto; left: 0; right: auto; width: 180px; height: auto;
+      transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease, width 0.25s ease;
+    }
+    body.landscape #maps-panel.visible { opacity: 1; transform: rotate(90deg); }
+    body.landscape #maps-panel.collapsed { width: 22px; }
   </style>
 </head>
 <body>
@@ -535,6 +544,13 @@
       if (thermalAnimId) { cancelAnimationFrame(thermalAnimId); thermalAnimId = null; }
     }
     function toggleThermal() { if (thermalActive) disableThermal(); else enableThermal(); }
+
+    function applyOrientation() {
+      const landscape = window.innerWidth > window.innerHeight;
+      document.body.classList.toggle('landscape', landscape);
+    }
+    window.addEventListener('resize', applyOrientation);
+    applyOrientation();
 
     function toggleCollapse(which) {
       const panel = document.getElementById(which === 'chart' ? 'chart-panel' : 'maps-panel');
