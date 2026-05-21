@@ -43,11 +43,11 @@
     .panel-tab {
       width: 22px; flex-shrink: 0; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.06); border-right: 1px solid rgba(255,255,255,0.3);
-      font-size: 15px; color: rgba(60,60,60,0.7); user-select: none;
+      background: rgba(0,0,0,0.28); border-right: 1px solid rgba(255,255,255,0.3);
+      font-size: 15px; color: rgba(255,255,255,0.85); user-select: none;
       transition: background 0.15s;
     }
-    .panel-tab:hover { background: rgba(0,0,0,0.12); }
+    .panel-tab:hover { background: rgba(0,0,0,0.42); }
     #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0; }
     #chart-panel.collapsed #chart-content { visibility: hidden; }
     #chart-panel.collapsed #chart-tab { border-right: none; }
@@ -114,14 +114,16 @@
     body.landscape #chart-panel {
       top: auto; bottom: 12px; right: 0; left: auto; width: 260px;
       transform-origin: center; transform: rotate(90deg);
-      transition: opacity 0.35s ease; opacity: 0; pointer-events: none;
+      transition: opacity 0.35s ease, width 0.25s ease; opacity: 0; pointer-events: none;
     }
     body.landscape #chart-panel.visible { opacity: 1; transform: rotate(90deg); pointer-events: auto; }
+    body.landscape #chart-panel.collapsed { width: 22px; }
     body.landscape #maps-panel {
       bottom: 12px; top: auto; left: 0; right: auto; width: 180px; height: auto;
-      transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease;
+      transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease, width 0.25s ease;
     }
     body.landscape #maps-panel.visible { opacity: 1; transform: rotate(90deg); }
+    body.landscape #maps-panel.collapsed { width: 22px; }
   </style>
 </head>
 <body>
