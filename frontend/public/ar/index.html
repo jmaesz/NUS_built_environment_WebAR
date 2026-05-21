@@ -513,24 +513,6 @@
         sub.setAttribute('position', '0 -0.028 0.002'); sub.setAttribute('wrap-count', '22');
         card.appendChild(sub);
 
-        // Description block below the card
-        const descBg = document.createElement('a-plane');
-        descBg.setAttribute('width', '0.26'); descBg.setAttribute('height', '0.13');
-        descBg.setAttribute('position', '0 -0.135 0');
-        descBg.setAttribute('material', 'color:#000000; opacity:0.75; shader:flat; side:double');
-        card.appendChild(descBg);
-        const descBar = document.createElement('a-box');
-        descBar.setAttribute('width', '0.007'); descBar.setAttribute('height', '0.118'); descBar.setAttribute('depth', '0.002');
-        descBar.setAttribute('position', '-0.119 -0.135 0.001');
-        descBar.setAttribute('material', `color:${color}; shader:flat`);
-        card.appendChild(descBar);
-        const descTxt = document.createElement('a-text');
-        descTxt.setAttribute('value', d.desc);
-        descTxt.setAttribute('color', '#dddddd'); descTxt.setAttribute('width', '0.22');
-        descTxt.setAttribute('align', 'center'); descTxt.setAttribute('baseline', 'top');
-        descTxt.setAttribute('position', '0 -0.073 0.002'); descTxt.setAttribute('wrap-count', '30');
-        card.appendChild(descTxt);
-
         targetEl.appendChild(card);
         arTaps.push({ entity: card, radius: 65, fn: () => showArDetail(key) });
       });
@@ -538,7 +520,7 @@
 
     function makeArDetail(targetEl, idx) {
       const detailEl = document.createElement('a-entity');
-      detailEl.setAttribute('position', '0.08 0.04 0.06');
+      detailEl.setAttribute('position', '0 -0.55 0.06');
       detailEl.setAttribute('visible', 'false');
       const bg = document.createElement('a-plane');
       bg.setAttribute('width', '0.65'); bg.setAttribute('height', '0.38');
