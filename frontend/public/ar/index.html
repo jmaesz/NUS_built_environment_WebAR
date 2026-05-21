@@ -612,7 +612,22 @@
         makeArLabels(el);
         makeArDetail(el, 0);
         el.addEventListener('targetFound', () => { foundTargets.add(0); activeTarget = 0; showChart(); });
-        el.addEventListener('targetLost',  () => { foundTargets.delete(0); hideUI(); });
+        el.addEventListener('targetLost',  () => { foundTargets.delete(0); activeTarget = -1; hideUI(); el.object3D.scale.setScalar(1); });
+
+        // Scale AR content with distance so it stays roughly the same screen size
+        const _cp = new THREE.Vector3(), _tp = new THREE.Vector3();
+        (function scaleTick() {
+          requestAnimationFrame(scaleTick);
+          if (activeTarget !== 0) return;
+          sceneEl.camera.getWorldPosition(_cp);
+          el.object3D.getWorldPosition(_tp);
+          const dist = _cp.distanceTo(_tp);
+          if (dist < 0.01) return;
+          // dist * 1.5: calibrated so scale=1 at ~0.67 units distance.
+          // Clamp so it never gets absurdly large or tiny.
+          const s = Math.max(0.4, Math.min(5, dist * 1.5));
+          el.object3D.scale.setScalar(s);
+        })();
       }
     });
   </script>
