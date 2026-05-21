@@ -36,9 +36,10 @@
       box-shadow: 0 4px 24px rgba(0,0,0,0.12); overflow: hidden;
       display: flex; flex-direction: row;
       opacity: 0; transform: translateX(16px);
-      transition: opacity 0.35s ease, transform 0.35s ease; pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease, width 0.25s ease; pointer-events: none;
     }
     #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    #chart-panel.collapsed { width: 22px; }
     .panel-tab {
       width: 22px; flex-shrink: 0; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
@@ -47,10 +48,8 @@
       transition: background 0.15s;
     }
     .panel-tab:hover { background: rgba(0,0,0,0.12); }
-    #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0;
-      transition: max-width 0.25s ease, opacity 0.25s ease, padding 0.25s ease;
-      max-width: 400px; }
-    #chart-panel.collapsed #chart-content { max-width: 0; opacity: 0; padding: 0; }
+    #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0; }
+    #chart-panel.collapsed #chart-content { visibility: hidden; }
     #chart-panel.collapsed #chart-tab { border-right: none; }
     #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
     #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
@@ -71,15 +70,14 @@
       width: 180px; border-radius: 12px; overflow: hidden;
       box-shadow: 0 4px 24px rgba(0,0,0,0.25);
       display: none; opacity: 0; transform: translateY(8px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
+      transition: opacity 0.3s ease, transform 0.3s ease, width 0.25s ease;
       -webkit-tap-highlight-color: transparent; text-decoration: none;
       flex-direction: row;
     }
     #maps-panel.visible { opacity: 1; transform: translateY(0); display: flex; }
-    #maps-content { flex: 1; overflow: hidden; min-width: 0;
-      transition: max-width 0.25s ease, opacity 0.25s ease;
-      max-width: 400px; }
-    #maps-panel.collapsed #maps-content { max-width: 0; opacity: 0; }
+    #maps-panel.collapsed { width: 22px; }
+    #maps-content { flex: 1; overflow: hidden; min-width: 0; }
+    #maps-panel.collapsed #maps-content { visibility: hidden; }
     #maps-panel.collapsed #maps-tab { border-right: none; }
     #maps-panel-img-wrap { position: relative; height: 110px; background: #1a1a2e; }
     #maps-panel-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
