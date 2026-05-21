@@ -762,10 +762,59 @@
       if (arDetailEls[idx]) arDetailEls[idx].setAttribute('visible', 'false');
     }
 
+    // ─── Scan-box gate ────────────────────────────────────────────────────────
+    // Only activate AR when all 4 marker corners are inside the scanning square.
+    const _pendingTargets = new Set();
+    const _gateCorner = new THREE.Vector3();
+
+    function scanBoxBounds() {
+      // Try to use MindAR's actual scanning overlay element for exact bounds
+      const el = document.querySelector('.mindar-ui-scanning') ||
+                 document.querySelector('[class*="scanning"]');
+      if (el) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 10) return { x0: r.left, y0: r.top, x1: r.right, y1: r.bottom };
+      }
+      // Fallback: center square at ~70% of min viewport dimension
+      const w = window.innerWidth, h = window.innerHeight;
+      const side = Math.min(w, h) * 0.70;
+      return { x0: (w - side) / 2, y0: (h - side) / 2, x1: (w + side) / 2, y1: (h + side) / 2 };
+    }
+
+    function allCornersInScanBox(targetEl) {
+      if (!targetEl.object3D) return false;
+      const { x0, y0, x1, y1 } = scanBoxBounds();
+      const r = sceneEl.canvas.getBoundingClientRect();
+      const localCorners = [[-0.5,-0.5,0],[0.5,-0.5,0],[0.5,0.5,0],[-0.5,0.5,0]];
+      for (const [lx, ly, lz] of localCorners) {
+        _gateCorner.set(lx, ly, lz).applyMatrix4(targetEl.object3D.matrixWorld).project(sceneEl.camera);
+        const sx = (_gateCorner.x + 1) / 2 * r.width + r.left;
+        const sy = (-_gateCorner.y + 1) / 2 * r.height + r.top;
+        if (sx < x0 || sx > x1 || sy < y0 || sy > y1) return false;
+      }
+      return true;
+    }
+
     // ─── MindAR wiring ────────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
       arCanvas = sceneEl.canvas;
       const PIN_Y = 0.27;
+
+      // Gate polling loop — activates pending targets once fully inside scan box
+      (function scanGateTick() {
+        requestAnimationFrame(scanGateTick);
+        if (_pendingTargets.size === 0) return;
+        for (const idx of _pendingTargets) {
+          const el = document.getElementById(`target-${idx}`);
+          if (!el) continue;
+          if (allCornersInScanBox(el)) {
+            _pendingTargets.delete(idx);
+            foundTargets.add(idx);
+            activeTarget = idx;
+            showChart(idx);
+          }
+        }
+      })();
 
       BUILDINGS.forEach((building, idx) => {
         const el = document.getElementById(`target-${idx}`);
@@ -788,11 +837,10 @@
         makeArDetail(wrap, idx);
 
         el.addEventListener('targetFound', () => {
-          foundTargets.add(idx);
-          activeTarget = idx;
-          showChart(idx);
+          _pendingTargets.add(idx); // wait for all corners inside scan box
         });
         el.addEventListener('targetLost', () => {
+          _pendingTargets.delete(idx);
           foundTargets.delete(idx);
           window.speechSynthesis.cancel();
           hideCaption(idx);
