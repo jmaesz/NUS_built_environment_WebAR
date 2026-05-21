@@ -114,29 +114,16 @@
     body.landscape #chart-panel {
       top: auto; bottom: 12px; right: 0; left: auto; width: 260px;
       transform-origin: center; transform: rotate(90deg);
-      transition: opacity 0.35s ease, bottom 0.3s ease; opacity: 0; pointer-events: none;
+      transition: opacity 0.35s ease, width 0.25s ease; opacity: 0; pointer-events: none;
     }
     body.landscape #chart-panel.visible { opacity: 1; transform: rotate(90deg); pointer-events: auto; }
-    body.landscape #chart-panel.collapsed { bottom: -400px; width: 260px; }
+    body.landscape #chart-panel.collapsed { width: 22px; }
     body.landscape #maps-panel {
       bottom: 12px; top: auto; left: 0; right: auto; width: 180px; height: auto;
-      transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease, bottom 0.3s ease;
+      transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease, width 0.25s ease;
     }
     body.landscape #maps-panel.visible { opacity: 1; transform: rotate(90deg); }
-    body.landscape #maps-panel.collapsed { bottom: -400px; width: 180px; }
-
-    .landscape-handle {
-      display: none; position: fixed; bottom: 0; z-index: 1002;
-      background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.9);
-      border: 1px solid rgba(255,255,255,0.25); border-bottom: none;
-      border-radius: 6px 6px 0 0;
-      padding: 6px 14px; font-size: 10px; letter-spacing: 0.06em; cursor: pointer;
-      font-family: -apple-system, sans-serif;
-    }
-    body.landscape #chart-handle { right: 20px; }
-    body.landscape #maps-handle  { left:  20px; }
-    body.landscape #chart-handle.visible { display: block; }
-    body.landscape #maps-handle.visible  { display: block; }
+    body.landscape #maps-panel.collapsed { width: 22px; }
   </style>
 </head>
 <body>
@@ -162,8 +149,6 @@
   </a>
 
   <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
-  <button id="chart-handle" class="landscape-handle" onclick="toggleCollapse('chart')">▲ CHART</button>
-  <button id="maps-handle"  class="landscape-handle" onclick="toggleCollapse('maps')">▲ MAP</button>
 
   <div id="chart-panel">
     <div id="chart-content">
@@ -575,11 +560,8 @@
     function toggleCollapse(which) {
       const panel = document.getElementById(which === 'chart' ? 'chart-panel' : 'maps-panel');
       const chevron = document.getElementById(which + '-chevron');
-      const handle = document.getElementById(which + '-handle');
       const collapsed = panel.classList.toggle('collapsed');
-      if (chevron) chevron.textContent = collapsed ? '›' : '‹';
-      if (handle) handle.classList.toggle('visible', collapsed);
-      if (handle && !collapsed) handle.textContent = '▲ ' + (which === 'chart' ? 'CHART' : 'MAP');
+      chevron.textContent = collapsed ? '›' : '‹';
     }
 
     function toggleOrient() {
