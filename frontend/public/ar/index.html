@@ -58,7 +58,7 @@
       box-shadow: 0 4px 24px rgba(0,0,0,0.25);
       display: none; opacity: 0; transform: translateY(8px);
       transition: opacity 0.3s ease, transform 0.3s ease;
-      -webkit-tap-highlight-color: transparent; text-decoration: none;
+      -webkit-tap-highlight-color: transparent;
     }
     #maps-panel.visible { opacity: 1; transform: translateY(0); }
     #maps-panel-img-wrap { position: relative; height: 110px; background: #1a1a2e; }
@@ -75,6 +75,7 @@
       padding: 18px 10px 10px;
     }
     #maps-panel-addr-lbl { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.4; margin-bottom: 5px; }
+    #maps-panel-link { text-decoration: none; -webkit-tap-highlight-color: transparent; }
     #maps-panel-cta {
       display: flex; align-items: center; gap: 4px;
       font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em;
@@ -94,16 +95,42 @@
     @media (max-width: 768px) { #orient-btn { display: block; } }
 
     body.landscape #chart-panel {
-      top: auto; bottom: 12px; right: 0; left: auto; width: 260px;
+      top: auto; bottom: 0; right: 0; left: auto; width: 260px;
       transform-origin: center; transform: rotate(90deg);
       transition: opacity 0.35s ease; opacity: 0; pointer-events: none;
     }
     body.landscape #chart-panel.visible { opacity: 1; transform: rotate(90deg); pointer-events: auto; }
     body.landscape #maps-panel {
-      bottom: 12px; top: auto; left: 0; right: auto; width: 180px; height: auto;
+      bottom: 0; top: auto; left: 16px; right: auto; width: 180px; height: auto;
       transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease;
     }
     body.landscape #maps-panel.visible { opacity: 1; transform: rotate(90deg); }
+
+    /* ── Collapse controls ──────────────────────────────────────────────────── */
+    .panel-collapse-btn {
+      display: flex;
+      position: absolute; top: 5px; right: 5px;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.85); font-size: 11px; line-height: 1;
+      cursor: pointer; z-index: 12;
+      align-items: center; justify-content: center;
+      font-family: -apple-system, sans-serif; padding: 0;
+    }
+    body.landscape #chart-panel.user-collapsed { opacity: 0 !important; pointer-events: none !important; }
+    body.landscape #maps-panel.user-collapsed  { opacity: 0 !important; pointer-events: none !important; }
+
+    #chart-restore-btn, #maps-restore-btn {
+      display: none; position: fixed; z-index: 1002;
+      background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.25);
+      color: rgba(255,255,255,0.8); border-radius: 4px;
+      padding: 5px 9px; font-size: 10px; letter-spacing: 0.06em;
+      cursor: pointer; font-family: -apple-system, sans-serif;
+    }
+    body.landscape #chart-restore-btn { bottom: 4px; right: 4px; }
+    body.landscape #maps-restore-btn  { bottom: 4px; left:  4px; }
+    body.landscape #chart-restore-btn.visible { display: block; }
+    body.landscape #maps-restore-btn.visible  { display: block; }
   </style>
 </head>
 <body>
@@ -111,23 +138,29 @@
   <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
   <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
 
-  <a id="maps-panel" href="#" target="_blank" rel="noopener">
+  <div id="maps-panel">
     <div id="maps-panel-img-wrap">
       <img id="maps-panel-img" src="" alt="Building" style="display:none">
       <div id="maps-panel-top">—</div>
       <div id="maps-panel-bottom">
         <div id="maps-panel-addr-lbl">NUS Campus</div>
-        <div id="maps-panel-cta">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-          Open in Google Maps
-        </div>
+        <a id="maps-panel-link" href="#" target="_blank" rel="noopener">
+          <div id="maps-panel-cta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            Open in Google Maps
+          </div>
+        </a>
       </div>
     </div>
-  </a>
+    <button class="panel-collapse-btn" onclick="collapsePanel('maps')">✕</button>
+  </div>
 
   <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
+  <button id="chart-restore-btn" onclick="restorePanel('chart')">▶ Chart</button>
+  <button id="maps-restore-btn"  onclick="restorePanel('maps')">◀ Map</button>
 
   <div id="chart-panel">
+    <button class="panel-collapse-btn" onclick="collapsePanel('chart')">✕</button>
     <div id="chart-building-name">—</div>
     <div id="chart-subtitle">Annual Energy Use</div>
     <div id="chart-row">
@@ -373,7 +406,7 @@
         data: { labels: components.map(c => c.label), datasets: [{ data: components.map(c => c.value), backgroundColor: components.map(c => c.color), borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' }] },
         options: { cutout: '60%', plugins: { legend: { display: false } }, animation: { duration: 600 } }
       });
-      mapsPanel.href = b.mapsUrl;
+      document.getElementById('maps-panel-link').href = b.mapsUrl;
       document.getElementById('maps-panel-top').textContent = b.name;
       document.getElementById('maps-panel-addr-lbl').textContent = b.full_name;
       const imgEl = document.getElementById('maps-panel-img');
@@ -386,9 +419,25 @@
       requestAnimationFrame(() => mapsPanel.classList.add('visible'));
     }
 
+    function collapsePanel(which) {
+      const panel = document.getElementById(which === 'chart' ? 'chart-panel' : 'maps-panel');
+      const restore = document.getElementById(which + '-restore-btn');
+      panel.classList.add('user-collapsed');
+      restore.classList.add('visible');
+    }
+    function restorePanel(which) {
+      const panel = document.getElementById(which === 'chart' ? 'chart-panel' : 'maps-panel');
+      const restore = document.getElementById(which + '-restore-btn');
+      panel.classList.remove('user-collapsed');
+      restore.classList.remove('visible');
+    }
+
     function hideUI() {
       if (foundTargets.size > 0) return;
-      chartPanel.classList.remove('visible');
+      chartPanel.classList.remove('visible', 'user-collapsed');
+      document.getElementById('chart-restore-btn').classList.remove('visible');
+      mapsPanel.classList.remove('user-collapsed');
+      document.getElementById('maps-restore-btn').classList.remove('visible');
       scanHint.style.opacity = '1';
       mapsPanel.classList.remove('visible');
       mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
