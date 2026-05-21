@@ -111,52 +111,62 @@
     #orient-btn.active { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.6); }
     @media (max-width: 768px) { #orient-btn { display: block; } }
 
-    body.landscape #back-btn  { transform: rotate(90deg); transform-origin: center; }
-    body.landscape #orient-btn { transform: rotate(90deg); transform-origin: center; }
-    body.landscape #scan-hint { transform: rotate(90deg) translateX(-50%); transform-origin: center; }
-    body.landscape #chart-panel { transform: rotate(90deg) translateX(16px); transform-origin: center; }
-    body.landscape #chart-panel.visible { transform: rotate(90deg) translateX(0); }
-    body.landscape #maps-panel { transform: rotate(90deg) translateY(8px); transform-origin: center; }
-    body.landscape #maps-panel.visible { transform: rotate(90deg) translateY(0); }
+    #ui-layer {
+      position: fixed; inset: 0; z-index: 999; pointer-events: none;
+      transition: transform 0.35s ease;
+    }
+    #ui-layer > * { pointer-events: auto; }
+    #back-btn, #thermal-btn, #orient-btn, #scan-hint, #chart-panel, #maps-panel {
+      position: absolute;
+    }
+    body.landscape #ui-layer {
+      transform: rotate(90deg);
+      width: 100vh; height: 100vw;
+      top: calc((100vh - 100vw) / 2);
+      left: calc((100vw - 100vh) / 2);
+      right: auto; bottom: auto;
+    }
   </style>
 </head>
 <body>
-  <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
-  <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
-  <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
+  <div id="ui-layer">
+    <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
+    <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
+    <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
 
-  <a id="maps-panel" href="#" target="_blank" rel="noopener">
-    <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
-    <div id="maps-content">
-      <div id="maps-panel-img-wrap">
-        <img id="maps-panel-img" src="" alt="Building" style="display:none">
-        <div id="maps-panel-top">—</div>
-        <div id="maps-panel-bottom">
-          <div id="maps-panel-addr-lbl">NUS Campus</div>
-          <div id="maps-panel-cta">
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-            Open in Google Maps
+    <a id="maps-panel" href="#" target="_blank" rel="noopener">
+      <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
+      <div id="maps-content">
+        <div id="maps-panel-img-wrap">
+          <img id="maps-panel-img" src="" alt="Building" style="display:none">
+          <div id="maps-panel-top">—</div>
+          <div id="maps-panel-bottom">
+            <div id="maps-panel-addr-lbl">NUS Campus</div>
+            <div id="maps-panel-cta">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              Open in Google Maps
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  </a>
+    </a>
 
-  <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
+    <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
 
-  <div id="chart-panel">
-    <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
-    <div id="chart-content">
-      <div id="chart-building-name">—</div>
-      <div id="chart-subtitle">Annual Energy Use</div>
-      <div id="chart-row">
-        <div id="chart-container"><canvas id="energy-chart"></canvas></div>
-        <div class="legend" id="legend"></div>
-      </div>
-      <div class="divider"></div>
-      <div id="total-row">
-        <span id="total-label">Annual Total</span>
-        <span id="total-value"></span>
+    <div id="chart-panel">
+      <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
+      <div id="chart-content">
+        <div id="chart-building-name">—</div>
+        <div id="chart-subtitle">Annual Energy Use</div>
+        <div id="chart-row">
+          <div id="chart-container"><canvas id="energy-chart"></canvas></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="divider"></div>
+        <div id="total-row">
+          <span id="total-label">Annual Total</span>
+          <span id="total-value"></span>
+        </div>
       </div>
     </div>
   </div>
