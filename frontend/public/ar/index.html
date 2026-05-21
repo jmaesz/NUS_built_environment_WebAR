@@ -28,7 +28,7 @@
 
     /* ── Chart panel ── */
     #chart-panel {
-      position: fixed; top: 0px; right: 12px; z-index: 999;
+      position: fixed; top: 16px; right: 12px; z-index: 999;
       width: 220px;
       background: rgba(255,255,255,0.18);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -126,6 +126,8 @@
       left: calc((100vw - 100vh) / 2);
       right: auto; bottom: auto;
     }
+    body.landscape #chart-panel { right: calc(12px + env(safe-area-inset-bottom, 83px)); }
+    body.landscape #maps-panel  { right: calc(16px + env(safe-area-inset-bottom, 83px)); }
   </style>
 </head>
 <body>
