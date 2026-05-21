@@ -798,7 +798,7 @@
     // ─── MindAR wiring ────────────────────────────────────────────────────────
     sceneEl.addEventListener('loaded', () => {
       arCanvas = sceneEl.canvas;
-      const PIN_Y = 0.27;
+      const PIN_Z = 0.05; // pin sits on marker surface, z = toward camera
 
       // Gate polling loop — activates pending targets once fully inside scan box
       (function scanGateTick() {
@@ -826,9 +826,10 @@
 
         const pin = document.createElement('a-gltf-model');
         pin.setAttribute('src', '/ar/map_pin.glb');
-        pin.setAttribute('scale', '0.167 0.167 0.167');
-        pin.setAttribute('position', `0 ${PIN_Y} 0`);
-        pin.setAttribute('animation', `property: position; from: 0 ${PIN_Y} 0; to: 0 ${PIN_Y + 0.06} 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
+        pin.setAttribute('scale', '0.25 0.25 0.25');
+        pin.setAttribute('position', `0 0 ${PIN_Z}`);
+        pin.setAttribute('rotation', '90 0 0');
+        pin.setAttribute('animation', `property: position; from: 0 0 ${PIN_Z}; to: 0 0 ${PIN_Z + 0.06}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
         wrap.appendChild(pin);
 
         makeSpeakerFor(wrap, idx);
