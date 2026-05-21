@@ -144,7 +144,7 @@
   </div>
 
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-all.mind; maxTrack: 1; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 10;"
+    mindar-image="imageTargetSrc: /ar/targets-all.mind; maxTrack: 1; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 10; filterMinCF: 0.0001; filterBeta: 0.01;"
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
@@ -627,8 +627,9 @@
         el.addEventListener('targetFound', () => { foundTargets.add(0); activeTarget = 0; showChart(); });
         el.addEventListener('targetLost',  () => { foundTargets.delete(0); activeTarget = -1; hideUI(); wrap.object3D.scale.setScalar(1); });
 
-        // Scale the wrapper with distance so AR stays roughly the same screen size
+        // Scale the wrapper with distance — lerp smooths out per-frame jitter
         const _cp = new THREE.Vector3(), _tp = new THREE.Vector3();
+        let _curScale = 1;
         (function scaleTick() {
           requestAnimationFrame(scaleTick);
           if (activeTarget !== 0 || !el.object3D || !wrap.object3D) return;
@@ -636,9 +637,9 @@
           el.object3D.getWorldPosition(_tp);
           const dist = _cp.distanceTo(_tp);
           if (dist < 0.01) return;
-          // Minimum 3 so content is always large enough; grows with distance
-          const s = Math.max(1.0, Math.min(4, dist * 1.67));
-          wrap.setAttribute('scale', `${s} ${s} ${s}`);
+          const target = Math.max(1.0, Math.min(4, dist * 1.67));
+          _curScale += (target - _curScale) * 0.08; // lerp — smooths scale jumps
+          wrap.setAttribute('scale', `${_curScale} ${_curScale} ${_curScale}`);
         })();
       }
     });
