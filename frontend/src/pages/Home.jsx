@@ -145,7 +145,7 @@ export default function Home() {
           <div className="home-about">
             <p className="home-about-heading">WHAT IS THIS?</p>
             <p className="home-description">
-              NUScape-AR is a WebAR experience built for NUS Built Environment. Point your phone camera at a campus building marker to instantly see its energy use breakdown — no app download required.
+              A no-download WebAR experience that surfaces real campus energy data through your phone camera. Point at any of the 20 supported building markers to instantly see energy breakdowns, building details, and a direct link to Google Maps — all running on-device in the browser.
             </p>
           </div>
 
