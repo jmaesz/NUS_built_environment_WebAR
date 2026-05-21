@@ -32,12 +32,26 @@
       width: 220px;
       background: rgba(255,255,255,0.18);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; padding: 14px;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+      border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; padding: 0;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12); overflow: hidden;
+      display: flex; flex-direction: row;
       opacity: 0; transform: translateX(16px);
       transition: opacity 0.35s ease, transform 0.35s ease; pointer-events: none;
     }
     #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    .panel-tab {
+      width: 22px; flex-shrink: 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.06); border-right: 1px solid rgba(255,255,255,0.3);
+      font-size: 15px; color: rgba(60,60,60,0.7); user-select: none;
+      transition: background 0.15s;
+    }
+    .panel-tab:hover { background: rgba(0,0,0,0.12); }
+    #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0;
+      transition: max-width 0.25s ease, opacity 0.25s ease, padding 0.25s ease;
+      max-width: 400px; }
+    #chart-panel.collapsed #chart-content { max-width: 0; opacity: 0; padding: 0; }
+    #chart-panel.collapsed #chart-tab { border-right: none; }
     #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
     #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
     #chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -59,8 +73,14 @@
       display: none; opacity: 0; transform: translateY(8px);
       transition: opacity 0.3s ease, transform 0.3s ease;
       -webkit-tap-highlight-color: transparent; text-decoration: none;
+      flex-direction: row;
     }
-    #maps-panel.visible { opacity: 1; transform: translateY(0); }
+    #maps-panel.visible { opacity: 1; transform: translateY(0); display: flex; }
+    #maps-content { flex: 1; overflow: hidden; min-width: 0;
+      transition: max-width 0.25s ease, opacity 0.25s ease;
+      max-width: 400px; }
+    #maps-panel.collapsed #maps-content { max-width: 0; opacity: 0; }
+    #maps-panel.collapsed #maps-tab { border-right: none; }
     #maps-panel-img-wrap { position: relative; height: 110px; background: #1a1a2e; }
     #maps-panel-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
     #maps-panel-top {
@@ -112,14 +132,17 @@
   <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
 
   <a id="maps-panel" href="#" target="_blank" rel="noopener">
-    <div id="maps-panel-img-wrap">
-      <img id="maps-panel-img" src="" alt="Building" style="display:none">
-      <div id="maps-panel-top">—</div>
-      <div id="maps-panel-bottom">
-        <div id="maps-panel-addr-lbl">NUS Campus</div>
-        <div id="maps-panel-cta">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-          Open in Google Maps
+    <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
+    <div id="maps-content">
+      <div id="maps-panel-img-wrap">
+        <img id="maps-panel-img" src="" alt="Building" style="display:none">
+        <div id="maps-panel-top">—</div>
+        <div id="maps-panel-bottom">
+          <div id="maps-panel-addr-lbl">NUS Campus</div>
+          <div id="maps-panel-cta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            Open in Google Maps
+          </div>
         </div>
       </div>
     </div>
@@ -128,16 +151,19 @@
   <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
 
   <div id="chart-panel">
-    <div id="chart-building-name">—</div>
-    <div id="chart-subtitle">Annual Energy Use</div>
-    <div id="chart-row">
-      <div id="chart-container"><canvas id="energy-chart"></canvas></div>
-      <div class="legend" id="legend"></div>
-    </div>
-    <div class="divider"></div>
-    <div id="total-row">
-      <span id="total-label">Annual Total</span>
-      <span id="total-value"></span>
+    <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
+    <div id="chart-content">
+      <div id="chart-building-name">—</div>
+      <div id="chart-subtitle">Annual Energy Use</div>
+      <div id="chart-row">
+        <div id="chart-container"><canvas id="energy-chart"></canvas></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="divider"></div>
+      <div id="total-row">
+        <span id="total-label">Annual Total</span>
+        <span id="total-value"></span>
+      </div>
     </div>
   </div>
 
@@ -379,10 +405,14 @@
       const imgEl = document.getElementById('maps-panel-img');
       if (b.img) { imgEl.src = b.img; imgEl.style.display = 'block'; }
       else { imgEl.src = ''; imgEl.style.display = 'none'; }
+      chartPanel.classList.remove('collapsed');
+      document.getElementById('chart-chevron').textContent = '‹';
       chartPanel.classList.add('visible');
       scanHint.style.opacity = '0';
       if (mapsHideTimer) { clearTimeout(mapsHideTimer); mapsHideTimer = null; }
-      mapsPanel.style.display = 'block';
+      mapsPanel.style.display = 'flex';
+      mapsPanel.classList.remove('collapsed');
+      document.getElementById('maps-chevron').textContent = '‹';
       requestAnimationFrame(() => mapsPanel.classList.add('visible'));
     }
 
@@ -527,6 +557,13 @@
     function toggleThermal() { if (thermalActive) disableThermal(); else enableThermal(); }
 
     let isLandscape = false;
+    function toggleCollapse(which) {
+      const panel = document.getElementById(which === 'chart' ? 'chart-panel' : 'maps-panel');
+      const chevron = document.getElementById(which + '-chevron');
+      const collapsed = panel.classList.toggle('collapsed');
+      chevron.textContent = collapsed ? '›' : '‹';
+    }
+
     function toggleOrient() {
       isLandscape = !isLandscape;
       document.body.classList.toggle('landscape', isLandscape);
