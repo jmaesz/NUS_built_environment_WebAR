@@ -28,7 +28,7 @@
 
     /* ── Chart panel ── */
     #chart-panel {
-      position: fixed; top: 0px; right: 12px; z-index: 999;
+      position: fixed; top: 16px; right: 12px; z-index: 999;
       width: 220px;
       background: rgba(255,255,255,0.18);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -53,7 +53,7 @@
     #total-value { font-size: 11px; font-weight: 700; color: #111; }
 
     #maps-panel {
-      position: fixed; bottom: 20px; right: 16px; z-index: 1000;
+      position: fixed; bottom: 16px; right: 16px; z-index: 1000;
       width: 180px; border-radius: 12px; overflow: hidden;
       box-shadow: 0 4px 24px rgba(0,0,0,0.25);
       display: none; opacity: 0; transform: translateY(8px);
@@ -94,16 +94,16 @@
     @media (max-width: 768px) { #orient-btn { display: block; } }
 
     body.landscape #chart-panel {
-      top: auto; bottom: 12px; right: 12px; left: auto; width: 260px;
-      transform-origin: center; transform: rotate(90deg);
+      top: 0; bottom: auto; right: 12px; left: auto; width: 260px;
+      transform: none;
       transition: opacity 0.35s ease; opacity: 0; pointer-events: none;
     }
-    body.landscape #chart-panel.visible { opacity: 1; transform: rotate(90deg); pointer-events: auto; }
+    body.landscape #chart-panel.visible { opacity: 1; transform: none; pointer-events: auto; }
     body.landscape #maps-panel {
-      bottom: 12px; top: auto; left: 12px; right: auto; width: 180px; height: auto;
-      transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease;
+      bottom: 0; top: auto; left: 12px; right: auto; width: 180px; height: auto;
+      transform: none; transition: opacity 0.3s ease;
     }
-    body.landscape #maps-panel.visible { opacity: 1; transform: rotate(90deg); }
+    body.landscape #maps-panel.visible { opacity: 1; transform: none; }
   </style>
 </head>
 <body>
