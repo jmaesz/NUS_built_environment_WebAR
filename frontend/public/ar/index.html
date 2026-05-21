@@ -601,32 +601,37 @@
       const PIN_Y = 0.27;
       const el = document.getElementById('target-0');
       if (el) {
+        // Wrapper inside the target — MindAR only transforms the parent,
+        // so scaling this child won't conflict with tracking.
+        const wrap = document.createElement('a-entity');
+        wrap.setAttribute('id', 'ar-wrap');
+        el.appendChild(wrap);
+
         const pin = document.createElement('a-gltf-model');
         pin.setAttribute('src', '/ar/map_pin.glb');
         pin.setAttribute('scale', '0.167 0.167 0.167');
         pin.setAttribute('position', `0 ${PIN_Y} 0`);
         pin.setAttribute('animation', `property: position; from: 0 ${PIN_Y} 0; to: 0 ${PIN_Y + 0.06} 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
-        el.appendChild(pin);
-        makeSpeakerFor(el);
-        makeCaption(el, 0);
-        makeArLabels(el);
-        makeArDetail(el, 0);
+        wrap.appendChild(pin);
+        makeSpeakerFor(wrap);
+        makeCaption(wrap, 0);
+        makeArLabels(wrap);
+        makeArDetail(wrap, 0);
         el.addEventListener('targetFound', () => { foundTargets.add(0); activeTarget = 0; showChart(); });
-        el.addEventListener('targetLost',  () => { foundTargets.delete(0); activeTarget = -1; hideUI(); el.object3D.scale.setScalar(1); });
+        el.addEventListener('targetLost',  () => { foundTargets.delete(0); activeTarget = -1; hideUI(); wrap.object3D.scale.setScalar(1); });
 
-        // Scale AR content with distance so it stays roughly the same screen size
+        // Scale the wrapper with distance so AR stays roughly the same screen size
         const _cp = new THREE.Vector3(), _tp = new THREE.Vector3();
         (function scaleTick() {
           requestAnimationFrame(scaleTick);
-          if (activeTarget !== 0) return;
+          if (activeTarget !== 0 || !el.object3D || !wrap.object3D) return;
           sceneEl.camera.getWorldPosition(_cp);
           el.object3D.getWorldPosition(_tp);
           const dist = _cp.distanceTo(_tp);
           if (dist < 0.01) return;
-          // dist * 1.5: calibrated so scale=1 at ~0.67 units distance.
-          // Clamp so it never gets absurdly large or tiny.
-          const s = Math.max(0.4, Math.min(10, dist * 4));
-          el.object3D.scale.setScalar(s);
+          // Minimum 3 so content is always large enough; grows with distance
+          const s = Math.max(3, Math.min(12, dist * 5));
+          wrap.setAttribute('scale', `${s} ${s} ${s}`);
         })();
       }
     });
