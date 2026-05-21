@@ -10,7 +10,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
-    a-scene, a-scene canvas, .a-canvas { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover !important; }
 
     #back-btn {
       position: fixed; top: 16px; left: 16px; z-index: 1000;
@@ -29,8 +28,8 @@
 
     /* ── Chart panel ── */
     #chart-panel {
-      position: fixed; top: 16px; right: 12px; z-index: 999;
-      width: 255px;
+      position: fixed; top: 0px; right: 12px; z-index: 999;
+      width: 220px;
       background: rgba(255,255,255,0.18);
       backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; padding: 0;
@@ -44,14 +43,14 @@
     .panel-tab {
       width: 22px; flex-shrink: 0; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.28); border-right: 1px solid rgba(255,255,255,0.3);
+      background: rgba(0,0,0,0.28); border-left: 1px solid rgba(255,255,255,0.3);
       font-size: 15px; color: rgba(255,255,255,0.85); user-select: none;
       transition: background 0.15s;
     }
     .panel-tab:hover { background: rgba(0,0,0,0.42); }
     #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0; }
     #chart-panel.collapsed #chart-content { visibility: hidden; }
-    #chart-panel.collapsed #chart-tab { border-right: none; }
+    #chart-panel.collapsed #chart-tab { border-left: none; }
     #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
     #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
     #chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
@@ -79,7 +78,7 @@
     #maps-panel.collapsed { width: 22px; }
     #maps-content { flex: 1; overflow: hidden; min-width: 0; }
     #maps-panel.collapsed #maps-content { visibility: hidden; }
-    #maps-panel.collapsed #maps-tab { border-right: none; }
+    #maps-panel.collapsed #maps-tab { border-left: none; }
     #maps-panel-img-wrap { position: relative; height: 110px; background: #1a1a2e; }
     #maps-panel-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
     #maps-panel-top {
@@ -112,66 +111,60 @@
     #orient-btn.active { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.6); }
     @media (max-width: 768px) { #orient-btn { display: block; } }
 
-    #ui-layer {
-      position: fixed; inset: 0; z-index: 999; pointer-events: none;
-      transition: transform 0.35s ease;
+    body.landscape #chart-panel {
+      top: auto; bottom: 12px; right: 0; left: auto; width: 260px;
+      transform-origin: center; transform: rotate(90deg);
+      transition: opacity 0.35s ease, width 0.25s ease; opacity: 0; pointer-events: none;
     }
-    #ui-layer > * { pointer-events: auto; }
-    #back-btn, #thermal-btn, #orient-btn, #scan-hint, #chart-panel, #maps-panel {
-      position: absolute;
+    body.landscape #chart-panel.visible { opacity: 1; transform: rotate(90deg); pointer-events: auto; }
+    body.landscape #chart-panel.collapsed { width: 22px; }
+    body.landscape #maps-panel {
+      bottom: 12px; top: auto; left: 0; right: auto; width: 180px; height: auto;
+      transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease, width 0.25s ease;
     }
-    body.landscape #ui-layer {
-      transform: rotate(90deg);
-      width: 100vh; height: 100vw;
-      top: calc((100vh - 100vw) / 2);
-      left: calc((100vw - 100vh) / 2);
-      right: auto; bottom: auto;
-    }
-    body.landscape #chart-panel { right: 100px; top: 60px; }
-    body.landscape #maps-panel  { right: 100px; bottom: 5px; }
+    body.landscape #maps-panel.visible { opacity: 1; transform: rotate(90deg); }
+    body.landscape #maps-panel.collapsed { width: 22px; }
   </style>
 </head>
 <body>
-  <div id="ui-layer">
-    <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
-    <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
-    <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
+  <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
+  <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
+  <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
 
-    <a id="maps-panel" href="#" target="_blank" rel="noopener">
-      <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
-      <div id="maps-content">
-        <div id="maps-panel-img-wrap">
-          <img id="maps-panel-img" src="" alt="Building" style="display:none">
-          <div id="maps-panel-top">—</div>
-          <div id="maps-panel-bottom">
-            <div id="maps-panel-addr-lbl">NUS Campus</div>
-            <div id="maps-panel-cta">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
-              Open in Google Maps
-            </div>
+  <a id="maps-panel" href="#" target="_blank" rel="noopener">
+    <div id="maps-content">
+      <div id="maps-panel-img-wrap">
+        <img id="maps-panel-img" src="" alt="Building" style="display:none">
+        <div id="maps-panel-top">—</div>
+        <div id="maps-panel-bottom">
+          <div id="maps-panel-addr-lbl">NUS Campus</div>
+          <div id="maps-panel-cta">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            Open in Google Maps
           </div>
         </div>
       </div>
-    </a>
+    </div>
+    <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
+  </a>
 
-    <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
+  <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
 
-    <div id="chart-panel">
-      <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
-      <div id="chart-content">
-        <div id="chart-building-name">—</div>
-        <div id="chart-subtitle">Annual Energy Use</div>
-        <div id="chart-row">
-          <div id="chart-container"><canvas id="energy-chart"></canvas></div>
-          <div class="legend" id="legend"></div>
-        </div>
-        <div class="divider"></div>
-        <div id="total-row">
-          <span id="total-label">Annual Total</span>
-          <span id="total-value"></span>
-        </div>
+  <div id="chart-panel">
+    <div id="chart-content">
+      <div id="chart-building-name">—</div>
+      <div id="chart-subtitle">Annual Energy Use</div>
+      <div id="chart-row">
+        <div id="chart-container"><canvas id="energy-chart"></canvas></div>
+        <div class="legend" id="legend"></div>
+      </div>
+      <div class="divider"></div>
+      <div id="total-row">
+        <span id="total-label">Annual Total</span>
+        <span id="total-value"></span>
       </div>
     </div>
+    <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
   </div>
 
   <a-scene
