@@ -101,7 +101,7 @@ export default function Home() {
           <div className="home-hero">
             <p className="home-tagline">SUSTAINABILITY<br />THROUGH YOUR<br />CAMERA</p>
             <div className="home-title-row">
-              <h1 className="home-title">CAMPUS AR</h1>
+              <h1 className="home-title">NUSCAPE-AR</h1>
               <div
                 className="marquee-wrapper"
                 onMouseDown={handlePointerDown}
