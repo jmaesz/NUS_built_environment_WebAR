@@ -625,7 +625,7 @@
           if (dist < 0.01) return;
           // dist * 1.5: calibrated so scale=1 at ~0.67 units distance.
           // Clamp so it never gets absurdly large or tiny.
-          const s = Math.max(0.4, Math.min(5, dist * 1.5));
+          const s = Math.max(0.4, Math.min(10, dist * 4));
           el.object3D.scale.setScalar(s);
         })();
       }
