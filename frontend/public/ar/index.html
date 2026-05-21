@@ -94,13 +94,13 @@
     @media (max-width: 768px) { #orient-btn { display: block; } }
 
     body.landscape #chart-panel {
-      top: auto; bottom: 12px; right: 12px; left: auto; width: 260px;
+      top: auto; bottom: 12px; right: 0; left: auto; width: 260px;
       transform-origin: center; transform: rotate(90deg);
       transition: opacity 0.35s ease; opacity: 0; pointer-events: none;
     }
     body.landscape #chart-panel.visible { opacity: 1; transform: rotate(90deg); pointer-events: auto; }
     body.landscape #maps-panel {
-      bottom: 12px; top: auto; left: 12px; right: auto; width: 180px; height: auto;
+      bottom: 12px; top: auto; left: 0; right: auto; width: 180px; height: auto;
       transform-origin: center; transform: rotate(90deg); transition: opacity 0.3s ease;
     }
     body.landscape #maps-panel.visible { opacity: 1; transform: rotate(90deg); }
