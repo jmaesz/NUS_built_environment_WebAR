@@ -630,7 +630,7 @@
           const dist = _cp.distanceTo(_tp);
           if (dist < 0.01) return;
           // Minimum 3 so content is always large enough; grows with distance
-          const s = Math.max(1.5, Math.min(6, dist * 2.5));
+          const s = Math.max(1.0, Math.min(4, dist * 1.67));
           wrap.setAttribute('scale', `${s} ${s} ${s}`);
         })();
       }
