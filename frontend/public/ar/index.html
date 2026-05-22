@@ -931,18 +931,14 @@
     });
   </script>
 
-  <!-- ArUco marker detection — runs alongside MindAR on the same video feed -->
-  <script src="https://cdn.jsdelivr.net/gh/jcmellado/js-aruco/src/svd.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/jcmellado/js-aruco/src/aruco.js"></script>
+  <!-- OpenCV.js ArUco detection — runs alongside MindAR on the same video feed -->
   <script>
-    // Map ArUco marker ID → BUILDINGS index
-    // Once you scan your SDE4 ArUco marker and see its ID in the debug toast,
-    // that ID gets mapped to building index 18 (SDE4).
+    // Map ArUco marker ID → BUILDINGS index (fill in once ID is known from toast)
     const ARUCO_MAP = {
-      // e.g.  42: 18   ← will be filled in once we know the ID
+      // e.g.  42: 18   ← SDE4
     };
 
-    // Debug toast — shows detected ArUco IDs so we can fill ARUCO_MAP
+    // Debug toast
     const _arucoToast = document.createElement('div');
     Object.assign(_arucoToast.style, {
       position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
@@ -959,48 +955,92 @@
       _toastTimer = setTimeout(() => { _arucoToast.style.display = 'none'; }, 3000);
     }
 
-    window.addEventListener('load', () => {
-      // Wait for MindAR to create its video element
+    // Load OpenCV.js (includes ArUco contrib module)
+    var Module = { onRuntimeInitialized: onOpenCVReady };
+    var _cvScript = document.createElement('script');
+    _cvScript.src = 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.8.0-release.1/dist/opencv.js';
+    _cvScript.async = true;
+    document.head.appendChild(_cvScript);
+
+    function onOpenCVReady() {
+      if (!cv || !cv.aruco_ArucoDetector) {
+        showArucoToast('OpenCV ArUco not available');
+        console.warn('[ArUco] cv.aruco_ArucoDetector not found in this build');
+        return;
+      }
+      console.log('[ArUco] OpenCV ready, ArUco module available');
+
+      // Try these dictionaries in order
+      const DICTS = [
+        { name: 'DICT_4X4_50',   id: cv.aruco_DICT_4X4_50   },
+        { name: 'DICT_4X4_100',  id: cv.aruco_DICT_4X4_100  },
+        { name: 'DICT_4X4_250',  id: cv.aruco_DICT_4X4_250  },
+        { name: 'DICT_4X4_1000', id: cv.aruco_DICT_4X4_1000 },
+        { name: 'DICT_5X5_50',   id: cv.aruco_DICT_5X5_50   },
+        { name: 'DICT_6X6_50',   id: cv.aruco_DICT_6X6_50   },
+      ].filter(d => d.id !== undefined);
+
+      const detectors = DICTS.map(d => {
+        const dict   = cv.getPredefinedDictionary(d.id);
+        const params = new cv.aruco_DetectorParameters();
+        return { name: d.name, detector: new cv.aruco_ArucoDetector(dict, params) };
+      });
+
+      // Wait for MindAR video element
       const waitForVideo = setInterval(() => {
         const video = document.querySelector('video');
         if (!video || !video.srcObject) return;
         clearInterval(waitForVideo);
 
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        const detector = new AR.Detector();
+        const offCanvas = document.createElement('canvas');
+        const offCtx    = offCanvas.getContext('2d', { willReadFrequently: true });
         let lastRun = 0;
 
         (function arucoLoop() {
           requestAnimationFrame(arucoLoop);
           const now = Date.now();
-          if (now - lastRun < 400) return; // ~2.5 fps — cheap on CPU
+          if (now - lastRun < 400) return;
           lastRun = now;
           if (video.readyState < 2 || !video.videoWidth) return;
 
-          canvas.width  = video.videoWidth;
-          canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0);
+          offCanvas.width  = video.videoWidth;
+          offCanvas.height = video.videoHeight;
+          offCtx.drawImage(video, 0, 0);
 
-          let markers;
-          try { markers = detector.detect(ctx.getImageData(0, 0, canvas.width, canvas.height)); }
-          catch(e) { return; }
+          let src, gray, corners, ids, rejected;
+          try {
+            src      = cv.imread(offCanvas);
+            gray     = new cv.Mat();
+            corners  = new cv.MatVector();
+            ids      = new cv.Mat();
+            rejected = new cv.MatVector();
+            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
 
-          if (!markers.length) return;
+            for (const { name, detector } of detectors) {
+              ids.delete(); ids = new cv.Mat();
+              corners.delete(); corners = new cv.MatVector();
+              rejected.delete(); rejected = new cv.MatVector();
+              detector.detectMarkers(gray, corners, ids, rejected);
 
-          const ids = markers.map(m => m.id);
-          showArucoToast('ArUco detected: ID ' + ids.join(', '));
-          console.log('[ArUco] detected IDs:', ids);
-
-          for (const m of markers) {
-            const buildingIdx = ARUCO_MAP[m.id];
-            if (buildingIdx !== undefined) {
-              showChart(buildingIdx);
+              if (ids.rows > 0) {
+                const found = [];
+                for (let i = 0; i < ids.rows; i++) found.push(ids.intAt(i, 0));
+                showArucoToast(`ArUco [${name}] ID: ${found.join(', ')}`);
+                console.log(`[ArUco] ${name} detected:`, found);
+                for (const id of found) {
+                  if (ARUCO_MAP[id] !== undefined) showChart(ARUCO_MAP[id]);
+                }
+                break; // stop after first dictionary that finds something
+              }
             }
+          } catch(e) {
+            console.warn('[ArUco] detection error:', e);
+          } finally {
+            try { src?.delete(); gray?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
           }
         })();
       }, 500);
-    });
+    }
   </script>
 </body>
 </html>
