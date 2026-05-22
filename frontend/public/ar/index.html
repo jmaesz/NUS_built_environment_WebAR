@@ -1188,10 +1188,34 @@
       }, 500);
     }
 
-    showArucoToast('Loading ArUco...', 60000);
+    let cvLoadAttempt = 0;
+    function loadOpenCV() {
+      cvLoadAttempt++;
+      console.log(`[ArUco] Loading opencv.js (attempt ${cvLoadAttempt})...`);
+      
+      const script = document.createElement('script');
+      script.async = true;
+      script.src = 'https://cdn.jsdelivr.net/npm/opencv-js@4.9.0/opencv.js';
+      script.onload = () => {
+        console.log('[ArUco] opencv.js loaded');
+        onOpenCvReady();
+      };
+      script.onerror = () => {
+        console.warn(`[ArUco] Failed to load opencv.js from CDN (attempt ${cvLoadAttempt})`);
+        if (cvLoadAttempt < 3) {
+          setTimeout(() => {
+            showArucoToast(`Retrying ArUco... (${cvLoadAttempt}/2)`, 5000);
+            loadOpenCV();
+          }, 2000);
+        } else {
+          showArucoToast('ArUco: opencv.js failed to load after 3 attempts');
+        }
+      };
+      document.head.appendChild(script);
+    }
+    
+    showArucoToast('Loading ArUco...', 120000);
+    loadOpenCV();
   </script>
-  <script async src="https://docs.opencv.org/4.10.0/opencv.js"
-          onload="onOpenCvReady();"
-          onerror="showArucoToast('opencv.js failed to load')"></script>
 </body>
 </html>
