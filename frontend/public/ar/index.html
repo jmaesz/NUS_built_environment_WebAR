@@ -183,7 +183,7 @@
     <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
     <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
 
-    <!-- 20 building targets — index matches energy_data.json order -->
+    <!-- 21 building targets — index matches BUILDINGS array order; target 20 = SDE4 alternate marker -->
     <a-entity id="target-0"  mindar-image-target="targetIndex: 0"></a-entity>
     <a-entity id="target-1"  mindar-image-target="targetIndex: 1"></a-entity>
     <a-entity id="target-2"  mindar-image-target="targetIndex: 2"></a-entity>
@@ -204,6 +204,7 @@
     <a-entity id="target-17" mindar-image-target="targetIndex: 17"></a-entity>
     <a-entity id="target-18" mindar-image-target="targetIndex: 18"></a-entity>
     <a-entity id="target-19" mindar-image-target="targetIndex: 19"></a-entity>
+    <a-entity id="target-20" mindar-image-target="targetIndex: 20"></a-entity>
   </a-scene>
 
   <script>
@@ -368,6 +369,14 @@
         "equipment_description": "Equipment dominates at 51% of total energy — the highest equipment share in the dataset and more than double the absolute equipment load of any other building. Secure server infrastructure, defence research instruments, and specialised laboratory systems operating 24/7 are the primary drivers.",
         "lighting_description": "Lighting accounts for 14% of total energy — the lowest lighting share of any building in the dataset. Despite the high absolute value, lighting is a relatively minor contributor compared to the enormous equipment and cooling loads from continuous research operations.",
         "cooling_description": "Cooling represents 35% of total energy, with an absolute cooling load nearly double that of the next highest building. Server rooms and defence research equipment generating continuous heat require industrial-scale cooling infrastructure running around the clock."
+      },
+      {
+        "id": "FOE18", "name": "SDE4", "full_name": "School of Design and Environment 4", "img": "https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/sde4/sde4.jpg", "mapsUrl": "https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9",
+        "description": "Southeast Asia's first net-zero energy building, opened in 2019 and designed by Serie Architects and Multiply Architects. Features a large rooftop photovoltaic array generating around 500 kilowatt-hours per day, chilled ceilings, natural ventilation, a smart building management system, and exposed building services as a living learning tool. Holds the BCA Green Mark 2021 Platinum Positive Energy Award — meaning it produces more energy than it consumes annually.",
+        "equipment_kWh": 1436175, "lighting_kWh": 940901, "cooling_kWh": 1837480,
+        "equipment_description": "Equipment accounts for 34% of total energy. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices, though computers and design studio equipment still represent a significant base load.",
+        "lighting_description": "Lighting represents 22% of total energy. Full LED fittings with daylight-linked dimming sensors and deep overhangs that maximise natural light penetration substantially reduce artificial lighting hours compared to conventionally designed buildings.",
+        "cooling_description": "Cooling is the dominant end use at 44% of total energy. Despite over 50% of spaces being naturally ventilated and chilled ceilings reducing HVAC load by around 30%, Singapore's tropical climate means cooling remains the largest single energy demand."
       }
     ];
 
