@@ -931,7 +931,7 @@
     });
   </script>
 
-  <!-- ArUco detection via OpenCV.js — 2D label (confirmed working) + 3D entity attempt -->
+  <!-- ArUco detection via OpenCV.js — 3D label on Z axis (marker normal, toward camera) -->
   <script>
     // ── Toast ─────────────────────────────────────────────────────────────────
     const _arucoToast = document.createElement('div');
@@ -950,57 +950,14 @@
       _toastTimer = setTimeout(() => { _arucoToast.style.display = 'none'; }, dur || 4000);
     }
 
-    // ── 2D label + connector line (the approach confirmed working) ─────────────
-    const _arSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    Object.assign(_arSvg.style, {
-      position:'fixed', top:'0', left:'0', width:'100%', height:'100%',
-      zIndex:'9996', pointerEvents:'none', overflow:'visible'
-    });
-    document.body.appendChild(_arSvg);
-    const _arLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-    _arLine.setAttribute('stroke', '#ffffff');
-    _arLine.setAttribute('stroke-width', '2');
-    _arLine.setAttribute('display', 'none');
-    _arSvg.appendChild(_arLine);
-
-    const _arLabel = document.createElement('div');
-    Object.assign(_arLabel.style, {
-      position:'fixed', display:'none', zIndex:'9997',
-      background:'white', color:'#111',
-      border:'2px solid #111', borderRadius:'3px',
-      padding:'6px 16px', fontSize:'15px', fontWeight:'700',
-      transform:'translate(-50%, -100%)',
-      cursor:'pointer', pointerEvents:'auto',
-      whiteSpace:'nowrap', boxShadow:'0 2px 10px rgba(0,0,0,0.22)',
-      userSelect:'none'
-    });
-    document.body.appendChild(_arLabel);
-    _arLabel.addEventListener('click', () => showChart(18));
-
-    let _arHideTimer = null;
-
-    function showArucoLabel(sx, sy) {
-      const LIFT = 100;
-      _arLabel.textContent = BUILDINGS[18].name;
-      _arLabel.style.left  = sx + 'px';
-      _arLabel.style.top   = (sy - LIFT) + 'px';
-      _arLabel.style.display = 'block';
-      _arLine.setAttribute('x1', sx); _arLine.setAttribute('y1', sy - LIFT);
-      _arLine.setAttribute('x2', sx); _arLine.setAttribute('y2', sy);
-      _arLine.setAttribute('display', 'block');
-      clearTimeout(_arHideTimer);
-      _arHideTimer = setTimeout(() => {
-        _arLabel.style.display = 'none';
-        _arLine.setAttribute('display', 'none');
-        if (_ar3d) { _ar3d.root.object3D.visible = false; }
-      }, 600);
-    }
-
-    // ── 3D A-Frame entity (bonus overlay on top of the 2D label) ──────────────
-    const ARUCO_PHYS = 0.08;
+    // ── 3D entity setup ───────────────────────────────────────────────────────
+    const ARUCO_PHYS = 0.08; // physical marker size in meters
     const _hs = ARUCO_PHYS / 2;
+    // TL, TR, BR, BL corners in marker space (Z=0 plane, Y up)
     const MARKER_OBJ_PTS = [-_hs, _hs, 0,  _hs, _hs, 0,  _hs, -_hs, 0,  -_hs, -_hs, 0];
-    let _ar3d = null;
+
+    let _ar3d = null;        // { root, clickDiv, sceneEl }
+    let _arHideTimer = null;
 
     function setupArucoEntities() {
       const sceneEl = document.querySelector('a-scene');
@@ -1008,20 +965,29 @@
         if (sceneEl) sceneEl.addEventListener('loaded', setupArucoEntities, { once: true });
         return;
       }
+
+      // Root: world matrix set from solvePnP each detection frame
       const root = document.createElement('a-entity');
       root.setAttribute('id', 'aruco-3d-root');
       sceneEl.appendChild(root);
       root.object3D.visible = false;
       root.object3D.matrixAutoUpdate = false;
 
+      // Stem along Z axis (marker normal = toward camera).
+      // a-cylinder default axis is Y, so rotate 90° around X to point along Z.
       const cyl = document.createElement('a-cylinder');
-      cyl.setAttribute('radius', '0.003'); cyl.setAttribute('height', '0.14');
-      cyl.setAttribute('color', '#ffffff'); cyl.setAttribute('shader', 'flat');
-      cyl.setAttribute('position', '0 0.07 0');
+      cyl.setAttribute('radius', '0.003');
+      cyl.setAttribute('height', '0.14');
+      cyl.setAttribute('color', '#ffffff');
+      cyl.setAttribute('shader', 'flat');
+      cyl.setAttribute('position', '0 0 0.07');   // midpoint along Z
+      cyl.setAttribute('rotation', '90 0 0');      // tip cylinder along Z
       root.appendChild(cyl);
 
+      // Label panel floating 14 cm out along Z (in front of the marker face).
+      // Default a-plane lies in XY plane with normal pointing +Z = toward camera. ✓
       const panelEl = document.createElement('a-entity');
-      panelEl.setAttribute('position', '0 0.14 0');
+      panelEl.setAttribute('position', '0 0 0.14');
 
       const border = document.createElement('a-plane');
       border.setAttribute('width', '0.215'); border.setAttribute('height', '0.080');
@@ -1036,19 +1002,33 @@
       panelEl.appendChild(face);
 
       const txt = document.createElement('a-text');
-      txt.setAttribute('value', 'SDE4'); txt.setAttribute('color', '#111111');
-      txt.setAttribute('align', 'center'); txt.setAttribute('width', '0.65');
+      txt.setAttribute('value', 'SDE4');
+      txt.setAttribute('color', '#111111');
+      txt.setAttribute('align', 'center');
+      txt.setAttribute('width', '0.65');
       txt.setAttribute('position', '0 0 0.002');
       panelEl.appendChild(txt);
 
       root.appendChild(panelEl);
-      _ar3d = { root, panelEl, sceneEl };
+
+      // Transparent DOM div for tap — projected to screen position of the panel
+      const clickDiv = document.createElement('div');
+      Object.assign(clickDiv.style, {
+        position:'fixed', width:'110px', height:'40px',
+        transform:'translate(-50%,-50%)', cursor:'pointer',
+        zIndex:'9998', display:'none'
+      });
+      document.body.appendChild(clickDiv);
+      clickDiv.addEventListener('click', () => showChart(18));
+
+      _ar3d = { root, panelEl, clickDiv, sceneEl };
     }
     try { setupArucoEntities(); } catch(e) { console.warn('[ArUco 3D setup]', e); }
 
+    // ── Apply solvePnP result ─────────────────────────────────────────────────
     function tryApply3DPose(rvecData, tvecData) {
       if (!_ar3d) return;
-      const { root, panelEl, sceneEl } = _ar3d;
+      const { root, panelEl, clickDiv, sceneEl } = _ar3d;
       const T = AFRAME.THREE;
       let rv, rm;
       try {
@@ -1056,6 +1036,9 @@
         rm = new cv.Mat();
         cv.Rodrigues(rv, rm);
         const r = rm.data64F, t = tvecData;
+
+        // OpenCV cam frame (X right, Y down, Z forward) → Three.js cam frame
+        // (X right, Y up, Z toward viewer): negate rows 1 and 2 of R, and ty, tz.
         const m4 = new T.Matrix4();
         m4.set(
            r[0],  r[1],  r[2],  t[0],
@@ -1064,20 +1047,29 @@
            0,     0,     0,     1
         );
         m4.premultiply(sceneEl.camera.matrixWorld);
+
         root.object3D.matrix.copy(m4);
         root.object3D.matrixWorldNeedsUpdate = true;
         root.object3D.visible = true;
 
-        root.object3D.updateWorldMatrix(false, false);
-        const qCam = sceneEl.camera.getWorldQuaternion(new T.Quaternion());
-        const qPar = root.object3D.getWorldQuaternion(new T.Quaternion()).invert();
-        panelEl.object3D.quaternion.copy(qPar.multiply(qCam));
-        panelEl.object3D.matrixWorldNeedsUpdate = true;
+        // Project panel world position → screen for the click div
+        panelEl.object3D.updateWorldMatrix(true, false);
+        const wp   = new T.Vector3().setFromMatrixPosition(panelEl.object3D.matrixWorld);
+        const proj = wp.project(sceneEl.camera);
+        clickDiv.style.left    = ((proj.x  + 1) / 2 * window.innerWidth)  + 'px';
+        clickDiv.style.top     = ((-proj.y + 1) / 2 * window.innerHeight) + 'px';
+        clickDiv.style.display = '';
+
       } catch(e) {
         console.warn('[ArUco 3D pose]', e);
       } finally {
         try { rv?.delete(); rm?.delete(); } catch(_) {}
       }
+
+      clearTimeout(_arHideTimer);
+      _arHideTimer = setTimeout(() => {
+        if (_ar3d) { _ar3d.root.object3D.visible = false; _ar3d.clickDiv.style.display = 'none'; }
+      }, 600);
     }
 
     // ── Detection ─────────────────────────────────────────────────────────────
@@ -1133,17 +1125,7 @@
                 det.detectMarkers(img, corners, ids, rejected);
 
                 if (ids.rows > 0) {
-                  const cd  = corners.get(0).data32F;
-                  const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4;
-                  const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4;
-                  const sc  = Math.max(window.innerWidth/W, window.innerHeight/H);
-                  const sx  = (window.innerWidth  - W*sc)/2 + vcx*sc;
-                  const sy  = (window.innerHeight - H*sc)/2 + vcy*sc;
-
-                  // Always show the 2D label (confirmed-working path)
-                  showArucoLabel(sx, sy);
-
-                  // Also attempt 3D pose on top
+                  const cd = corners.get(0).data32F;
                   let imgPts, objPts, camMat, dist, rvec, tvec;
                   try {
                     imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
@@ -1159,7 +1141,6 @@
                   } finally {
                     try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
                   }
-
                   break outer;
                 }
               }
