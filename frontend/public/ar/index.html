@@ -1029,16 +1029,13 @@
 
       _ar3d = { root, panelEl, clickDiv, sceneEl };
     }
-    setupArucoEntities();
+    try { setupArucoEntities(); } catch(e) { console.warn('[ArUco setup]', e); }
 
     // ── Apply solvePnP pose to scene ──────────────────────────────────────────
-    const _m4   = new THREE.Matrix4();
-    const _qCam = new THREE.Quaternion();
-    const _qPar = new THREE.Quaternion();
-
     function applyArucoPose(rvecData, tvecData) {
       if (!_ar3d) return;
       const { root, panelEl, clickDiv, sceneEl } = _ar3d;
+      const T = AFRAME.THREE; // safe alias — AFRAME is always defined here
 
       let rv, rm;
       try {
@@ -1051,28 +1048,29 @@
         // Convert OpenCV camera frame (X right, Y down, Z forward)
         // → Three.js camera frame (X right, Y up, Z toward viewer)
         // by negating Y and Z rows of R and Y,Z of t.
-        _m4.set(
+        const m4 = new T.Matrix4();
+        m4.set(
            r[0],  r[1],  r[2],  t[0],
           -r[3], -r[4], -r[5], -t[1],
           -r[6], -r[7], -r[8], -t[2],
            0,     0,     0,     1
         );
-        _m4.premultiply(sceneEl.camera.matrixWorld);
+        m4.premultiply(sceneEl.camera.matrixWorld);
 
-        root.object3D.matrix.copy(_m4);
+        root.object3D.matrix.copy(m4);
         root.object3D.matrixWorldNeedsUpdate = true;
         root.object3D.visible = true;
 
         // Billboard panelEl: local quat = inv(root world quat) * camera world quat
         root.object3D.updateWorldMatrix(false, false);
-        sceneEl.camera.getWorldQuaternion(_qCam);
-        root.object3D.getWorldQuaternion(_qPar).invert();
-        panelEl.object3D.quaternion.copy(_qPar.multiply(_qCam));
+        const qCam = sceneEl.camera.getWorldQuaternion(new T.Quaternion());
+        const qPar = root.object3D.getWorldQuaternion(new T.Quaternion()).invert();
+        panelEl.object3D.quaternion.copy(qPar.multiply(qCam));
         panelEl.object3D.matrixWorldNeedsUpdate = true;
 
         // Project panel world position → screen for the click div
         panelEl.object3D.updateWorldMatrix(true, false);
-        const wp   = new THREE.Vector3().setFromMatrixPosition(panelEl.object3D.matrixWorld);
+        const wp   = new T.Vector3().setFromMatrixPosition(panelEl.object3D.matrixWorld);
         const proj = wp.project(sceneEl.camera);
         clickDiv.style.left    = ((proj.x  + 1) / 2 * window.innerWidth)  + 'px';
         clickDiv.style.top     = ((-proj.y + 1) / 2 * window.innerHeight) + 'px';
