@@ -175,7 +175,7 @@
   </div>
 
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=22; maxTrack: 1; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 10; filterMinCF: 0.0001; filterBeta: 0.01;"
+    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=23; maxTrack: 1; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 10; filterMinCF: 0.0001; filterBeta: 0.01;"
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
@@ -894,7 +894,14 @@
         makeArDetail(wrap, idx);
 
         el.addEventListener('targetFound', () => {
-          _pendingTargets.add(idx); // wait for all corners inside scan box
+          if (idx === 20) {
+            // skip scan box gate for alt SDE4 marker — activate immediately
+            foundTargets.add(idx);
+            activeTarget = idx;
+            showChart(idx);
+          } else {
+            _pendingTargets.add(idx); // wait for all corners inside scan box
+          }
         });
         el.addEventListener('targetLost', () => {
           _pendingTargets.delete(idx);
