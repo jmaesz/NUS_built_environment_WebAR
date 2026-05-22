@@ -931,9 +931,11 @@
     });
   </script>
 
-  <!-- ArUco detection + 3D pin via OpenCV.js solvePnP pose estimation -->
+  <!-- ArUco detection via OpenCV.js (runs alongside MindAR on the same video feed) -->
+  <!-- Reference: github.com/kbralten/aruco_online — official opencv.js, inverted grayscale, RefineParameters -->
   <script>
-    // ── toast ────────────────────────────────────────────────────────────────
+    const ARUCO_MAP = { 0: 18 };  // DICT_4X4_50 marker ID 0 → SDE4
+
     const _arucoToast = document.createElement('div');
     Object.assign(_arucoToast.style, {
       position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
@@ -950,124 +952,43 @@
       _toastTimer = setTimeout(() => { _arucoToast.style.display = 'none'; }, dur || 4000);
     }
 
-    // ── 3-D pin entity ───────────────────────────────────────────────────────
-    // Standalone entity (not a mindar-image-target child).
-    // We set its world matrix directly from solvePnP on every detection frame.
-    let _arucoPin  = null;
-    let _pinReady  = false;
-    let _pinHideTimer = null;
-    const _PIN_Z   = 0.05;
-
-    function ensurePin() {
-      if (_arucoPin) return;
-      const sceneEl = document.querySelector('a-scene');
-      if (!sceneEl) return;
-
-      _arucoPin = document.createElement('a-entity');
-      sceneEl.appendChild(_arucoPin);
-
-      const model = document.createElement('a-gltf-model');
-      model.setAttribute('src', '/ar/map_pin.glb');
-      model.setAttribute('scale', '0.25 0.25 0.25');
-      model.setAttribute('position', `0 0 ${_PIN_Z}`);
-      model.setAttribute('rotation', '90 0 0');
-      model.setAttribute('animation',
-        `property: position; from: 0 0 ${_PIN_Z}; to: 0 0 ${_PIN_Z + 0.06};` +
-        `dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
-      _arucoPin.appendChild(model);
-
-      _arucoPin.addEventListener('loaded', () => {
-        _arucoPin.object3D.matrixAutoUpdate = false;
-        _arucoPin.object3D.visible = false;
-        _pinReady = true;
-      });
-    }
-
-    function positionPin(cv, corners, video) {
-      if (!_pinReady || !_arucoPin || !_arucoPin.object3D) return;
-      const sceneEl = document.querySelector('a-scene');
-      if (!sceneEl || !sceneEl.camera) return;
-
-      // Physical marker side length in metres — adjust if pin sits too high/low
-      const L  = 0.12;
-      const W  = video.videoWidth, H = video.videoHeight;
-      // Approximate focal length from max video dimension
-      const fx = Math.max(W, H) * 0.9;
-
-      const camMat    = cv.matFromArray(3, 3, cv.CV_64F, [fx,0,W/2, 0,fx,H/2, 0,0,1]);
-      const distCoeff = cv.Mat.zeros(4, 1, cv.CV_64F);
-      // 3-D marker corners in marker space: X right, Y up, Z toward viewer
-      const objPts    = cv.matFromArray(4, 1, cv.CV_64FC3, [
-        -L/2,  L/2, 0,
-         L/2,  L/2, 0,
-         L/2, -L/2, 0,
-        -L/2, -L/2, 0,
-      ]);
-      const cd     = corners.get(0).data32F;          // [x0,y0, x1,y1, x2,y2, x3,y3]
-      const imgPts = cv.matFromArray(4, 1, cv.CV_64FC2,
-        [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
-      const rvec = new cv.Mat(), tvec = new cv.Mat();
-
-      try {
-        cv.solvePnP(objPts, imgPts, camMat, distCoeff, rvec, tvec);
-        const R = new cv.Mat();
-        cv.Rodrigues(rvec, R);
-        const r = R.data64F, t = tvec.data64F;
-
-        // Convert OpenCV camera space (X right, Y down, Z forward)
-        // → Three.js camera space (X right, Y up, Z toward viewer): negate Y and Z rows
-        const m = new THREE.Matrix4();
-        m.set(
-           r[0],  r[1],  r[2],  t[0],
-          -r[3], -r[4], -r[5], -t[1],
-          -r[6], -r[7], -r[8], -t[2],
-           0,     0,     0,     1
-        );
-        // Camera-space → world-space
-        m.premultiply(sceneEl.camera.matrixWorld);
-
-        _arucoPin.object3D.matrix.copy(m);
-        _arucoPin.object3D.visible = true;
-        _arucoPin.object3D.matrixWorldNeedsUpdate = true;
-        R.delete();
-      } catch(e) {
-        console.warn('[ArUco] solvePnP:', e);
-      } finally {
-        camMat.delete(); distCoeff.delete(); objPts.delete(); imgPts.delete();
-        rvec.delete(); tvec.delete();
+    // Called by onload on the opencv.js script tag below.
+    // Poll until cv + ArUco are ready (WASM init is async).
+    function onOpenCvReady() {
+      if (typeof cv === 'undefined' || !cv.Mat) {
+        setTimeout(onOpenCvReady, 100);
+        return;
+      }
+      if (!cv.aruco_ArucoDetector) {
+        showArucoToast('ArUco: not in this opencv.js build');
+        return;
       }
 
-      // Hide pin if no detection for 600 ms
-      clearTimeout(_pinHideTimer);
-      _pinHideTimer = setTimeout(() => {
-        if (_arucoPin) _arucoPin.object3D.visible = false;
-      }, 600);
-    }
-
-    // ── OpenCV detection loop ────────────────────────────────────────────────
-    function onOpenCvReady() {
-      if (typeof cv === 'undefined' || !cv.Mat) { setTimeout(onOpenCvReady, 100); return; }
-      if (!cv.aruco_ArucoDetector) { showArucoToast('ArUco: not in build'); return; }
-
+      // Discover all 4x4 dictionaries present in this build
       const dict4x4Keys = Object.keys(cv).filter(k => k.startsWith('DICT_4X4_'));
       if (!dict4x4Keys.length) { showArucoToast('ArUco: no 4x4 dicts'); return; }
 
       const detectors = dict4x4Keys.map(k => {
-        const dict = cv.getPredefinedDictionary(cv[k]);
+        const dict   = cv.getPredefinedDictionary(cv[k]);
         const params = new cv.aruco_DetectorParameters();
-        let det;
-        try { det = new cv.aruco_ArucoDetector(dict, params, new cv.aruco_RefineParameters(10, 3, true)); }
-        catch(_) { det = new cv.aruco_ArucoDetector(dict, params); }
+        let   det;
+        try {
+          const refine = new cv.aruco_RefineParameters(10, 3, true);
+          det = new cv.aruco_ArucoDetector(dict, params, refine);
+        } catch(_) {
+          det = new cv.aruco_ArucoDetector(dict, params);
+        }
         return { name: k, det };
       });
 
       showArucoToast('ArUco ready', 2000);
-      ensurePin();
 
+      // Any video with actual frames — MindAR camera feed
       const waitForVideo = setInterval(() => {
         const video = [...document.querySelectorAll('video')].find(v => v.videoWidth > 0);
         if (!video) return;
         clearInterval(waitForVideo);
+        showArucoToast(`Scanning ${video.videoWidth}×${video.videoHeight}`, 3000);
 
         const canvas = document.createElement('canvas');
         const ctx    = canvas.getContext('2d', { willReadFrequently: true });
@@ -1075,29 +996,39 @@
 
         (function arucoLoop() {
           requestAnimationFrame(arucoLoop);
-          if (Date.now() - lastRun < 250) return;
+          if (Date.now() - lastRun < 350) return;
           lastRun = Date.now();
           if (video.readyState < 2 || !video.videoWidth) return;
 
-          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+          canvas.width  = video.videoWidth;
+          canvas.height = video.videoHeight;
           ctx.drawImage(video, 0, 0);
 
           let src, gray, grayInv, corners, ids, rejected;
           try {
-            src = cv.imread(canvas); gray = new cv.Mat(); grayInv = new cv.Mat();
-            corners = new cv.MatVector(); ids = new cv.Mat(); rejected = new cv.MatVector();
+            src     = cv.imread(canvas);
+            gray    = new cv.Mat();
+            grayInv = new cv.Mat();
+            corners = new cv.MatVector();
+            ids     = new cv.Mat();
+            rejected = new cv.MatVector();
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
             cv.bitwise_not(gray, grayInv);
 
             outer:
-            for (const { det } of detectors) {
+            for (const { name, det } of detectors) {
               for (const img of [gray, grayInv]) {
                 corners.delete(); corners  = new cv.MatVector();
                 ids.delete();     ids      = new cv.Mat();
                 rejected.delete(); rejected = new cv.MatVector();
                 det.detectMarkers(img, corners, ids, rejected);
                 if (ids.rows > 0) {
-                  positionPin(cv, corners, video);
+                  const found = [];
+                  for (let i = 0; i < ids.rows; i++) found.push(ids.intAt(i, 0));
+                  showArucoToast(`[${name}] ID: ${found.join(', ')}`, 2000);
+                  for (const id of found) {
+                    if (ARUCO_MAP[id] !== undefined) showChart(ARUCO_MAP[id]);
+                  }
                   break outer;
                 }
               }
