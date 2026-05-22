@@ -1002,7 +1002,7 @@
       panelEl.appendChild(face);
 
       const txt = document.createElement('a-text');
-      txt.setAttribute('value', 'SDE4');
+      txt.setAttribute('value', 'Marker 0');
       txt.setAttribute('color', '#111111');
       txt.setAttribute('align', 'center');
       txt.setAttribute('width', '0.65');
@@ -1021,17 +1021,20 @@
       document.body.appendChild(clickDiv);
       clickDiv.addEventListener('click', () => showChart(18));
 
-      _ar3d = { root, panelEl, clickDiv, sceneEl };
+      _ar3d = { root, panelEl, clickDiv, sceneEl, labelTxt: txt };
     }
     try { setupArucoEntities(); } catch(e) { console.warn('[ArUco 3D setup]', e); }
 
-    // ── Apply solvePnP result ─────────────────────────────────────────────────
-    function tryApply3DPose(rvecData, tvecData) {
+     function tryApply3DPose(rvecData, tvecData, markerId) {
       if (!_ar3d) return;
-      const { root, panelEl, clickDiv, sceneEl } = _ar3d;
+      const { root, panelEl, clickDiv, sceneEl, labelTxt } = _ar3d;
       const T = AFRAME.THREE;
       let rv, rm;
       try {
+        if (markerId !== undefined && labelTxt) {
+          labelTxt.setAttribute('value', `Marker ${markerId}`);
+        }
+        
         rv = cv.matFromArray(3, 1, cv.CV_64F, rvecData);
         rm = new cv.Mat();
         cv.Rodrigues(rv, rm);
@@ -1125,23 +1128,45 @@
                 det.detectMarkers(img, corners, ids, rejected);
 
                 if (ids.rows > 0) {
-                  const cd = corners.get(0).data32F;
-                  let imgPts, objPts, camMat, dist, rvec, tvec;
                   try {
-                    imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
-                    objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
-                    const f = Math.max(W, H);
-                    camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,W/2, 0,f,H/2, 0,0,1]);
-                    dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
-                    rvec   = new cv.Mat(); tvec = new cv.Mat();
-                    cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
-                    tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F));
-                  } catch(pnpErr) {
-                    console.warn('[solvePnP]', pnpErr);
-                  } finally {
-                    try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
+                    const markerIdMat = ids.data32S || ids.data32U;
+                    const markerId = markerIdMat ? markerIdMat[0] : -1;
+                    
+                    if (markerId !== 0) {
+                      continue;
+                    }
+                    
+                    const cornerMat = corners.get(0);
+                    if (!cornerMat) {
+                      console.warn('[ArUco] No corner data for marker 0');
+                      continue;
+                    }
+                    
+                    const cd = cornerMat.data32F;
+                    if (!cd || cd.length < 8) {
+                      console.warn('[ArUco] Invalid corner data length:', cd?.length);
+                      continue;
+                    }
+                    
+                    let imgPts, objPts, camMat, dist, rvec, tvec;
+                    try {
+                      imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
+                      objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
+                      const f = Math.max(W, H);
+                      camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,W/2, 0,f,H/2, 0,0,1]);
+                      dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
+                      rvec   = new cv.Mat(); tvec = new cv.Mat();
+                      cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
+                      tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F), markerId);
+                    } catch(pnpErr) {
+                      console.warn('[solvePnP]', pnpErr);
+                    } finally {
+                      try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
+                    }
+                    break outer;
+                  } catch(detErr) {
+                    console.warn('[ArUco marker processing]', detErr);
                   }
-                  break outer;
                 }
               }
             }
