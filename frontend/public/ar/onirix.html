@@ -114,12 +114,13 @@
     </div>
 
     <div id="scan-hint">POINT CAMERA AT A FLAT SURFACE</div>
+    <div id="loading-msg" style="position:absolute;bottom:36px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.55);color:#fff;padding:11px 18px;font-size:11px;letter-spacing:0.1em;border-radius:4px;white-space:nowrap;">LOADING SDK…</div>
     <div id="error-msg"></div>
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script type="module">
-    import OnirixSDK from 'https://sdk.onirix.com/ar-engine/latest/ox-ar-engine.esm.js';
+    import OnirixSDK from 'https://unpkg.com/@onirix/ar-engine@1.8.0/dist/ox-ar-engine.esm.js';
 
     // ── Building data ──────────────────────────────────────────────────────────
     const BUILDINGS = {
@@ -214,12 +215,25 @@
 
     // ── Onirix SDK init ────────────────────────────────────────────────────────
     const SCENE_TOKEN = '205b19e5a1c64fb89ba0d4ccc9286721';
-    const hint = document.getElementById('scan-hint');
+    const hint    = document.getElementById('scan-hint');
+    const loading = document.getElementById('loading-msg');
+    const errEl   = document.getElementById('error-msg');
+
+    function showError(msg) {
+      loading.style.display = 'none';
+      hint.style.display = 'none';
+      errEl.textContent = msg;
+      errEl.style.display = 'block';
+    }
+
+    // Kill if SDK takes more than 15 s
+    const timeout = setTimeout(() => showError('SDK timed out — check your token or network.'), 15000);
 
     try {
       const oxSDK = new OnirixSDK(SCENE_TOKEN);
 
       oxSDK.subscribe(OnirixSDK.Events.SURFACE_FOUND, () => {
+        loading.style.display = 'none';
         hint.style.opacity = '0';
       });
 
@@ -227,19 +241,19 @@
         hint.style.opacity = '1';
       });
 
-      // Fires when user taps a named element in the Onirix scene
       oxSDK.subscribe(OnirixSDK.Events.ELEMENT_CLICK, (element) => {
         const key = element.name;
         if (BUILDINGS[key]) showDetail(key);
       });
 
       await oxSDK.init();
+      clearTimeout(timeout);
+      loading.style.display = 'none';
 
     } catch (err) {
+      clearTimeout(timeout);
       console.error('Onirix error:', err);
-      const errEl = document.getElementById('error-msg');
-      errEl.textContent = 'AR failed to start: ' + (err.message || err);
-      errEl.style.display = 'block';
+      showError('AR failed to start: ' + (err.message || err));
     }
   </script>
 </body>
