@@ -932,6 +932,7 @@
   </script>
 
   <!-- ArUco detection via OpenCV.js (runs alongside MindAR on the same video feed) -->
+  <!-- Reference: github.com/kbralten/aruco_online — official opencv.js, inverted grayscale, RefineParameters -->
   <script>
     const ARUCO_MAP = { 0: 18 };  // DICT_4X4_50 marker ID 0 → SDE4
 
@@ -951,130 +952,100 @@
       _toastTimer = setTimeout(() => { _arucoToast.style.display = 'none'; }, dur || 4000);
     }
 
-    function startArucoDetection(cv) {
+    // Called by onload on the opencv.js script tag below.
+    // Poll until cv + ArUco are ready (WASM init is async).
+    function onOpenCvReady() {
+      if (typeof cv === 'undefined' || !cv.Mat) {
+        setTimeout(onOpenCvReady, 100);
+        return;
+      }
       if (!cv.aruco_ArucoDetector) {
-        showArucoToast('ArUco: module not in this build');
+        showArucoToast('ArUco: not in this opencv.js build');
         return;
       }
 
-      // Build detectors for all 4x4 dictionary sizes (try each on every frame)
-      const DICTS = [
-        { name: '4X4_50',   id: cv.aruco_DICT_4X4_50   },
-        { name: '4X4_100',  id: cv.aruco_DICT_4X4_100  },
-        { name: '4X4_250',  id: cv.aruco_DICT_4X4_250  },
-        { name: '4X4_1000', id: cv.aruco_DICT_4X4_1000 },
-      ].filter(d => d.id !== undefined);
+      // Discover all 4x4 dictionaries present in this build
+      const dict4x4Keys = Object.keys(cv).filter(k => k.startsWith('DICT_4X4_'));
+      if (!dict4x4Keys.length) { showArucoToast('ArUco: no 4x4 dicts'); return; }
 
-      function makeDetector(dictId) {
-        const dict   = cv.getPredefinedDictionary(dictId);
+      const detectors = dict4x4Keys.map(k => {
+        const dict   = cv.getPredefinedDictionary(cv[k]);
         const params = new cv.aruco_DetectorParameters();
-        // Loosen parameters for real-world mobile camera conditions
+        let   det;
         try {
-          params.adaptiveThreshWinSizeMin    = 3;
-          params.adaptiveThreshWinSizeMax    = 53;
-          params.adaptiveThreshWinSizeStep   = 4;
-          params.adaptiveThreshConstant      = 7;
-          params.minMarkerPerimeterRate      = 0.02;
-          params.maxMarkerPerimeterRate      = 4.0;
-          params.polygonalApproxAccuracyRate = 0.1;
-          params.minDistanceToBorder         = 1;
-          params.errorCorrectionRate         = 0.9;
-          params.maxErroneousBitsInBorderRate = 0.5;
-        } catch(_) {}
-        return new cv.aruco_ArucoDetector(dict, params);
-      }
+          const refine = new cv.aruco_RefineParameters(10, 3, true);
+          det = new cv.aruco_ArucoDetector(dict, params, refine);
+        } catch(_) {
+          det = new cv.aruco_ArucoDetector(dict, params);
+        }
+        return { name: k, det };
+      });
 
-      const detectors = DICTS.map(d => ({ name: d.name, det: makeDetector(d.id) }));
       showArucoToast('ArUco ready', 2000);
 
-      // Find the camera video element (must be backed by a real MediaStream)
-      function getCameraVideo() {
-        for (const v of document.querySelectorAll('video')) {
-          if (v.srcObject instanceof MediaStream && v.videoWidth > 0) return v;
-        }
-        return null;
-      }
-
+      // Any video with actual frames — MindAR camera feed
       const waitForVideo = setInterval(() => {
-        const video = getCameraVideo();
+        const video = [...document.querySelectorAll('video')].find(v => v.videoWidth > 0);
         if (!video) return;
         clearInterval(waitForVideo);
-        showArucoToast(`ArUco scanning ${video.videoWidth}x${video.videoHeight}`, 3000);
+        showArucoToast(`Scanning ${video.videoWidth}×${video.videoHeight}`, 3000);
 
-        const offCanvas = document.createElement('canvas');
-        const offCtx    = offCanvas.getContext('2d', { willReadFrequently: true });
-        let lastRun = 0;
+        const canvas = document.createElement('canvas');
+        const ctx    = canvas.getContext('2d', { willReadFrequently: true });
+        let lastRun  = 0;
 
         (function arucoLoop() {
           requestAnimationFrame(arucoLoop);
-          const now = Date.now();
-          if (now - lastRun < 350) return;
-          lastRun = now;
+          if (Date.now() - lastRun < 350) return;
+          lastRun = Date.now();
           if (video.readyState < 2 || !video.videoWidth) return;
 
-          offCanvas.width  = video.videoWidth;
-          offCanvas.height = video.videoHeight;
-          offCtx.drawImage(video, 0, 0);
+          canvas.width  = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
 
-          let src, gray, corners, ids, rejected;
+          let src, gray, grayInv, corners, ids, rejected;
           try {
-            src      = cv.imread(offCanvas);
-            gray     = new cv.Mat();
-            corners  = new cv.MatVector();
-            ids      = new cv.Mat();
+            src     = cv.imread(canvas);
+            gray    = new cv.Mat();
+            grayInv = new cv.Mat();
+            corners = new cv.MatVector();
+            ids     = new cv.Mat();
             rejected = new cv.MatVector();
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+            cv.bitwise_not(gray, grayInv);
 
+            outer:
             for (const { name, det } of detectors) {
-              corners.delete(); corners = new cv.MatVector();
-              ids.delete();     ids     = new cv.Mat();
-              rejected.delete(); rejected = new cv.MatVector();
-              det.detectMarkers(gray, corners, ids, rejected);
-              if (ids.rows > 0) {
-                const found = [];
-                for (let i = 0; i < ids.rows; i++) found.push(ids.intAt(i, 0));
-                showArucoToast(`ArUco [${name}] ID: ${found.join(', ')}`, 2000);
-                for (const id of found) {
-                  if (ARUCO_MAP[id] !== undefined) showChart(ARUCO_MAP[id]);
+              for (const img of [gray, grayInv]) {
+                corners.delete(); corners  = new cv.MatVector();
+                ids.delete();     ids      = new cv.Mat();
+                rejected.delete(); rejected = new cv.MatVector();
+                det.detectMarkers(img, corners, ids, rejected);
+                if (ids.rows > 0) {
+                  const found = [];
+                  for (let i = 0; i < ids.rows; i++) found.push(ids.intAt(i, 0));
+                  showArucoToast(`[${name}] ID: ${found.join(', ')}`, 2000);
+                  for (const id of found) {
+                    if (ARUCO_MAP[id] !== undefined) showChart(ARUCO_MAP[id]);
+                  }
+                  break outer;
                 }
-                break;
               }
             }
           } catch(e) {
-            console.warn('[ArUco] detection error:', e);
+            console.warn('[ArUco]', e);
           } finally {
-            try { src?.delete(); gray?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
+            try { src?.delete(); gray?.delete(); grayInv?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
           }
         })();
       }, 500);
     }
 
-    // @techstark/opencv-js uses a MODULARIZE emscripten build — cv is a Promise, not a sync global.
-    // Load the script then resolve cv correctly.
-    showArucoToast('Loading ArUco...', 30000);
-    var _cvScript = document.createElement('script');
-    _cvScript.src = 'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.8.0-release.1/dist/opencv.js';
-    _cvScript.onload = function() {
-      if (typeof cv === 'undefined') {
-        showArucoToast('ArUco: cv undefined after load');
-        return;
-      }
-      if (typeof cv.then === 'function') {
-        cv.then(function(cvInstance) {
-          window.cv = cvInstance;
-          startArucoDetection(cvInstance);
-        }).catch(function(e) {
-          showArucoToast('ArUco: WASM init failed');
-          console.error('[ArUco] WASM init error:', e);
-        });
-      } else {
-        startArucoDetection(cv);
-      }
-    };
-    _cvScript.onerror = function() {
-      showArucoToast('ArUco: script load failed');
-    };
-    document.head.appendChild(_cvScript);
+    showArucoToast('Loading ArUco...', 60000);
   </script>
+  <script async src="https://docs.opencv.org/4.10.0/opencv.js"
+          onload="onOpenCvReady();"
+          onerror="showArucoToast('opencv.js failed to load')"></script>
 </body>
 </html>
