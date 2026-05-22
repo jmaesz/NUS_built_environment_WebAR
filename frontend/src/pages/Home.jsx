@@ -151,7 +151,11 @@ export default function Home() {
 
           <div className="home-cta-row">
             <button className="home-cta" onClick={() => window.location.href = '/ar/index.html'}>
-              LAUNCH AR
+              BUILDING MARKERS
+              <span className="cta-arrow">→</span>
+            </button>
+            <button className="home-cta" onClick={() => window.location.href = '/ar/model.html'}>
+              CAMPUS MODEL
               <span className="cta-arrow">→</span>
             </button>
           </div>
