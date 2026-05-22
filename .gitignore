@@ -4,17 +4,19 @@ dist/
 .env.local
 .claude/
 package-lock.json
+scene-colored-e7.glb
 
-# Local source assets & working files (not needed in deployed repo)
-source-assets/
+# Build intermediates & source assets (not needed in deployed repo)
+ARmarkers.png
 _markers_raw.png
 cropped_qr_codes/
-scene-colored-e7.glb
 /*.mind
+energy_data.json
+EnergyUse.xlsx
+SDE4marker.png
+*.pdf
 
-# Misc photos / root-level map view sources
-photo_*.jpg
-image1.png
+# Root-level map view sources (deployed copies live in frontend/public/ar/imgs/)
 E1mapview.png
 EW1Amapview.png
 TLabmapview.png
@@ -23,3 +25,7 @@ e3amapview.png
 e3mapview.png
 ew1mpaview.png
 sde3mapoview.png
+
+# Misc photos
+photo_*.jpg
+image1.png
