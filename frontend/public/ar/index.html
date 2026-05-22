@@ -1129,14 +1129,29 @@
 
                 if (ids.rows > 0) {
                   try {
-                    const markerIdMat = ids.data32S || ids.data32U;
-                    const markerId = markerIdMat ? markerIdMat[0] : -1;
-                    
-                    if (markerId !== 0) {
+                    const idsData = ids.data32S || ids.data32U;
+                    if (!idsData) {
+                      console.warn('[ArUco] Could not access ids data');
                       continue;
                     }
                     
-                    const cornerMat = corners.get(0);
+                    const numMarkers = ids.rows;
+                    console.log(`[ArUco] Detected ${numMarkers} markers, IDs:`, Array.from(idsData).slice(0, numMarkers));
+                    
+                    let targetIdx = -1;
+                    for (let i = 0; i < numMarkers; i++) {
+                      if (idsData[i] === 0) {
+                        targetIdx = i;
+                        break;
+                      }
+                    }
+                    
+                    if (targetIdx === -1) {
+                      console.log('[ArUco] Marker ID 0 not found in detected markers');
+                      continue;
+                    }
+                    
+                    const cornerMat = corners.get(targetIdx);
                     if (!cornerMat) {
                       console.warn('[ArUco] No corner data for marker 0');
                       continue;
@@ -1157,7 +1172,8 @@
                       dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
                       rvec   = new cv.Mat(); tvec = new cv.Mat();
                       cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
-                      tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F), markerId);
+                      console.log('[ArUco] Successfully processed marker 0');
+                      tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F), 0);
                     } catch(pnpErr) {
                       console.warn('[solvePnP]', pnpErr);
                     } finally {
