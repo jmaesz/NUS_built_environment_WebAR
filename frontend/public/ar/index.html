@@ -1133,31 +1133,39 @@
                 det.detectMarkers(img, corners, ids, rejected);
 
                 if (ids.rows > 0) {
-                  const cd  = corners.get(0).data32F;
-                  const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4;
-                  const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4;
-                  const sc  = Math.max(window.innerWidth/W, window.innerHeight/H);
-                  const sx  = (window.innerWidth  - W*sc)/2 + vcx*sc;
-                  const sy  = (window.innerHeight - H*sc)/2 + vcy*sc;
+                  const idsData = ids.data32S || ids.data32U;
+                  const markerId = idsData[0];
+                  
+                  // Only show AR for marker ID 0
+                  if (markerId === 0) {
+                    const cd  = corners.get(0).data32F;
+                    const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4;
+                    const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4;
+                    const sc  = Math.max(window.innerWidth/W, window.innerHeight/H);
+                    const sx  = (window.innerWidth  - W*sc)/2 + vcx*sc;
+                    const sy  = (window.innerHeight - H*sc)/2 + vcy*sc;
 
-                  // Always show the 2D label (confirmed-working path)
-                  showArucoLabel(sx, sy);
+                    console.log('[ArUco] Detected marker ID 0, showing AR');
+                    showArucoLabel(sx, sy);
 
-                  // Also attempt 3D pose on top
-                  let imgPts, objPts, camMat, dist, rvec, tvec;
-                  try {
-                    imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
-                    objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
-                    const f = Math.max(W, H);
-                    camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,W/2, 0,f,H/2, 0,0,1]);
-                    dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
-                    rvec   = new cv.Mat(); tvec = new cv.Mat();
-                    cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
-                    tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F));
-                  } catch(pnpErr) {
-                    console.warn('[solvePnP]', pnpErr);
-                  } finally {
-                    try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
+                    // Attempt 3D pose on top
+                    let imgPts, objPts, camMat, dist, rvec, tvec;
+                    try {
+                      imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
+                      objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
+                      const f = Math.max(W, H);
+                      camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,W/2, 0,f,H/2, 0,0,1]);
+                      dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
+                      rvec   = new cv.Mat(); tvec = new cv.Mat();
+                      cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
+                      tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F));
+                    } catch(pnpErr) {
+                      console.warn('[solvePnP]', pnpErr);
+                    } finally {
+                      try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
+                    }
+                  } else {
+                    console.log(`[ArUco] Detected marker ID ${markerId}, ignoring (only ID 0 shows AR)`);
                   }
 
                   break outer;
