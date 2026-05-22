@@ -931,17 +931,73 @@
     });
   </script>
 
-  <!-- ArUco detection via OpenCV.js (runs alongside MindAR on the same video feed) -->
-  <!-- Reference: github.com/kbralten/aruco_online — official opencv.js, inverted grayscale, RefineParameters -->
+  <!-- ArUco detection via OpenCV.js — shows floating label with connector line over detected marker -->
   <script>
-    const ARUCO_MAP = { 0: 18 };  // DICT_4X4_50 marker ID 0 → SDE4
+    // ── AR label + connector line ─────────────────────────────────────────────
+    // SVG for the connector line (full-screen overlay, no pointer events)
+    const _arSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    Object.assign(_arSvg.style, {
+      position:'fixed', top:'0', left:'0', width:'100%', height:'100%',
+      zIndex:'9996', pointerEvents:'none', overflow:'visible'
+    });
+    document.body.appendChild(_arSvg);
+    const _arLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    _arLine.setAttribute('stroke', '#111');
+    _arLine.setAttribute('stroke-width', '2.5');
+    _arLine.setAttribute('display', 'none');
+    _arSvg.appendChild(_arLine);
 
+    // Label box
+    const _arLabel = document.createElement('div');
+    Object.assign(_arLabel.style, {
+      position:'fixed', display:'none', zIndex:'9997',
+      background:'white', color:'#111',
+      border:'2.5px solid #111', borderRadius:'3px',
+      padding:'6px 16px', fontSize:'15px', fontWeight:'700',
+      transform:'translate(-50%, -100%)',
+      cursor:'pointer', pointerEvents:'auto',
+      whiteSpace:'nowrap',
+      boxShadow:'0 2px 10px rgba(0,0,0,0.22)',
+      userSelect:'none'
+    });
+    document.body.appendChild(_arLabel);
+
+    // Clicking the label opens the chart (once, not on every detection frame)
+    _arLabel.addEventListener('click', () => {
+      showChart(18); // SDE4
+    });
+
+    let _arHideTimer = null;
+
+    function showArucoLabel(sx, sy, labelText) {
+      const LIFT = 100; // px above marker centre
+      _arLabel.textContent = labelText;
+      _arLabel.style.left  = sx + 'px';
+      _arLabel.style.top   = (sy - LIFT) + 'px';
+      _arLabel.style.display = 'block';
+
+      // Line: from anchor point at label's bottom-centre down to marker centre
+      _arLine.setAttribute('x1', sx);
+      _arLine.setAttribute('y1', sy - LIFT);
+      _arLine.setAttribute('x2', sx);
+      _arLine.setAttribute('y2', sy);
+      _arLine.setAttribute('display', 'block');
+
+      // Hide after 600 ms of no new detections
+      clearTimeout(_arHideTimer);
+      _arHideTimer = setTimeout(() => {
+        _arLabel.style.display = 'none';
+        _arLine.setAttribute('display', 'none');
+      }, 600);
+    }
+
+    // ── status toast (loading / error only) ───────────────────────────────────
     const _arucoToast = document.createElement('div');
     Object.assign(_arucoToast.style, {
-      position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
-      background: 'rgba(0,0,0,0.75)', color: '#4fc3f7', padding: '8px 18px',
-      borderRadius: '6px', fontSize: '12px', letterSpacing: '0.05em',
-      display: 'none', zIndex: '9999', whiteSpace: 'nowrap'
+      position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)',
+      background:'rgba(0,0,0,0.75)', color:'#4fc3f7', padding:'8px 18px',
+      borderRadius:'6px', fontSize:'12px', letterSpacing:'0.05em',
+      display:'none', zIndex:'9999', whiteSpace:'nowrap'
     });
     document.body.appendChild(_arucoToast);
     let _toastTimer = null;
@@ -952,43 +1008,27 @@
       _toastTimer = setTimeout(() => { _arucoToast.style.display = 'none'; }, dur || 4000);
     }
 
-    // Called by onload on the opencv.js script tag below.
-    // Poll until cv + ArUco are ready (WASM init is async).
+    // ── detection ─────────────────────────────────────────────────────────────
     function onOpenCvReady() {
-      if (typeof cv === 'undefined' || !cv.Mat) {
-        setTimeout(onOpenCvReady, 100);
-        return;
-      }
-      if (!cv.aruco_ArucoDetector) {
-        showArucoToast('ArUco: not in this opencv.js build');
-        return;
-      }
+      if (typeof cv === 'undefined' || !cv.Mat) { setTimeout(onOpenCvReady, 100); return; }
+      if (!cv.aruco_ArucoDetector) { showArucoToast('ArUco: not in build'); return; }
 
-      // Discover all 4x4 dictionaries present in this build
       const dict4x4Keys = Object.keys(cv).filter(k => k.startsWith('DICT_4X4_'));
       if (!dict4x4Keys.length) { showArucoToast('ArUco: no 4x4 dicts'); return; }
 
       const detectors = dict4x4Keys.map(k => {
-        const dict   = cv.getPredefinedDictionary(cv[k]);
+        const dict = cv.getPredefinedDictionary(cv[k]);
         const params = new cv.aruco_DetectorParameters();
-        let   det;
-        try {
-          const refine = new cv.aruco_RefineParameters(10, 3, true);
-          det = new cv.aruco_ArucoDetector(dict, params, refine);
-        } catch(_) {
-          det = new cv.aruco_ArucoDetector(dict, params);
-        }
-        return { name: k, det };
+        let det;
+        try { det = new cv.aruco_ArucoDetector(dict, params, new cv.aruco_RefineParameters(10, 3, true)); }
+        catch(_) { det = new cv.aruco_ArucoDetector(dict, params); }
+        return { det };
       });
 
-      showArucoToast('ArUco ready', 2000);
-
-      // Any video with actual frames — MindAR camera feed
       const waitForVideo = setInterval(() => {
         const video = [...document.querySelectorAll('video')].find(v => v.videoWidth > 0);
         if (!video) return;
         clearInterval(waitForVideo);
-        showArucoToast(`Scanning ${video.videoWidth}×${video.videoHeight}`, 3000);
 
         const canvas = document.createElement('canvas');
         const ctx    = canvas.getContext('2d', { willReadFrequently: true });
@@ -1000,35 +1040,36 @@
           lastRun = Date.now();
           if (video.readyState < 2 || !video.videoWidth) return;
 
-          canvas.width  = video.videoWidth;
-          canvas.height = video.videoHeight;
+          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
           ctx.drawImage(video, 0, 0);
 
           let src, gray, grayInv, corners, ids, rejected;
           try {
-            src     = cv.imread(canvas);
-            gray    = new cv.Mat();
-            grayInv = new cv.Mat();
-            corners = new cv.MatVector();
-            ids     = new cv.Mat();
-            rejected = new cv.MatVector();
+            src = cv.imread(canvas); gray = new cv.Mat(); grayInv = new cv.Mat();
+            corners = new cv.MatVector(); ids = new cv.Mat(); rejected = new cv.MatVector();
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
             cv.bitwise_not(gray, grayInv);
 
             outer:
-            for (const { name, det } of detectors) {
+            for (const { det } of detectors) {
               for (const img of [gray, grayInv]) {
                 corners.delete(); corners  = new cv.MatVector();
                 ids.delete();     ids      = new cv.Mat();
                 rejected.delete(); rejected = new cv.MatVector();
                 det.detectMarkers(img, corners, ids, rejected);
                 if (ids.rows > 0) {
-                  const found = [];
-                  for (let i = 0; i < ids.rows; i++) found.push(ids.intAt(i, 0));
-                  showArucoToast(`[${name}] ID: ${found.join(', ')}`, 2000);
-                  for (const id of found) {
-                    if (ARUCO_MAP[id] !== undefined) showChart(ARUCO_MAP[id]);
-                  }
+                  // Compute marker centre in video space from detected corners
+                  const cd  = corners.get(0).data32F; // [x0,y0,x1,y1,x2,y2,x3,y3]
+                  const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4;
+                  const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4;
+
+                  // Map video pixels → screen pixels (object-fit:cover, centred)
+                  const W = video.videoWidth, H = video.videoHeight;
+                  const sc = Math.max(window.innerWidth/W, window.innerHeight/H);
+                  const sx = (window.innerWidth  - W*sc)/2 + vcx*sc;
+                  const sy = (window.innerHeight - H*sc)/2 + vcy*sc;
+
+                  showArucoLabel(sx, sy, BUILDINGS[18].name);
                   break outer;
                 }
               }
