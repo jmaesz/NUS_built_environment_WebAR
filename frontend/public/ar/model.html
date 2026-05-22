@@ -179,16 +179,15 @@
       }
     };
 
-    // ── Label positions (X Y Z relative to marker centre) ─────────────────────
-    // Y = height above model surface. Adjust X/Z to match physical building positions.
+    // ── Label positions derived from scene.glb building centres ───────────────
     const LABELS = [
-      { key: 'T-Lab', pos: '-0.35 0.18 -0.25' },
-      { key: 'E6',    pos: '-0.25 0.18  0.15' },
-      { key: 'E3',    pos: '-0.05 0.18  0.28' },
-      { key: 'E4',    pos:  '0.12 0.18  0.05' },
-      { key: 'E4A',   pos:  '0.30 0.18  0.12' },
-      { key: 'E7',    pos:  '0.05 0.18 -0.18' },
-      { key: 'E8',    pos:  '0.30 0.18 -0.22' },
+      { key: 'E3',    pos: '-0.450 0.20 -0.206' },
+      { key: 'E4',    pos: '-0.185 0.20  0.450' },
+      { key: 'E4A',   pos:  '0.043 0.20 -0.357' },
+      { key: 'E6',    pos:  '0.317 0.20 -0.432' },
+      { key: 'E7',    pos:  '0.450 0.20 -0.450' },
+      { key: 'E8',    pos: '-0.021 0.20 -0.354' },
+      { key: 'T-Lab', pos: '-0.251 0.20 -0.024' },
     ];
 
     // ── Build label entities ───────────────────────────────────────────────────
