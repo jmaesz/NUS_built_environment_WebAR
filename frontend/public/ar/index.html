@@ -956,16 +956,50 @@
         showArucoToast('ArUco: module not in this build');
         return;
       }
-      showArucoToast('ArUco ready — scanning', 3000);
 
-      const dict     = cv.getPredefinedDictionary(cv.aruco_DICT_4X4_50);
-      const params   = new cv.aruco_DetectorParameters();
-      const detector = new cv.aruco_ArucoDetector(dict, params);
+      // Build detectors for all 4x4 dictionary sizes (try each on every frame)
+      const DICTS = [
+        { name: '4X4_50',   id: cv.aruco_DICT_4X4_50   },
+        { name: '4X4_100',  id: cv.aruco_DICT_4X4_100  },
+        { name: '4X4_250',  id: cv.aruco_DICT_4X4_250  },
+        { name: '4X4_1000', id: cv.aruco_DICT_4X4_1000 },
+      ].filter(d => d.id !== undefined);
+
+      function makeDetector(dictId) {
+        const dict   = cv.getPredefinedDictionary(dictId);
+        const params = new cv.aruco_DetectorParameters();
+        // Loosen parameters for real-world mobile camera conditions
+        try {
+          params.adaptiveThreshWinSizeMin    = 3;
+          params.adaptiveThreshWinSizeMax    = 53;
+          params.adaptiveThreshWinSizeStep   = 4;
+          params.adaptiveThreshConstant      = 7;
+          params.minMarkerPerimeterRate      = 0.02;
+          params.maxMarkerPerimeterRate      = 4.0;
+          params.polygonalApproxAccuracyRate = 0.1;
+          params.minDistanceToBorder         = 1;
+          params.errorCorrectionRate         = 0.9;
+          params.maxErroneousBitsInBorderRate = 0.5;
+        } catch(_) {}
+        return new cv.aruco_ArucoDetector(dict, params);
+      }
+
+      const detectors = DICTS.map(d => ({ name: d.name, det: makeDetector(d.id) }));
+      showArucoToast('ArUco ready', 2000);
+
+      // Find the camera video element (must be backed by a real MediaStream)
+      function getCameraVideo() {
+        for (const v of document.querySelectorAll('video')) {
+          if (v.srcObject instanceof MediaStream && v.videoWidth > 0) return v;
+        }
+        return null;
+      }
 
       const waitForVideo = setInterval(() => {
-        const video = document.querySelector('video');
-        if (!video || !video.videoWidth) return;
+        const video = getCameraVideo();
+        if (!video) return;
         clearInterval(waitForVideo);
+        showArucoToast(`ArUco scanning ${video.videoWidth}x${video.videoHeight}`, 3000);
 
         const offCanvas = document.createElement('canvas');
         const offCtx    = offCanvas.getContext('2d', { willReadFrequently: true });
@@ -990,13 +1024,20 @@
             ids      = new cv.Mat();
             rejected = new cv.MatVector();
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-            detector.detectMarkers(gray, corners, ids, rejected);
-            if (ids.rows > 0) {
-              const found = [];
-              for (let i = 0; i < ids.rows; i++) found.push(ids.intAt(i, 0));
-              showArucoToast(`ArUco ID: ${found.join(', ')}`, 2000);
-              for (const id of found) {
-                if (ARUCO_MAP[id] !== undefined) showChart(ARUCO_MAP[id]);
+
+            for (const { name, det } of detectors) {
+              corners.delete(); corners = new cv.MatVector();
+              ids.delete();     ids     = new cv.Mat();
+              rejected.delete(); rejected = new cv.MatVector();
+              det.detectMarkers(gray, corners, ids, rejected);
+              if (ids.rows > 0) {
+                const found = [];
+                for (let i = 0; i < ids.rows; i++) found.push(ids.intAt(i, 0));
+                showArucoToast(`ArUco [${name}] ID: ${found.join(', ')}`, 2000);
+                for (const id of found) {
+                  if (ARUCO_MAP[id] !== undefined) showChart(ARUCO_MAP[id]);
+                }
+                break;
               }
             }
           } catch(e) {
