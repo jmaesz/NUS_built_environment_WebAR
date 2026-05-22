@@ -930,5 +930,77 @@
       });
     });
   </script>
+
+  <!-- ArUco marker detection — runs alongside MindAR on the same video feed -->
+  <script src="https://cdn.jsdelivr.net/gh/jcmellado/js-aruco/src/svd.js"></script>
+  <script src="https://cdn.jsdelivr.net/gh/jcmellado/js-aruco/src/aruco.js"></script>
+  <script>
+    // Map ArUco marker ID → BUILDINGS index
+    // Once you scan your SDE4 ArUco marker and see its ID in the debug toast,
+    // that ID gets mapped to building index 18 (SDE4).
+    const ARUCO_MAP = {
+      // e.g.  42: 18   ← will be filled in once we know the ID
+    };
+
+    // Debug toast — shows detected ArUco IDs so we can fill ARUCO_MAP
+    const _arucoToast = document.createElement('div');
+    Object.assign(_arucoToast.style, {
+      position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
+      background: 'rgba(0,0,0,0.7)', color: '#4fc3f7', padding: '8px 16px',
+      borderRadius: '6px', fontSize: '11px', letterSpacing: '0.08em',
+      display: 'none', zIndex: '9999', whiteSpace: 'nowrap'
+    });
+    document.body.appendChild(_arucoToast);
+    let _toastTimer = null;
+    function showArucoToast(msg) {
+      _arucoToast.textContent = msg;
+      _arucoToast.style.display = 'block';
+      clearTimeout(_toastTimer);
+      _toastTimer = setTimeout(() => { _arucoToast.style.display = 'none'; }, 3000);
+    }
+
+    window.addEventListener('load', () => {
+      // Wait for MindAR to create its video element
+      const waitForVideo = setInterval(() => {
+        const video = document.querySelector('video');
+        if (!video || !video.srcObject) return;
+        clearInterval(waitForVideo);
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const detector = new AR.Detector();
+        let lastRun = 0;
+
+        (function arucoLoop() {
+          requestAnimationFrame(arucoLoop);
+          const now = Date.now();
+          if (now - lastRun < 400) return; // ~2.5 fps — cheap on CPU
+          lastRun = now;
+          if (video.readyState < 2 || !video.videoWidth) return;
+
+          canvas.width  = video.videoWidth;
+          canvas.height = video.videoHeight;
+          ctx.drawImage(video, 0, 0);
+
+          let markers;
+          try { markers = detector.detect(ctx.getImageData(0, 0, canvas.width, canvas.height)); }
+          catch(e) { return; }
+
+          if (!markers.length) return;
+
+          const ids = markers.map(m => m.id);
+          showArucoToast('ArUco detected: ID ' + ids.join(', '));
+          console.log('[ArUco] detected IDs:', ids);
+
+          for (const m of markers) {
+            const buildingIdx = ARUCO_MAP[m.id];
+            if (buildingIdx !== undefined) {
+              showChart(buildingIdx);
+            }
+          }
+        })();
+      }, 500);
+    });
+  </script>
 </body>
 </html>
