@@ -1135,25 +1135,12 @@
                       continue;
                     }
                     
-                    const numMarkers = ids.rows;
-                    console.log(`[ArUco] Detected ${numMarkers} markers, IDs:`, Array.from(idsData).slice(0, numMarkers));
+                    const markerId = idsData[0];
+                    console.log(`[ArUco] Detected marker ID: ${markerId}`);
                     
-                    let targetIdx = -1;
-                    for (let i = 0; i < numMarkers; i++) {
-                      if (idsData[i] === 0) {
-                        targetIdx = i;
-                        break;
-                      }
-                    }
-                    
-                    if (targetIdx === -1) {
-                      console.log('[ArUco] Marker ID 0 not found in detected markers');
-                      continue;
-                    }
-                    
-                    const cornerMat = corners.get(targetIdx);
+                    const cornerMat = corners.get(0);
                     if (!cornerMat) {
-                      console.warn('[ArUco] No corner data for marker 0');
+                      console.warn('[ArUco] No corner data for marker');
                       continue;
                     }
                     
@@ -1172,8 +1159,8 @@
                       dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
                       rvec   = new cv.Mat(); tvec = new cv.Mat();
                       cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
-                      console.log('[ArUco] Successfully processed marker 0');
-                      tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F), 0);
+                      console.log('[ArUco] Successfully processed marker');
+                      tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F), markerId);
                     } catch(pnpErr) {
                       console.warn('[solvePnP]', pnpErr);
                     } finally {
