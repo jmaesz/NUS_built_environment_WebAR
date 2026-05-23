@@ -1091,13 +1091,19 @@
       const detectors = dict4x4Keys.map(k => {
         const dict   = cv.getPredefinedDictionary(cv[k]);
         const params = new cv.aruco_DetectorParameters();
-        // Allow detection of small/distant markers
-        params.minMarkerPerimeterRate = 0.01;  // default ~0.03; lower = detect farther away
+        // Small marker tuning (1cm physical, ~40px after 2x upscale)
+        params.minMarkerPerimeterRate = 0.01;   // default ~0.03; catch smaller markers
         params.maxMarkerPerimeterRate = 4.0;
+        // Window must stay SMALLER than the marker; 53 would smear a 40px marker's borders
         params.adaptiveThreshWinSizeMin  = 3;
-        params.adaptiveThreshWinSizeMax  = 53; // wider range catches more lighting conditions
+        params.adaptiveThreshWinSizeMax  = 23;
         params.adaptiveThreshWinSizeStep = 4;
-        params.errorCorrectionRate = 0.8;      // more lenient bit error correction
+        params.errorCorrectionRate = 0.8;
+        // More pixels per cell improves bit extraction from small/blurry markers
+        try { params.perspectiveRemovePixelPerCell = 8; } catch(_) {}
+        try { params.perspectiveRemoveIgnoredMarginPerCell = 0.18; } catch(_) {}
+        // Subpixel corner refinement for small markers (CORNER_REFINE_SUBPIX = 1)
+        try { params.cornerRefinementMethod = 1; } catch(_) {}
         let det;
         try { det = new cv.aruco_ArucoDetector(dict, params, new cv.aruco_RefineParameters(10, 3, true)); }
         catch(_) { det = new cv.aruco_ArucoDetector(dict, params); }
@@ -1115,7 +1121,7 @@
 
         (function arucoLoop() {
           requestAnimationFrame(arucoLoop);
-          if (Date.now() - lastRun < 350) return;
+          if (Date.now() - lastRun < 200) return;
           lastRun = Date.now();
           if (video.readyState < 2 || !video.videoWidth) return;
 
