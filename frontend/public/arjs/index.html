@@ -170,21 +170,21 @@
           marker.id = 'marker-' + idx;
 
           var stem = document.createElement('a-cylinder');
-          stem.setAttribute('radius', '0.015');
-          stem.setAttribute('height', '0.5');
+          stem.setAttribute('radius', '0.025');
+          stem.setAttribute('height', '1.0');
           stem.setAttribute('color', '#ffffff');
           stem.setAttribute('opacity', '0.85');
-          stem.setAttribute('position', '0 0.25 0');
+          stem.setAttribute('position', '0 0.5 0');
 
           var label = document.createElement('a-entity');
-          label.setAttribute('position', '0 0.5 0');
+          label.setAttribute('position', '0 1.0 0');
           label.setAttribute('look-at', '[camera]');
-          label.setAttribute('animation', 'property: position; from: 0 0.5 0; to: 0 0.62 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
+          label.setAttribute('animation', 'property: position; from: 0 1.0 0; to: 0 1.2 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
 
           var bg = document.createElement('a-plane');
           bg.id = 'ar-bg-' + idx;
-          bg.setAttribute('width', '0.7');
-          bg.setAttribute('height', '0.32');
+          bg.setAttribute('width', '1.4');
+          bg.setAttribute('height', '0.64');
           bg.setAttribute('color', '#ffffff');
           bg.setAttribute('opacity', '0.92');
 
@@ -192,15 +192,15 @@
           txt.setAttribute('value', b.name);
           txt.setAttribute('align', 'center');
           txt.setAttribute('color', '#111111');
-          txt.setAttribute('width', '3.0');
-          txt.setAttribute('position', '0 0.065 0.01');
+          txt.setAttribute('width', '6.0');
+          txt.setAttribute('position', '0 0.13 0.01');
 
           var sub = document.createElement('a-text');
           sub.setAttribute('value', 'Tap for details');
           sub.setAttribute('align', 'center');
           sub.setAttribute('color', '#888888');
-          sub.setAttribute('width', '1.9');
-          sub.setAttribute('position', '0 -0.085 0.01');
+          sub.setAttribute('width', '3.8');
+          sub.setAttribute('position', '0 -0.17 0.01');
 
           bg.appendChild(txt);
           bg.appendChild(sub);
