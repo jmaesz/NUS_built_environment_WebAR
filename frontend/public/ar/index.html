@@ -1119,8 +1119,10 @@
           lastRun = Date.now();
           if (video.readyState < 2 || !video.videoWidth) return;
 
-          canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-          ctx.drawImage(video, 0, 0);
+          // 2× upscale so a tiny 1cm marker has more pixels to work with
+          const SCALE = 2;
+          canvas.width = video.videoWidth * SCALE; canvas.height = video.videoHeight * SCALE;
+          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
           let src, gray, grayInv, corners, ids, rejected;
           try {
@@ -1129,7 +1131,9 @@
             cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
             cv.bitwise_not(gray, grayInv);
 
+            // Scaled canvas dims used for detection; divide by SCALE to get real video coords
             const W = video.videoWidth, H = video.videoHeight;
+            const SW = W * SCALE, SH = H * SCALE;
 
             outer:
             for (const { det } of detectors) {
@@ -1142,17 +1146,17 @@
                 if (ids.rows > 0) {
                   const idsData = ids.data32S || ids.data32U;
                   const markerId = idsData[0];
-                  
+
                   // Only show AR for marker ID 0
                   if (markerId === 0) {
                     const cd  = corners.get(0).data32F;
-                    const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4;
-                    const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4;
+                    // corners are in scaled canvas space — convert back to video space
+                    const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4 / SCALE;
+                    const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4 / SCALE;
                     const sc  = Math.max(window.innerWidth/W, window.innerHeight/H);
                     const sx  = (window.innerWidth  - W*sc)/2 + vcx*sc;
                     const sy  = (window.innerHeight - H*sc)/2 + vcy*sc;
 
-                    console.log('[ArUco] Detected marker ID 0, showing AR');
                     showArucoLabel(sx, sy);
 
                     // Attempt 3D pose on top
@@ -1160,8 +1164,8 @@
                     try {
                       imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
                       objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
-                      const f = Math.max(W, H);
-                      camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,W/2, 0,f,H/2, 0,0,1]);
+                      const f = Math.max(SW, SH);
+                      camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,SW/2, 0,f,SH/2, 0,0,1]);
                       dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
                       rvec   = new cv.Mat(); tvec = new cv.Mat();
                       cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
