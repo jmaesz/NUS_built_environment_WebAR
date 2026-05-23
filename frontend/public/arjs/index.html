@@ -186,7 +186,7 @@
           bg.setAttribute('width', '2.2');
           bg.setAttribute('height', '1.0');
           bg.setAttribute('color', '#ffffff');
-          bg.setAttribute('opacity', '0.92');
+          bg.setAttribute('position', '0 0 0');
 
           var txt = document.createElement('a-text');
           txt.setAttribute('value', b.name);
@@ -202,9 +202,9 @@
           sub.setAttribute('width', '6.0');
           sub.setAttribute('position', '0 -0.27 0.01');
 
-          bg.appendChild(txt);
-          bg.appendChild(sub);
           label.appendChild(bg);
+          label.appendChild(txt);
+          label.appendChild(sub);
           marker.appendChild(stem);
           marker.appendChild(label);
           scene.appendChild(marker);
