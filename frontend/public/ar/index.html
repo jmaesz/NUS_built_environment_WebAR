@@ -1108,17 +1108,20 @@
       function makeDetector() {
         const dict   = cv.getPredefinedDictionary(cv[dictKey]);
         const params = new cv.aruco_DetectorParameters();
-        // Small marker: push perimeter threshold as low as possible
-        params.minMarkerPerimeterRate = 0.005;
-        params.maxMarkerPerimeterRate = 4.0;
-        // Keep window smaller than the marker itself (~40px after upscale)
+        params.minMarkerPerimeterRate    = 0.01;
+        params.maxMarkerPerimeterRate    = 4.0;
         params.adaptiveThreshWinSizeMin  = 3;
         params.adaptiveThreshWinSizeMax  = 23;
-        params.adaptiveThreshWinSizeStep = 5;
-        params.errorCorrectionRate = 0.9;
+        params.adaptiveThreshWinSizeStep = 10;  // default; fewer passes = faster
+        params.errorCorrectionRate       = 0.6; // default
+        // More pixels per cell → better bit sampling on tiny markers
         try { params.perspectiveRemovePixelPerCell = 8; } catch(_) {}
-        try { params.perspectiveRemoveIgnoredMarginPerCell = 0.18; } catch(_) {}
+        // SMALL margin: for a 13px cell, 0.18 wastes too much; use 0.05
+        try { params.perspectiveRemoveIgnoredMarginPerCell = 0.05; } catch(_) {}
+        // Subpixel corner refinement
         try { params.cornerRefinementMethod = 1; } catch(_) {}
+        // Native inverted-marker support so we don't need a separate grayInv pass
+        try { params.detectInvertedMarker = true; } catch(_) {}
         let det;
         try { det = new cv.aruco_ArucoDetector(dict, params, new cv.aruco_RefineParameters(10, 3, true)); }
         catch(_) { det = new cv.aruco_ArucoDetector(dict, params); }
@@ -1160,7 +1163,7 @@
           canvas.width = W; canvas.height = H;
           ctx.drawImage(video, 0, 0, W, H);
 
-          let src, up, gray, blurred, grayInv, corners, ids, rejected;
+          let src, up, gray, blurred, corners, ids, rejected;
           try {
             src = cv.imread(canvas);
             up  = new cv.Mat();
@@ -1177,61 +1180,44 @@
             cv.addWeighted(gray, 2.0, blurred, -1.0, 0, gray);
             blurred.delete(); blurred = null;
 
-            grayInv = new cv.Mat();
-            cv.bitwise_not(gray, grayInv);
-
             corners = new cv.MatVector(); ids = new cv.Mat(); rejected = new cv.MatVector();
+            detector.detectMarkers(gray, corners, ids, rejected);
 
-            outer:
-            for (const img of [gray, grayInv]) {
-              corners.delete(); corners  = new cv.MatVector();
-              ids.delete();     ids      = new cv.Mat();
-              rejected.delete(); rejected = new cv.MatVector();
-              detector.detectMarkers(img, corners, ids, rejected);
+            if (ids.rows > 0) {
+              const idsData = ids.data32S || ids.data32U;
+              const markerId = idsData[0];
 
-                if (ids.rows > 0) {
-                  const idsData = ids.data32S || ids.data32U;
-                  const markerId = idsData[0];
+              if (markerId === 0) {
+                const cd  = corners.get(0).data32F;
+                const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4 / SCALE;
+                const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4 / SCALE;
+                const sc  = Math.max(window.innerWidth/W, window.innerHeight/H);
+                const sx  = (window.innerWidth  - W*sc)/2 + vcx*sc;
+                const sy  = (window.innerHeight - H*sc)/2 + vcy*sc;
 
-                  // Only show AR for marker ID 0
-                  if (markerId === 0) {
-                    const cd  = corners.get(0).data32F;
-                    // corners are in scaled canvas space — convert back to video space
-                    const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4 / SCALE;
-                    const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4 / SCALE;
-                    const sc  = Math.max(window.innerWidth/W, window.innerHeight/H);
-                    const sx  = (window.innerWidth  - W*sc)/2 + vcx*sc;
-                    const sy  = (window.innerHeight - H*sc)/2 + vcy*sc;
+                showArucoLabel(sx, sy);
 
-                    showArucoLabel(sx, sy);
-
-                    // Attempt 3D pose on top
-                    let imgPts, objPts, camMat, dist, rvec, tvec;
-                    try {
-                      imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
-                      objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
-                      const f = Math.max(SW, SH);
-                      camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,SW/2, 0,f,SH/2, 0,0,1]);
-                      dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
-                      rvec   = new cv.Mat(); tvec = new cv.Mat();
-                      cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
-                      tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F));
-                    } catch(pnpErr) {
-                      console.warn('[solvePnP]', pnpErr);
-                    } finally {
-                      try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
-                    }
-                  } else {
-                    console.log(`[ArUco] Detected marker ID ${markerId}, ignoring (only ID 0 shows AR)`);
-                  }
-
-                  break outer;
+                let imgPts, objPts, camMat, dist, rvec, tvec;
+                try {
+                  imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
+                  objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
+                  const f = Math.max(SW, SH);
+                  camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,SW/2, 0,f,SH/2, 0,0,1]);
+                  dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
+                  rvec   = new cv.Mat(); tvec = new cv.Mat();
+                  cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
+                  tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F));
+                } catch(pnpErr) {
+                  console.warn('[solvePnP]', pnpErr);
+                } finally {
+                  try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
                 }
+              }
             }
           } catch(e) {
             console.warn('[ArUco]', e);
           } finally {
-            try { src?.delete(); up?.delete(); gray?.delete(); blurred?.delete(); grayInv?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
+            try { src?.delete(); up?.delete(); gray?.delete(); blurred?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
           }
         })();
       }, 500);
