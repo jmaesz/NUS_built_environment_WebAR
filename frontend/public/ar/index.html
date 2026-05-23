@@ -880,6 +880,41 @@
         const el = document.getElementById(`target-${idx}`);
         if (!el) return;
 
+        // ── Target 21: simple clickable label only ───────────────────────────
+        if (idx === 21) {
+          const label = document.createElement('a-entity');
+          label.setAttribute('id', 'ar-label-21');
+
+          const bg = document.createElement('a-plane');
+          bg.setAttribute('width', '0.18'); bg.setAttribute('height', '0.07');
+          bg.setAttribute('color', '#ffffff');
+          bg.setAttribute('opacity', '0.92');
+          bg.setAttribute('position', '0 0 0.04');
+
+          const txt = document.createElement('a-text');
+          txt.setAttribute('value', 'SDE4');
+          txt.setAttribute('align', 'center');
+          txt.setAttribute('color', '#111111');
+          txt.setAttribute('width', '0.5');
+          txt.setAttribute('position', '0 0 0.001');
+
+          bg.appendChild(txt);
+          bg.setAttribute('class', 'clickable');
+          bg.addEventListener('click', () => showChart(21));
+          label.appendChild(bg);
+          el.appendChild(label);
+
+          el.addEventListener('targetFound', () => {
+            label.setAttribute('visible', 'true');
+          });
+          el.addEventListener('targetLost', () => {
+            label.setAttribute('visible', 'false');
+            hideUI();
+          });
+          return;
+        }
+
+        // ── All other targets ────────────────────────────────────────────────
         const wrap = document.createElement('a-entity');
         wrap.setAttribute('id', `ar-wrap-${idx}`);
         el.appendChild(wrap);
@@ -898,8 +933,8 @@
         makeArDetail(wrap, idx);
 
         el.addEventListener('targetFound', () => {
-          if (idx === 20 || idx === 21) {
-            // skip scan box gate for alt SDE4 markers — activate immediately
+          if (idx === 20) {
+            // skip scan box gate for ArUco SDE4 marker — activate immediately
             foundTargets.add(idx);
             activeTarget = idx;
             showChart(idx);
