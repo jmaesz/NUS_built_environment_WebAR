@@ -193,12 +193,16 @@
           marker.setAttribute('smoothThreshold', '5');
           marker.id = 'marker-' + idx;
 
-          var stem = document.createElement('a-cylinder');
-          stem.setAttribute('radius', '0.04');
-          stem.setAttribute('height', '1.3');
-          stem.setAttribute('color', '#ffffff');
-          stem.setAttribute('opacity', '0.85');
-          stem.setAttribute('position', '0 0.65 0');
+          var dashH = 0.1, pitch = 0.2, totalH = 1.3;
+          for (var y = dashH / 2; y < totalH; y += pitch) {
+            var dash = document.createElement('a-cylinder');
+            dash.setAttribute('radius', '0.025');
+            dash.setAttribute('height', String(dashH));
+            dash.setAttribute('color', '#ffffff');
+            dash.setAttribute('opacity', '0.85');
+            dash.setAttribute('position', '0 ' + y.toFixed(3) + ' 0');
+            marker.appendChild(dash);
+          }
 
           var label = document.createElement('a-entity');
           label.setAttribute('position', '0 1.8 0');
@@ -212,7 +216,6 @@
           bg.setAttribute('material', 'src: #lbl-' + idx + '; side: double; transparent: false; shader: flat');
 
           label.appendChild(bg);
-          marker.appendChild(stem);
           marker.appendChild(label);
           scene.appendChild(marker);
         });
