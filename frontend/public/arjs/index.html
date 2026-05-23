@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>NUScape-AR · ArUco</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
+
+    #back-btn {
+      position: fixed; top: 16px; left: 16px; z-index: 1000;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
+      cursor: pointer; border-radius: 4px; text-decoration: none;
+      display: block; width: 100px; text-align: center;
+    }
+    #scan-hint {
+      position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; background: rgba(0,0,0,0.55); color: #fff;
+      padding: 11px 18px; font-size: 11px; letter-spacing: 0.1em;
+      border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
+    }
+
+    #chart-panel {
+      position: fixed; top: 16px; right: 12px; z-index: 999;
+      width: 255px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; padding: 0;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12); overflow: hidden;
+      display: flex; flex-direction: row;
+      opacity: 0; transform: translateX(16px);
+      transition: opacity 0.35s ease, transform 0.35s ease, width 0.25s ease; pointer-events: none;
+    }
+    #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    #chart-panel.collapsed { width: 22px; }
+    .panel-tab {
+      width: 22px; flex-shrink: 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.28); border-right: 1px solid rgba(255,255,255,0.3);
+      font-size: 15px; color: rgba(255,255,255,0.85); user-select: none;
+      transition: background 0.15s;
+    }
+    .panel-tab:hover { background: rgba(0,0,0,0.42); }
+    #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0; }
+    #chart-panel.collapsed #chart-content { visibility: hidden; }
+    #chart-panel.collapsed #chart-tab { border-right: none; }
+    #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
+    #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
+    #chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    #chart-container { position: relative; width: 95px; height: 95px; flex-shrink: 0; }
+    .legend { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .legend-label { font-size: 9px; color: #333; flex: 1; }
+    .legend-value { font-size: 9px; font-weight: 600; color: #111; }
+    .divider { height: 1px; background: rgba(0,0,0,0.12); margin: 8px 0; }
+    #total-row { display: flex; justify-content: space-between; align-items: center; }
+    #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
+    #total-value { font-size: 11px; font-weight: 700; color: #111; }
+
+    #maps-panel {
+      position: fixed; bottom: 20px; right: 16px; z-index: 1000;
+      width: 180px; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+      display: none; opacity: 0; transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease, width 0.25s ease;
+      -webkit-tap-highlight-color: transparent; text-decoration: none;
+      flex-direction: row;
+    }
+    #maps-panel.visible { opacity: 1; transform: translateY(0); display: flex; }
+    #maps-panel.collapsed { width: 22px; }
+    #maps-content { flex: 1; overflow: hidden; min-width: 0; }
+    #maps-panel.collapsed #maps-content { visibility: hidden; }
+    #maps-panel.collapsed #maps-tab { border-right: none; }
+    #maps-panel-img-wrap { position: relative; height: 110px; background: #1a1a2e; }
+    #maps-panel-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    #maps-panel-top {
+      position: absolute; top: 8px; left: 8px;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+      border-radius: 6px; padding: 4px 8px;
+      font-size: 12px; font-weight: 800; color: #fff; letter-spacing: 0.06em;
+    }
+    #maps-panel-bottom {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.72));
+      padding: 18px 10px 10px;
+    }
+    #maps-panel-addr-lbl { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.4; margin-bottom: 5px; }
+    #maps-panel-cta {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui-layer">
+    <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
+    <div id="scan-hint">POINT CAMERA AT ARUCO MARKER</div>
+
+    <div id="chart-panel">
+      <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
+      <div id="chart-content">
+        <div id="chart-building-name">SDE4</div>
+        <div id="chart-subtitle">Annual Energy Use (kWh)</div>
+        <div id="chart-row">
+          <div id="chart-container"><canvas id="myChart"></canvas></div>
+          <div class="legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#4A90D9"></div><span class="legend-label">Cooling</span><span class="legend-value" id="lv-cooling"></span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#F5A623"></div><span class="legend-label">Equipment</span><span class="legend-value" id="lv-equipment"></span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#7ED321"></div><span class="legend-label">Lighting</span><span class="legend-value" id="lv-lighting"></span></div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div id="total-row">
+          <span id="total-label">Total</span>
+          <span id="total-value"></span>
+        </div>
+      </div>
+    </div>
+
+    <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
+      <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
+      <div id="maps-content">
+        <div id="maps-panel-img-wrap">
+          <img src="https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/sde4/sde4.jpg" alt="SDE4">
+          <div id="maps-panel-top">SDE4</div>
+          <div id="maps-panel-bottom">
+            <div id="maps-panel-addr-lbl">School of Design and Environment 4</div>
+            <div id="maps-panel-cta">Open in Maps →</div>
+          </div>
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <a-scene
+    embedded
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_9_3;"
+    vr-mode-ui="enabled: false"
+    renderer="colorManagement: true; logarithmicDepthBuffer: true;"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-marker
+      type="barcode" value="0"
+      id="sde4-marker"
+      emitevents="true"
+      smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5"
+    >
+      <a-cylinder id="ar-stem" radius="0.01" height="0.5" color="#ffffff" opacity="0.85" position="0 0.25 0"></a-cylinder>
+      <a-entity id="ar-label" position="0 0.5 0" look-at="[camera]"
+        animation="property: position; from: 0 0.5 0; to: 0 0.62 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine">
+        <a-plane id="ar-bg" width="0.7" height="0.32" color="#ffffff" opacity="0.92">
+          <a-text value="SDE4" align="center" color="#111111" width="3.0" position="0 0.065 0.01"></a-text>
+          <a-text value="Tap for details" align="center" color="#888888" width="1.9" position="0 -0.085 0.01"></a-text>
+        </a-plane>
+      </a-entity>
+    </a-marker>
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    const SDE4 = {
+      equipment_kWh: 1508607,
+      lighting_kWh:  754743,
+      cooling_kWh:   1164336,
+    };
+
+    const chartPanel  = document.getElementById('chart-panel');
+    const scanHint    = document.getElementById('scan-hint');
+    const mapsPanel   = document.getElementById('maps-panel');
+    let chartInstance = null;
+    let markerVisible = false;
+    let mapsHideTimer = null;
+
+    function fmtMWh(kwh) {
+      return kwh >= 1000000 ? (kwh / 1000000).toFixed(2) + ' GWh' : (kwh / 1000).toFixed(1) + ' MWh';
+    }
+
+    function toggleCollapse(which) {
+      const panel   = document.getElementById(which + '-panel');
+      const chevron = document.getElementById(which + '-chevron');
+      panel.classList.toggle('collapsed');
+      chevron.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
+    }
+
+    function showChart() {
+      const b = SDE4;
+      const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
+      document.getElementById('total-value').textContent      = fmtMWh(total);
+      document.getElementById('lv-cooling').textContent       = fmtMWh(b.cooling_kWh);
+      document.getElementById('lv-equipment').textContent     = fmtMWh(b.equipment_kWh);
+      document.getElementById('lv-lighting').textContent      = fmtMWh(b.lighting_kWh);
+
+      const ctx = document.getElementById('myChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          datasets: [{ data: [b.cooling_kWh, b.equipment_kWh, b.lighting_kWh],
+            backgroundColor: ['#4A90D9', '#F5A623', '#7ED321'], borderWidth: 0 }]
+        },
+        options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: false }
+      });
+
+      chartPanel.classList.add('visible');
+      scanHint.style.opacity = '0';
+      if (mapsHideTimer) { clearTimeout(mapsHideTimer); mapsHideTimer = null; }
+      mapsPanel.style.display = 'flex';
+      requestAnimationFrame(() => mapsPanel.classList.add('visible'));
+    }
+
+    function hideChart() {
+      chartPanel.classList.remove('visible');
+      scanHint.style.opacity = '1';
+      mapsPanel.classList.remove('visible');
+      mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
+    }
+
+    // ── Marker events ──────────────────────────────────────────────────────────
+    const marker = document.getElementById('sde4-marker');
+    marker.addEventListener('markerFound', () => {
+      markerVisible = true;
+      scanHint.style.opacity = '0';
+    });
+    marker.addEventListener('markerLost', () => {
+      markerVisible = false;
+      hideChart();
+    });
+
+    // ── Tap detection ──────────────────────────────────────────────────────────
+    const sceneEl  = document.querySelector('a-scene');
+    const arBg     = document.getElementById('ar-bg');
+    const _arVec   = new THREE.Vector3();
+    let _lastTouch = 0;
+    const _uiLayer = document.getElementById('ui-layer');
+
+    function getScreenPos(entity) {
+      if (!entity || !entity.object3D) return null;
+      entity.object3D.getWorldPosition(_arVec);
+      _arVec.project(sceneEl.camera);
+      const r = sceneEl.canvas.getBoundingClientRect();
+      return { x: (_arVec.x + 1) / 2 * r.width + r.left,
+               y: (-_arVec.y + 1) / 2 * r.height + r.top };
+    }
+
+    function handleTap(cx, cy) {
+      if (!markerVisible) return;
+      const sp = getScreenPos(arBg);
+      if (!sp) return;
+      const dx = cx - sp.x, dy = cy - sp.y;
+      if (Math.sqrt(dx * dx + dy * dy) < 130) {
+        chartPanel.classList.contains('visible') ? hideChart() : showChart();
+      }
+    }
+
+    document.addEventListener('touchend', e => {
+      _lastTouch = Date.now();
+      if (_uiLayer.contains(e.target)) return;
+      const t = e.changedTouches[0];
+      handleTap(t.clientX, t.clientY);
+    });
+    document.addEventListener('click', e => {
+      if (Date.now() - _lastTouch < 500) return;
+      if (_uiLayer.contains(e.target)) return;
+      handleTap(e.clientX, e.clientY);
+    });
+  </script>
+</body>
+</html>

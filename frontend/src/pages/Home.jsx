@@ -151,7 +151,11 @@ export default function Home() {
 
           <div className="home-cta-row">
             <button className="home-cta" onClick={() => window.location.href = '/ar/index.html'}>
-              BUILDING MARKERS
+              MINDAR.JS
+              <span className="cta-arrow">→</span>
+            </button>
+            <button className="home-cta" onClick={() => window.location.href = '/arjs/index.html'}>
+              AR.JS
               <span className="cta-arrow">→</span>
             </button>
           </div>
