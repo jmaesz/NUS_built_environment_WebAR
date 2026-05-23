@@ -227,6 +227,7 @@
 
           // Dashes — dash-track flips their Y when marker is detected upside-down
           var dashContainer = document.createElement('a-entity');
+          dashContainer.id = 'ar-dash-' + idx;
           dashContainer.setAttribute('dash-track', '');
           var dashH = 0.1, pitch = 0.2, numDashes = Math.floor(1.3 / pitch);
           for (var di = 0; di < numDashes; di++) {
@@ -241,6 +242,7 @@
 
           // up-track keeps label on the world-up side of the marker
           var upContainer = document.createElement('a-entity');
+          upContainer.id = 'ar-up-' + idx;
           upContainer.setAttribute('up-track', 'y: 1.8');
 
           var label = document.createElement('a-entity');
@@ -322,10 +324,21 @@
       })(t0);
     }
 
+    function setOtherLabelsVisible(skipIdx, visible) {
+      BUILDINGS.forEach(function (_, i) {
+        if (i === skipIdx) return;
+        const up   = document.getElementById('ar-up-'   + i);
+        const dash = document.getElementById('ar-dash-' + i);
+        if (up)   up.object3D.visible   = visible;
+        if (dash) dash.object3D.visible = visible;
+      });
+    }
+
     function showChart(idx) {
       const b = BUILDINGS[idx];
       activeIdx = idx;
       setLabelHint(idx, true);
+      setOtherLabelsVisible(idx, false);
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
       document.getElementById('chart-building-name').textContent = b.name;
       document.getElementById('total-value').textContent         = fmtMWh(total);
@@ -361,6 +374,7 @@
 
     function hideChart() {
       if (activeIdx !== null) setLabelHint(activeIdx, false);
+      setOtherLabelsVisible(-1, true);
       activeIdx = null;
       chartPanel.classList.remove('visible');
       scanHint.style.opacity = '1';
