@@ -4,6 +4,21 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>NUScape-AR</title>
+  <script>
+    // Intercept getUserMedia before MindAR loads — request 1920×1080 instead of 640×480
+    (function() {
+      const orig = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = function(constraints) {
+        if (constraints && constraints.video) {
+          constraints.video = Object.assign(
+            typeof constraints.video === 'object' ? constraints.video : {},
+            { width: { ideal: 1920 }, height: { ideal: 1080 } }
+          );
+        }
+        return orig(constraints);
+      };
+    })();
+  </script>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
