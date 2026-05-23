@@ -7,6 +7,28 @@
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script>
+    // Always keep label on the world-up side of the marker
+    AFRAME.registerComponent('up-track', {
+      schema: { y: { default: 1.8 } },
+      init: function () { this._v = new THREE.Vector3(); },
+      tick: function () {
+        this._v.set(0, 1, 0).applyQuaternion(this.el.parentEl.object3D.quaternion);
+        this.el.object3D.position.y = (this._v.y >= 0 ? 1 : -1) * this.data.y;
+      }
+    });
+    // Keep dashes pointing toward the marker regardless of orientation
+    AFRAME.registerComponent('dash-track', {
+      schema: { dashH: { default: 0.1 }, pitch: { default: 0.2 } },
+      init: function () { this._v = new THREE.Vector3(); this._kids = null; },
+      tick: function () {
+        if (!this._kids) this._kids = Array.from(this.el.children);
+        this._v.set(0, 1, 0).applyQuaternion(this.el.parentEl.object3D.quaternion);
+        var sign = this._v.y >= 0 ? 1 : -1, p = this.data.pitch, h = this.data.dashH;
+        this._kids.forEach(function (c, i) { c.object3D.position.y = sign * (i * p + h / 2); });
+      }
+    });
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
@@ -188,26 +210,32 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '10');
-          marker.setAttribute('smoothTolerance', '0.01');
-          marker.setAttribute('smoothThreshold', '5');
+          marker.setAttribute('smoothCount', '20');
+          marker.setAttribute('smoothTolerance', '0.005');
+          marker.setAttribute('smoothThreshold', '2');
           marker.id = 'marker-' + idx;
 
-          var dashH = 0.1, pitch = 0.2, totalH = 1.3;
-          for (var y = dashH / 2; y < totalH; y += pitch) {
+          // Dashes — dash-track flips their Y when marker is detected upside-down
+          var dashContainer = document.createElement('a-entity');
+          dashContainer.setAttribute('dash-track', '');
+          var dashH = 0.1, pitch = 0.2, numDashes = Math.floor(1.3 / pitch);
+          for (var di = 0; di < numDashes; di++) {
             var dash = document.createElement('a-cylinder');
             dash.setAttribute('radius', '0.025');
             dash.setAttribute('height', String(dashH));
             dash.setAttribute('color', '#ffffff');
             dash.setAttribute('opacity', '0.85');
-            dash.setAttribute('position', '0 ' + y.toFixed(3) + ' 0');
-            marker.appendChild(dash);
+            dashContainer.appendChild(dash);
           }
+          marker.appendChild(dashContainer);
+
+          // up-track keeps label on the world-up side of the marker
+          var upContainer = document.createElement('a-entity');
+          upContainer.setAttribute('up-track', 'y: 1.8');
 
           var label = document.createElement('a-entity');
-          label.setAttribute('position', '0 1.8 0');
           label.setAttribute('look-at', '[camera]');
-          label.setAttribute('animation', 'property: position; from: 0 1.8 0; to: 0 2.1 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
+          label.setAttribute('animation', 'property: position; from: 0 0 0; to: 0 0.3 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
 
           var bg = document.createElement('a-plane');
           bg.id = 'ar-bg-' + idx;
@@ -216,7 +244,8 @@
           bg.setAttribute('material', 'src: #lbl-' + idx + '; side: double; transparent: false; shader: flat');
 
           label.appendChild(bg);
-          marker.appendChild(label);
+          upContainer.appendChild(label);
+          marker.appendChild(upContainer);
           scene.appendChild(marker);
         });
       })();
