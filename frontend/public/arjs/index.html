@@ -181,7 +181,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; canvasWidth: 1280; canvasHeight: 960;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; canvasWidth: 640; canvasHeight: 480;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true;"
     device-orientation-permission-ui="enabled: false"
@@ -220,8 +220,8 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '10');
-          marker.setAttribute('smoothTolerance', '0.005');
+          marker.setAttribute('smoothCount', '5');
+          marker.setAttribute('smoothTolerance', '0.01');
           marker.setAttribute('smoothThreshold', '2');
           marker.id = 'marker-' + idx;
 
