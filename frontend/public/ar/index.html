@@ -1085,36 +1085,38 @@
       if (typeof cv === 'undefined' || !cv.Mat) { setTimeout(onOpenCvReady, 100); return; }
       if (!cv.aruco_ArucoDetector) { showArucoToast('ArUco: not in build'); return; }
 
-      const dict4x4Keys = Object.keys(cv).filter(k => k.startsWith('DICT_4X4_'));
-      if (!dict4x4Keys.length) { showArucoToast('ArUco: no 4x4 dicts'); return; }
+      // Use only DICT_4X4_50 — marker ID 0 is in this dict; running all variants wastes 4× time
+      const dictKey = cv['DICT_4X4_50'] !== undefined ? 'DICT_4X4_50'
+                    : Object.keys(cv).find(k => k.startsWith('DICT_4X4_'));
+      if (!dictKey) { showArucoToast('ArUco: no 4x4 dicts'); return; }
 
-      const detectors = dict4x4Keys.map(k => {
-        const dict   = cv.getPredefinedDictionary(cv[k]);
+      function makeDetector() {
+        const dict   = cv.getPredefinedDictionary(cv[dictKey]);
         const params = new cv.aruco_DetectorParameters();
-        // Small marker tuning (1cm physical, ~40px after 2x upscale)
-        params.minMarkerPerimeterRate = 0.01;   // default ~0.03; catch smaller markers
+        // Small marker: push perimeter threshold as low as possible
+        params.minMarkerPerimeterRate = 0.005;
         params.maxMarkerPerimeterRate = 4.0;
-        // Window must stay SMALLER than the marker; 53 would smear a 40px marker's borders
+        // Keep window smaller than the marker itself (~40px after upscale)
         params.adaptiveThreshWinSizeMin  = 3;
         params.adaptiveThreshWinSizeMax  = 23;
-        params.adaptiveThreshWinSizeStep = 4;
-        params.errorCorrectionRate = 0.8;
-        // More pixels per cell improves bit extraction from small/blurry markers
+        params.adaptiveThreshWinSizeStep = 2;
+        params.errorCorrectionRate = 0.9;
         try { params.perspectiveRemovePixelPerCell = 8; } catch(_) {}
         try { params.perspectiveRemoveIgnoredMarginPerCell = 0.18; } catch(_) {}
-        // Subpixel corner refinement for small markers (CORNER_REFINE_SUBPIX = 1)
         try { params.cornerRefinementMethod = 1; } catch(_) {}
         let det;
         try { det = new cv.aruco_ArucoDetector(dict, params, new cv.aruco_RefineParameters(10, 3, true)); }
         catch(_) { det = new cv.aruco_ArucoDetector(dict, params); }
-        return { det };
-      });
+        return det;
+      }
+      const detector = makeDetector();
 
       const waitForVideo = setInterval(() => {
         const video = [...document.querySelectorAll('video')].find(v => v.videoWidth > 0);
         if (!video) return;
         clearInterval(waitForVideo);
 
+        // Native-size canvas — OpenCV will handle upscaling with cubic interpolation
         const canvas = document.createElement('canvas');
         const ctx    = canvas.getContext('2d', { willReadFrequently: true });
         let lastRun  = 0;
@@ -1125,29 +1127,47 @@
           lastRun = Date.now();
           if (video.readyState < 2 || !video.videoWidth) return;
 
-          // 2× upscale so a tiny 1cm marker has more pixels to work with
+          const W = video.videoWidth, H = video.videoHeight;
           const SCALE = 2;
-          canvas.width = video.videoWidth * SCALE; canvas.height = video.videoHeight * SCALE;
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+          const SW = W * SCALE, SH = H * SCALE;
 
-          let src, gray, grayInv, corners, ids, rejected;
+          // Draw at native resolution; let OpenCV upscale with cubic (sharper than canvas bilinear)
+          canvas.width = W; canvas.height = H;
+          ctx.drawImage(video, 0, 0, W, H);
+
+          let src, up, gray, enhanced, grayInv, corners, ids, rejected, clahe;
           try {
-            src = cv.imread(canvas); gray = new cv.Mat(); grayInv = new cv.Mat();
-            corners = new cv.MatVector(); ids = new cv.Mat(); rejected = new cv.MatVector();
-            cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
-            cv.bitwise_not(gray, grayInv);
+            src = cv.imread(canvas);
+            up  = new cv.Mat();
+            // Cubic upscale — preserves edges better than browser bilinear
+            cv.resize(src, up, new cv.Size(SW, SH), 0, 0, cv.INTER_CUBIC);
+            src.delete(); src = null;
 
-            // Scaled canvas dims used for detection; divide by SCALE to get real video coords
-            const W = video.videoWidth, H = video.videoHeight;
-            const SW = W * SCALE, SH = H * SCALE;
+            gray = new cv.Mat();
+            cv.cvtColor(up, gray, cv.COLOR_RGBA2GRAY);
+            up.delete(); up = null;
+
+            // CLAHE: boost local contrast so small/distant marker cells become visible
+            enhanced = new cv.Mat();
+            try {
+              clahe = cv.createCLAHE(2.0, new cv.Size(8, 8));
+              clahe.apply(gray, enhanced);
+              clahe.delete(); clahe = null;
+            } catch(_) {
+              gray.copyTo(enhanced);
+            }
+
+            grayInv = new cv.Mat();
+            cv.bitwise_not(enhanced, grayInv);
+
+            corners = new cv.MatVector(); ids = new cv.Mat(); rejected = new cv.MatVector();
 
             outer:
-            for (const { det } of detectors) {
-              for (const img of [gray, grayInv]) {
-                corners.delete(); corners  = new cv.MatVector();
-                ids.delete();     ids      = new cv.Mat();
-                rejected.delete(); rejected = new cv.MatVector();
-                det.detectMarkers(img, corners, ids, rejected);
+            for (const img of [enhanced, grayInv]) {
+              corners.delete(); corners  = new cv.MatVector();
+              ids.delete();     ids      = new cv.Mat();
+              rejected.delete(); rejected = new cv.MatVector();
+              detector.detectMarkers(img, corners, ids, rejected);
 
                 if (ids.rows > 0) {
                   const idsData = ids.data32S || ids.data32U;
@@ -1187,12 +1207,11 @@
 
                   break outer;
                 }
-              }
             }
           } catch(e) {
             console.warn('[ArUco]', e);
           } finally {
-            try { src?.delete(); gray?.delete(); grayInv?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
+            try { src?.delete(); up?.delete(); gray?.delete(); enhanced?.delete(); grayInv?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); if (clahe) clahe.delete(); } catch(_) {}
           }
         })();
       }, 500);
