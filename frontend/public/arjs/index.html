@@ -8,23 +8,27 @@
   <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script>
-    // Always keep label on the world-up side of the marker
+    // Always keep label on the world-up side of the marker, with lerp for smooth transitions
     AFRAME.registerComponent('up-track', {
       schema: { y: { default: 1.8 } },
       init: function () { this._v = new THREE.Vector3(); },
       tick: function () {
         this._v.set(0, 1, 0).applyQuaternion(this.el.parentEl.object3D.quaternion);
-        this.el.object3D.position.y = (this._v.y >= 0 ? 1 : -1) * this.data.y;
+        var target = (this._v.y >= 0 ? 1 : -1) * this.data.y;
+        this.el.object3D.position.y += (target - this.el.object3D.position.y) * 0.12;
       }
     });
-    // Reliable per-frame billboard: directly calls THREE.js lookAt on the camera
+    // Reliable per-frame billboard with slerp for smooth rotation as camera orbits
     AFRAME.registerComponent('billboard', {
-      init: function () { this._v = new THREE.Vector3(); },
+      init: function () { this._v = new THREE.Vector3(); this._tq = new THREE.Quaternion(); },
       tick: function () {
         var cam = this.el.sceneEl.camera;
         if (!cam) return;
         cam.getWorldPosition(this._v);
+        this._tq.copy(this.el.object3D.quaternion);
         this.el.object3D.lookAt(this._v);
+        this._tq.slerp(this.el.object3D.quaternion, 0.15);
+        this.el.object3D.quaternion.copy(this._tq);
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
@@ -220,9 +224,9 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '20');
-          marker.setAttribute('smoothTolerance', '0.005');
-          marker.setAttribute('smoothThreshold', '2');
+          marker.setAttribute('smoothCount', '30');
+          marker.setAttribute('smoothTolerance', '0.02');
+          marker.setAttribute('smoothThreshold', '5');
           marker.id = 'marker-' + idx;
 
           // Dashes — dash-track flips their Y when marker is detected upside-down
