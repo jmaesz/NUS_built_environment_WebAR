@@ -17,6 +17,16 @@
         this.el.object3D.position.y = (this._v.y >= 0 ? 1 : -1) * this.data.y;
       }
     });
+    // Reliable per-frame billboard: directly calls THREE.js lookAt on the camera
+    AFRAME.registerComponent('billboard', {
+      init: function () { this._v = new THREE.Vector3(); },
+      tick: function () {
+        var cam = this.el.sceneEl.camera;
+        if (!cam) return;
+        cam.getWorldPosition(this._v);
+        this.el.object3D.lookAt(this._v);
+      }
+    });
     // Keep dashes pointing toward the marker regardless of orientation
     AFRAME.registerComponent('dash-track', {
       schema: { dashH: { default: 0.1 }, pitch: { default: 0.2 } },
@@ -234,7 +244,7 @@
           upContainer.setAttribute('up-track', 'y: 1.8');
 
           var label = document.createElement('a-entity');
-          label.setAttribute('look-at', '[camera]');
+          label.setAttribute('billboard', '');
           label.setAttribute('animation', 'property: position; from: 0 0 0; to: 0 0.3 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
 
           var bg = document.createElement('a-plane');
