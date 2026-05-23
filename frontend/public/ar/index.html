@@ -1114,7 +1114,7 @@
         // Keep window smaller than the marker itself (~40px after upscale)
         params.adaptiveThreshWinSizeMin  = 3;
         params.adaptiveThreshWinSizeMax  = 23;
-        params.adaptiveThreshWinSizeStep = 2;
+        params.adaptiveThreshWinSizeStep = 5;
         params.errorCorrectionRate = 0.9;
         try { params.perspectiveRemovePixelPerCell = 8; } catch(_) {}
         try { params.perspectiveRemoveIgnoredMarginPerCell = 0.18; } catch(_) {}
@@ -1160,42 +1160,30 @@
           canvas.width = W; canvas.height = H;
           ctx.drawImage(video, 0, 0, W, H);
 
-          let src, up, gray, enhanced, blurred, grayInv, corners, ids, rejected, clahe;
+          let src, up, gray, blurred, grayInv, corners, ids, rejected;
           try {
             src = cv.imread(canvas);
             up  = new cv.Mat();
-            // Lanczos upscale — sharpest available, better edge preservation than bilinear/cubic
-            cv.resize(src, up, new cv.Size(SW, SH), 0, 0, cv.INTER_LANCZOS4);
+            cv.resize(src, up, new cv.Size(SW, SH), 0, 0, cv.INTER_LINEAR);
             src.delete(); src = null;
 
             gray = new cv.Mat();
             cv.cvtColor(up, gray, cv.COLOR_RGBA2GRAY);
             up.delete(); up = null;
 
-            // CLAHE: boost local contrast so small/distant marker cells become visible
-            enhanced = new cv.Mat();
-            try {
-              clahe = cv.createCLAHE(3.0, new cv.Size(4, 4));
-              clahe.apply(gray, enhanced);
-              clahe.delete(); clahe = null;
-            } catch(_) {
-              gray.copyTo(enhanced);
-            }
-            gray.delete(); gray = null;
-
-            // Unsharp mask: sharpen edges — critical for resolving small marker cells
+            // Unsharp mask — sharpens cell edges without distorting within-cell uniformity
             blurred = new cv.Mat();
-            cv.GaussianBlur(enhanced, blurred, new cv.Size(0, 0), 1.0);
-            cv.addWeighted(enhanced, 1.5, blurred, -0.5, 0, enhanced);
+            cv.GaussianBlur(gray, blurred, new cv.Size(0, 0), 1.0);
+            cv.addWeighted(gray, 2.0, blurred, -1.0, 0, gray);
             blurred.delete(); blurred = null;
 
             grayInv = new cv.Mat();
-            cv.bitwise_not(enhanced, grayInv);
+            cv.bitwise_not(gray, grayInv);
 
             corners = new cv.MatVector(); ids = new cv.Mat(); rejected = new cv.MatVector();
 
             outer:
-            for (const img of [enhanced, grayInv]) {
+            for (const img of [gray, grayInv]) {
               corners.delete(); corners  = new cv.MatVector();
               ids.delete();     ids      = new cv.Mat();
               rejected.delete(); rejected = new cv.MatVector();
@@ -1243,7 +1231,7 @@
           } catch(e) {
             console.warn('[ArUco]', e);
           } finally {
-            try { src?.delete(); up?.delete(); gray?.delete(); enhanced?.delete(); blurred?.delete(); grayInv?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); if (clahe) clahe.delete(); } catch(_) {}
+            try { src?.delete(); up?.delete(); gray?.delete(); blurred?.delete(); grayInv?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
           }
         })();
       }, 500);
