@@ -149,7 +149,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; canvasWidth: 1280; canvasHeight: 960;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true; logarithmicDepthBuffer: true;"
     device-orientation-permission-ui="enabled: false"
@@ -186,25 +186,25 @@
           bg.setAttribute('width', '2.2');
           bg.setAttribute('height', '1.0');
           bg.setAttribute('color', '#ffffff');
-          bg.setAttribute('position', '0 0 0');
+          bg.setAttribute('material', 'color: #ffffff; opacity: 1; transparent: false');
 
           var txt = document.createElement('a-text');
           txt.setAttribute('value', b.name);
           txt.setAttribute('align', 'center');
           txt.setAttribute('color', '#000000');
           txt.setAttribute('width', '9.0');
-          txt.setAttribute('position', '0 0.2 0.01');
+          txt.setAttribute('position', '0 0.2 0.001');
 
           var sub = document.createElement('a-text');
           sub.setAttribute('value', 'Tap for details');
           sub.setAttribute('align', 'center');
           sub.setAttribute('color', '#000000');
           sub.setAttribute('width', '6.0');
-          sub.setAttribute('position', '0 -0.27 0.01');
+          sub.setAttribute('position', '0 -0.27 0.001');
 
+          bg.appendChild(txt);
+          bg.appendChild(sub);
           label.appendChild(bg);
-          label.appendChild(txt);
-          label.appendChild(sub);
           marker.appendChild(stem);
           marker.appendChild(label);
           scene.appendChild(marker);
