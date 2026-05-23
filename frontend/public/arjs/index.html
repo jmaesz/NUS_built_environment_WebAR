@@ -398,20 +398,20 @@
     }
 
     function handleTap(cx, cy) {
+      let bestIdx = -1, bestDist = 200;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         if (!visibleMarkers.has(idx)) continue;
         const bg = document.getElementById('ar-bg-' + idx);
         if (!bg) continue;
         const sp = getScreenPos(bg);
         if (!sp) continue;
-        const dx = cx - sp.x, dy = cy - sp.y;
-        if (Math.sqrt(dx * dx + dy * dy) < 130) {
-          pulseTap(idx);
-          activeIdx === idx && chartPanel.classList.contains('visible')
-            ? hideChart() : showChart(idx);
-          return;
-        }
+        const dist = Math.sqrt((cx - sp.x) ** 2 + (cy - sp.y) ** 2);
+        if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
       }
+      if (bestIdx === -1) return;
+      pulseTap(bestIdx);
+      activeIdx === bestIdx && chartPanel.classList.contains('visible')
+        ? hideChart() : showChart(bestIdx);
     }
 
     document.addEventListener('touchend', e => {
