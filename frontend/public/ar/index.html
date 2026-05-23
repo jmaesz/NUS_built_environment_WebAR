@@ -916,18 +916,21 @@
           txt.setAttribute('position', '0 0 0.001');
           bg.appendChild(txt);
 
-          bg.setAttribute('class', 'clickable');
-          bg.addEventListener('click', () => showChart(21));
           label.appendChild(bg);
           el.appendChild(label);
+          arTaps.push({ entity: bg, radius: 120, targetIdx: 21, fn: () => showChart(21) });
 
           el.addEventListener('targetFound', () => {
             label.setAttribute('visible', 'true');
             stem.setAttribute('visible', 'true');
+            foundTargets.add(21);
+            activeTarget = 21;
           });
           el.addEventListener('targetLost', () => {
             label.setAttribute('visible', 'false');
             stem.setAttribute('visible', 'false');
+            foundTargets.delete(21);
+            if (activeTarget === 21) activeTarget = null;
             hideUI();
           });
           return;
