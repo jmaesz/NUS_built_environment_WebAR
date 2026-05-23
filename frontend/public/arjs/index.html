@@ -38,6 +38,30 @@
         this._kids.forEach(function (c, i) { c.object3D.position.y = sign * (i * p + h / 2); });
       }
     });
+    // EMA pose filter — lerps marker position/rotation each frame to kill high-freq jitter
+    AFRAME.registerComponent('pose-filter', {
+      schema: { alpha: { default: 0.15 } },
+      init: function () {
+        this._pos   = new THREE.Vector3();
+        this._quat  = new THREE.Quaternion();
+        this._ready = false;
+      },
+      tick: function () {
+        var obj = this.el.object3D;
+        if (!obj.visible) { this._ready = false; return; }
+        if (!this._ready) {
+          this._pos.copy(obj.position);
+          this._quat.copy(obj.quaternion);
+          this._ready = true;
+          return;
+        }
+        var a = this.data.alpha;
+        this._pos.lerp(obj.position, a);
+        this._quat.slerp(obj.quaternion, a);
+        obj.position.copy(this._pos);
+        obj.quaternion.copy(this._quat);
+      }
+    });
   </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -222,9 +246,10 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '25');
-          marker.setAttribute('smoothTolerance', '0.02');
-          marker.setAttribute('smoothThreshold', '5');
+          marker.setAttribute('smoothCount', '10');
+          marker.setAttribute('smoothTolerance', '0.01');
+          marker.setAttribute('smoothThreshold', '2');
+          marker.setAttribute('pose-filter', 'alpha: 0.15');
           marker.id = 'marker-' + idx;
 
           // Dashes — dash-track flips their Y when marker is detected upside-down
