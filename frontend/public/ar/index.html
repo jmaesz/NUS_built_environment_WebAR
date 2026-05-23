@@ -895,18 +895,17 @@
           stem.setAttribute('rotation', '90 0 0');
           el.appendChild(stem);
 
-          // Floating label — rotated -90° around X so board stands upright (like sign on ground)
+          // Floating label — billboard that always faces the camera
           const label = document.createElement('a-entity');
           label.setAttribute('id', 'ar-label-21');
           label.setAttribute('position', `0 0 ${LABEL_Z}`);
-          label.setAttribute('rotation', '-90 0 0');
+          label.setAttribute('look-at', '[camera]');
           label.setAttribute('animation', `property: position; from: 0 0 ${LABEL_Z}; to: 0 0 ${LABEL_Z + FLOAT}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
 
           const bg = document.createElement('a-plane');
           bg.setAttribute('width', '0.48'); bg.setAttribute('height', '0.16');
           bg.setAttribute('color', '#ffffff');
           bg.setAttribute('opacity', '0.92');
-          bg.setAttribute('material', 'side: double');
           bg.setAttribute('position', '0 0 0');
 
           const txt = document.createElement('a-text');
@@ -917,15 +916,6 @@
           txt.setAttribute('position', '0 0 0.001');
           bg.appendChild(txt);
 
-          const txt2 = document.createElement('a-text');
-          txt2.setAttribute('value', 'SDE4');
-          txt2.setAttribute('align', 'center');
-          txt2.setAttribute('color', '#111111');
-          txt2.setAttribute('width', '1.6');
-          txt2.setAttribute('position', '0 0 -0.001');
-          txt2.setAttribute('rotation', '0 180 0');
-          txt2.setAttribute('scale', '-1 1 1');
-          bg.appendChild(txt2);
           bg.setAttribute('class', 'clickable');
           bg.addEventListener('click', () => showChart(21));
           label.appendChild(bg);
