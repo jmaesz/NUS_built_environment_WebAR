@@ -93,7 +93,7 @@ export default function Home() {
     <div className="home">
       <header className="home-header">
         <img src="/logo.png" alt="NUS Built Environment" className="home-header-logo" />
-        <span className="home-label">2025</span>
+        <span className="home-label">2026</span>
       </header>
 
       <main className="home-main">
@@ -150,12 +150,8 @@ export default function Home() {
           </div>
 
           <div className="home-cta-row">
-            <button className="home-cta" onClick={() => window.location.href = '/ar/index.html'}>
-              MINDAR.JS
-              <span className="cta-arrow">→</span>
-            </button>
             <button className="home-cta" onClick={() => window.location.href = '/arjs/index.html'}>
-              AR.JS
+              LAUNCH AR
               <span className="cta-arrow">→</span>
             </button>
           </div>
