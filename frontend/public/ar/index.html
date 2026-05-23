@@ -882,13 +882,27 @@
 
         // ── Target 21: simple clickable label only ───────────────────────────
         if (idx === 21) {
+          const LABEL_Z = 0.22;
+          const FLOAT = 0.07;
+
+          // Stem — fixed cylinder connecting marker surface to label base
+          const stem = document.createElement('a-cylinder');
+          stem.setAttribute('radius', '0.004');
+          stem.setAttribute('height', String(LABEL_Z));
+          stem.setAttribute('color', '#ffffff');
+          stem.setAttribute('opacity', '0.85');
+          stem.setAttribute('position', `0 0 ${LABEL_Z / 2}`);
+          stem.setAttribute('rotation', '90 0 0');
+          el.appendChild(stem);
+
+          // Floating label
           const label = document.createElement('a-entity');
           label.setAttribute('id', 'ar-label-21');
-          label.setAttribute('position', `0 0 ${PIN_Z}`);
-          label.setAttribute('animation', `property: position; from: 0 0 ${PIN_Z}; to: 0 0 ${PIN_Z + 0.06}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
+          label.setAttribute('position', `0 0 ${LABEL_Z}`);
+          label.setAttribute('animation', `property: position; from: 0 0 ${LABEL_Z}; to: 0 0 ${LABEL_Z + FLOAT}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
 
           const bg = document.createElement('a-plane');
-          bg.setAttribute('width', '0.42'); bg.setAttribute('height', '0.14');
+          bg.setAttribute('width', '0.48'); bg.setAttribute('height', '0.16');
           bg.setAttribute('color', '#ffffff');
           bg.setAttribute('opacity', '0.92');
           bg.setAttribute('position', '0 0 0');
@@ -897,7 +911,7 @@
           txt.setAttribute('value', 'SDE4');
           txt.setAttribute('align', 'center');
           txt.setAttribute('color', '#111111');
-          txt.setAttribute('width', '1.4');
+          txt.setAttribute('width', '1.6');
           txt.setAttribute('position', '0 0 0.001');
 
           bg.appendChild(txt);
@@ -908,9 +922,11 @@
 
           el.addEventListener('targetFound', () => {
             label.setAttribute('visible', 'true');
+            stem.setAttribute('visible', 'true');
           });
           el.addEventListener('targetLost', () => {
             label.setAttribute('visible', 'false');
+            stem.setAttribute('visible', 'false');
             hideUI();
           });
           return;
