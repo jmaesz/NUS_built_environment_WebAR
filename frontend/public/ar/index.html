@@ -903,7 +903,7 @@
           label.setAttribute('animation', `property: position; from: 0 0 ${LABEL_Z}; to: 0 0 ${LABEL_Z + FLOAT}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
 
           const bg = document.createElement('a-plane');
-          bg.setAttribute('width', '0.48'); bg.setAttribute('height', '0.16');
+          bg.setAttribute('width', '0.48'); bg.setAttribute('height', '0.22');
           bg.setAttribute('color', '#ffffff');
           bg.setAttribute('opacity', '0.92');
           bg.setAttribute('position', '0 0 0');
@@ -913,12 +913,29 @@
           txt.setAttribute('align', 'center');
           txt.setAttribute('color', '#111111');
           txt.setAttribute('width', '1.6');
-          txt.setAttribute('position', '0 0 0.001');
+          txt.setAttribute('position', '0 0.03 0.001');
           bg.appendChild(txt);
+
+          const sub = document.createElement('a-text');
+          sub.setAttribute('value', 'Tap for details');
+          sub.setAttribute('align', 'center');
+          sub.setAttribute('color', '#888888');
+          sub.setAttribute('width', '1.0');
+          sub.setAttribute('position', '0 -0.04 0.001');
+          bg.appendChild(sub);
 
           label.appendChild(bg);
           el.appendChild(label);
-          arTaps.push({ entity: bg, radius: 120, targetIdx: 21, fn: () => showChart(21) });
+          arTaps.push({ entity: bg, radius: 120, targetIdx: 21, fn: () => {
+            if (chartPanel.classList.contains('visible')) {
+              chartPanel.classList.remove('visible');
+              scanHint.style.opacity = '1';
+              mapsPanel.classList.remove('visible');
+              setTimeout(() => { mapsPanel.style.display = 'none'; }, 300);
+            } else {
+              showChart(21);
+            }
+          }});
 
           el.addEventListener('targetFound', () => {
             label.setAttribute('visible', 'true');
