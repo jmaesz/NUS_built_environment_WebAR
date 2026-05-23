@@ -284,34 +284,29 @@
       chevron.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
     }
 
-    function makeLabelTexture(name, hint, hintColor) {
-      var cv = document.createElement('canvas');
+    function setLabelHint(idx, isOpen) {
+      const bg = document.getElementById('ar-bg-' + idx);
+      if (!bg || !bg.object3D) return;
+      const b = BUILDINGS[idx];
+      const cv = document.createElement('canvas');
       cv.width = 1024; cv.height = 512;
-      var cx = cv.getContext('2d');
+      const cx = cv.getContext('2d');
       cx.fillStyle = '#ffffff';
       cx.fillRect(0, 0, 1024, 512);
       cx.textAlign = 'center'; cx.textBaseline = 'middle';
       cx.fillStyle = '#000000';
       cx.font = 'bold 140px Arial, sans-serif';
-      cx.fillText(name, 512, 180);
+      cx.fillText(b.name, 512, 180);
       cx.font = '110px Arial, sans-serif';
-      cx.fillStyle = hintColor;
-      cx.fillText(hint, 512, 370);
-      return new THREE.CanvasTexture(cv);
-    }
-
-    function setLabelHint(idx, isOpen) {
-      const bg = document.getElementById('ar-bg-' + idx);
-      if (!bg) return;
-      const mesh = bg.getObject3D('mesh');
-      if (!mesh || !mesh.material) return;
-      if (mesh.material.map) mesh.material.map.dispose();
-      mesh.material.map = makeLabelTexture(
-        BUILDINGS[idx].name,
-        isOpen ? 'Tap to close' : 'Tap for details',
-        isOpen ? '#e53935' : '#333333'
-      );
-      mesh.material.needsUpdate = true;
+      cx.fillStyle = isOpen ? '#e53935' : '#333333';
+      cx.fillText(isOpen ? 'Tap to close' : 'Tap for details', 512, 370);
+      const tex = new THREE.CanvasTexture(cv);
+      bg.object3D.traverse(function (child) {
+        if (!child.isMesh || !child.material) return;
+        if (child.material.map) child.material.map.dispose();
+        child.material.map = tex;
+        child.material.needsUpdate = true;
+      });
     }
 
     function pulseTap(idx) {
