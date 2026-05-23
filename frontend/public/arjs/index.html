@@ -284,9 +284,53 @@
       chevron.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
     }
 
+    function makeLabelTexture(name, hint, hintColor) {
+      var cv = document.createElement('canvas');
+      cv.width = 1024; cv.height = 512;
+      var cx = cv.getContext('2d');
+      cx.fillStyle = '#ffffff';
+      cx.fillRect(0, 0, 1024, 512);
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillStyle = '#000000';
+      cx.font = 'bold 140px Arial, sans-serif';
+      cx.fillText(name, 512, 180);
+      cx.font = '110px Arial, sans-serif';
+      cx.fillStyle = hintColor;
+      cx.fillText(hint, 512, 370);
+      return new THREE.CanvasTexture(cv);
+    }
+
+    function setLabelHint(idx, isOpen) {
+      const bg = document.getElementById('ar-bg-' + idx);
+      if (!bg) return;
+      const mesh = bg.getObject3D('mesh');
+      if (!mesh || !mesh.material) return;
+      if (mesh.material.map) mesh.material.map.dispose();
+      mesh.material.map = makeLabelTexture(
+        BUILDINGS[idx].name,
+        isOpen ? 'Tap to close' : 'Tap for details',
+        isOpen ? '#e53935' : '#333333'
+      );
+      mesh.material.needsUpdate = true;
+    }
+
+    function pulseTap(idx) {
+      const bg = document.getElementById('ar-bg-' + idx);
+      if (!bg) return;
+      const t0 = performance.now(), dur = 350;
+      (function frame(now) {
+        const t = Math.min((now - t0) / dur, 1);
+        const s = 1 + 0.25 * Math.sin(t * Math.PI);
+        bg.object3D.scale.set(s, s, s);
+        if (t < 1) requestAnimationFrame(frame);
+        else bg.object3D.scale.set(1, 1, 1);
+      })(t0);
+    }
+
     function showChart(idx) {
       const b = BUILDINGS[idx];
       activeIdx = idx;
+      setLabelHint(idx, true);
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
       document.getElementById('chart-building-name').textContent = b.name;
       document.getElementById('total-value').textContent         = fmtMWh(total);
@@ -321,6 +365,7 @@
     }
 
     function hideChart() {
+      if (activeIdx !== null) setLabelHint(activeIdx, false);
       activeIdx = null;
       chartPanel.classList.remove('visible');
       scanHint.style.opacity = '1';
@@ -366,6 +411,7 @@
         if (!sp) continue;
         const dx = cx - sp.x, dy = cy - sp.y;
         if (Math.sqrt(dx * dx + dy * dy) < 130) {
+          pulseTap(idx);
           activeIdx === idx && chartPanel.classList.contains('visible')
             ? hideChart() : showChart(idx);
           return;
