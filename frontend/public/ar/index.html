@@ -5,14 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>NUScape-AR</title>
   <script>
-    // Intercept getUserMedia before MindAR loads — request 1920×1080 instead of 640×480
+    // Intercept getUserMedia before MindAR loads — request highest resolution possible
     (function() {
       const orig = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
       navigator.mediaDevices.getUserMedia = function(constraints) {
         if (constraints && constraints.video) {
           constraints.video = Object.assign(
             typeof constraints.video === 'object' ? constraints.video : {},
-            { width: { ideal: 1920 }, height: { ideal: 1080 } }
+            { width: { ideal: 3840 }, height: { ideal: 2160 } }
           );
         }
         return orig(constraints);
@@ -1131,10 +1131,10 @@
         if (!video) return;
         clearInterval(waitForVideo);
 
-        // Native-size canvas — OpenCV will handle upscaling with cubic interpolation
         const canvas = document.createElement('canvas');
         const ctx    = canvas.getContext('2d', { willReadFrequently: true });
         let lastRun  = 0;
+        let resShown = false;
 
         (function arucoLoop() {
           requestAnimationFrame(arucoLoop);
@@ -1143,7 +1143,17 @@
           if (video.readyState < 2 || !video.videoWidth) return;
 
           const W = video.videoWidth, H = video.videoHeight;
-          const SCALE = 2;
+
+          // Show camera resolution once so user knows what we got
+          if (!resShown) {
+            resShown = true;
+            showArucoToast(`Cam: ${W}×${H}`, 4000);
+          }
+
+          // Scale up so the detection image is at least 1920px on the long axis
+          // (higher pixels = smaller markers detectable from farther away)
+          const long  = Math.max(W, H);
+          const SCALE = long >= 1920 ? 1 : long >= 960 ? 2 : 3;
           const SW = W * SCALE, SH = H * SCALE;
 
           // Draw at native resolution; let OpenCV upscale with cubic (sharper than canvas bilinear)
@@ -1153,7 +1163,6 @@
           let src, up, gray, enhanced, blurred, grayInv, corners, ids, rejected, clahe;
           try {
             src = cv.imread(canvas);
-            console.log(`[ArUco] video ${W}×${H} → scaled ${SW}×${SH}`);
             up  = new cv.Mat();
             // Lanczos upscale — sharpest available, better edge preservation than bilinear/cubic
             cv.resize(src, up, new cv.Size(SW, SH), 0, 0, cv.INTER_LANCZOS4);
