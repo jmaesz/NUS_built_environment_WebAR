@@ -953,7 +953,79 @@
           return;
         }
 
-        // ── All other targets ────────────────────────────────────────────────
+        // ── Targets 0–19: floating billboard label ───────────────────────────
+        if (idx <= 19) {
+          const LABEL_Z = 0.22;
+          const FLOAT = 0.07;
+          const bName = BUILDINGS[idx].name;
+
+          const stem = document.createElement('a-cylinder');
+          stem.setAttribute('radius', '0.004');
+          stem.setAttribute('height', String(LABEL_Z));
+          stem.setAttribute('color', '#ffffff');
+          stem.setAttribute('opacity', '0.85');
+          stem.setAttribute('position', `0 0 ${LABEL_Z / 2}`);
+          stem.setAttribute('rotation', '90 0 0');
+          el.appendChild(stem);
+
+          const label = document.createElement('a-entity');
+          label.setAttribute('id', `ar-label-${idx}`);
+          label.setAttribute('position', `0 0 ${LABEL_Z}`);
+          label.setAttribute('look-at', '[camera]');
+          label.setAttribute('animation', `property: position; from: 0 0 ${LABEL_Z}; to: 0 0 ${LABEL_Z + FLOAT}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
+
+          const bg = document.createElement('a-plane');
+          bg.setAttribute('width', '0.48'); bg.setAttribute('height', '0.22');
+          bg.setAttribute('color', '#ffffff');
+          bg.setAttribute('opacity', '0.92');
+          bg.setAttribute('position', '0 0 0');
+
+          const txt = document.createElement('a-text');
+          txt.setAttribute('value', bName);
+          txt.setAttribute('align', 'center');
+          txt.setAttribute('color', '#111111');
+          txt.setAttribute('width', '1.6');
+          txt.setAttribute('position', '0 0.03 0.001');
+          bg.appendChild(txt);
+
+          const sub = document.createElement('a-text');
+          sub.setAttribute('value', 'Tap for details');
+          sub.setAttribute('align', 'center');
+          sub.setAttribute('color', '#888888');
+          sub.setAttribute('width', '1.0');
+          sub.setAttribute('position', '0 -0.04 0.001');
+          bg.appendChild(sub);
+
+          label.appendChild(bg);
+          el.appendChild(label);
+          arTaps.push({ entity: bg, radius: 120, targetIdx: idx, fn: () => {
+            if (chartPanel.classList.contains('visible')) {
+              chartPanel.classList.remove('visible');
+              scanHint.style.opacity = '1';
+              mapsPanel.classList.remove('visible');
+              setTimeout(() => { mapsPanel.style.display = 'none'; }, 300);
+            } else {
+              showChart(idx);
+            }
+          }});
+
+          el.addEventListener('targetFound', () => {
+            label.setAttribute('visible', 'true');
+            stem.setAttribute('visible', 'true');
+            foundTargets.add(idx);
+            activeTarget = idx;
+          });
+          el.addEventListener('targetLost', () => {
+            label.setAttribute('visible', 'false');
+            stem.setAttribute('visible', 'false');
+            foundTargets.delete(idx);
+            if (activeTarget === idx) activeTarget = null;
+            hideUI();
+          });
+          return;
+        }
+
+        // ── Target 20 (ArUco) and any remaining: full AR setup ───────────────
         const wrap = document.createElement('a-entity');
         wrap.setAttribute('id', `ar-wrap-${idx}`);
         el.appendChild(wrap);
