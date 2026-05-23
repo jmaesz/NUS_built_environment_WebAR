@@ -915,8 +915,16 @@
           txt.setAttribute('color', '#111111');
           txt.setAttribute('width', '1.6');
           txt.setAttribute('position', '0 0 0.001');
-
           bg.appendChild(txt);
+
+          const txt2 = document.createElement('a-text');
+          txt2.setAttribute('value', 'SDE4');
+          txt2.setAttribute('align', 'center');
+          txt2.setAttribute('color', '#111111');
+          txt2.setAttribute('width', '1.6');
+          txt2.setAttribute('position', '0 0 -0.001');
+          txt2.setAttribute('rotation', '0 180 0');
+          bg.appendChild(txt2);
           bg.setAttribute('class', 'clickable');
           bg.addEventListener('click', () => showChart(21));
           label.appendChild(bg);
