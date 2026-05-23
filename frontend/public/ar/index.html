@@ -1135,12 +1135,13 @@
           canvas.width = W; canvas.height = H;
           ctx.drawImage(video, 0, 0, W, H);
 
-          let src, up, gray, enhanced, grayInv, corners, ids, rejected, clahe;
+          let src, up, gray, enhanced, blurred, grayInv, corners, ids, rejected, clahe;
           try {
             src = cv.imread(canvas);
+            console.log(`[ArUco] video ${W}×${H} → scaled ${SW}×${SH}`);
             up  = new cv.Mat();
-            // Cubic upscale — preserves edges better than browser bilinear
-            cv.resize(src, up, new cv.Size(SW, SH), 0, 0, cv.INTER_CUBIC);
+            // Lanczos upscale — sharpest available, better edge preservation than bilinear/cubic
+            cv.resize(src, up, new cv.Size(SW, SH), 0, 0, cv.INTER_LANCZOS4);
             src.delete(); src = null;
 
             gray = new cv.Mat();
@@ -1150,12 +1151,19 @@
             // CLAHE: boost local contrast so small/distant marker cells become visible
             enhanced = new cv.Mat();
             try {
-              clahe = cv.createCLAHE(2.0, new cv.Size(8, 8));
+              clahe = cv.createCLAHE(3.0, new cv.Size(4, 4));
               clahe.apply(gray, enhanced);
               clahe.delete(); clahe = null;
             } catch(_) {
               gray.copyTo(enhanced);
             }
+            gray.delete(); gray = null;
+
+            // Unsharp mask: sharpen edges — critical for resolving small marker cells
+            blurred = new cv.Mat();
+            cv.GaussianBlur(enhanced, blurred, new cv.Size(0, 0), 1.0);
+            cv.addWeighted(enhanced, 1.5, blurred, -0.5, 0, enhanced);
+            blurred.delete(); blurred = null;
 
             grayInv = new cv.Mat();
             cv.bitwise_not(enhanced, grayInv);
@@ -1211,7 +1219,7 @@
           } catch(e) {
             console.warn('[ArUco]', e);
           } finally {
-            try { src?.delete(); up?.delete(); gray?.delete(); enhanced?.delete(); grayInv?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); if (clahe) clahe.delete(); } catch(_) {}
+            try { src?.delete(); up?.delete(); gray?.delete(); enhanced?.delete(); blurred?.delete(); grayInv?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); if (clahe) clahe.delete(); } catch(_) {}
           }
         })();
       }, 500);
