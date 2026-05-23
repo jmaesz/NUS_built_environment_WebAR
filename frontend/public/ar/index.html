@@ -175,7 +175,7 @@
   </div>
 
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=30; maxTrack: 1; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 50; warmupTolerance: 2; filterMinCF: 0.00001; filterBeta: 0.001;"
+    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=31; maxTrack: 1; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 50; warmupTolerance: 2; filterMinCF: 0.00001; filterBeta: 0.001;"
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
@@ -205,6 +205,7 @@
     <a-entity id="target-18" mindar-image-target="targetIndex: 18"></a-entity>
     <a-entity id="target-19" mindar-image-target="targetIndex: 19"></a-entity>
     <a-entity id="target-20" mindar-image-target="targetIndex: 20"></a-entity>
+    <a-entity id="target-21" mindar-image-target="targetIndex: 21"></a-entity>
   </a-scene>
 
   <script>
@@ -379,6 +380,9 @@
         "cooling_description": "Cooling is the dominant end use at 44% of total energy. Despite over 50% of spaces being naturally ventilated and chilled ceilings reducing HVAC load by around 30%, Singapore's tropical climate means cooling remains the largest single energy demand."
       }
     ];
+
+    // Target 21 = SDE4 map marker (same content as target 18 / target 20)
+    BUILDINGS.push(BUILDINGS[18]);
 
     function fmtMWh(kwh) {
       return Math.round(kwh / 1000).toLocaleString('en-US') + ' MWh/yr';
@@ -894,8 +898,8 @@
         makeArDetail(wrap, idx);
 
         el.addEventListener('targetFound', () => {
-          if (idx === 20) {
-            // skip scan box gate for alt SDE4 marker — activate immediately
+          if (idx === 20 || idx === 21) {
+            // skip scan box gate for alt SDE4 markers — activate immediately
             foundTargets.add(idx);
             activeTarget = idx;
             showChart(idx);
