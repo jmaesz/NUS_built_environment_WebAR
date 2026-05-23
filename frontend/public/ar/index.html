@@ -1008,7 +1008,7 @@
         _arLabel.style.display = 'none';
         _arLine.setAttribute('display', 'none');
         if (_ar3d) { _ar3d.root.object3D.visible = false; }
-      }, 600);
+      }, 2000);
     }
 
     // ── 3D A-Frame entity (bonus overlay on top of the 2D label) ──────────────
@@ -1141,7 +1141,7 @@
 
         (function arucoLoop() {
           requestAnimationFrame(arucoLoop);
-          if (Date.now() - lastRun < 200) return;
+          if (Date.now() - lastRun < 100) return;
           lastRun = Date.now();
           if (video.readyState < 2 || !video.videoWidth) return;
 
@@ -1163,7 +1163,7 @@
           canvas.width = W; canvas.height = H;
           ctx.drawImage(video, 0, 0, W, H);
 
-          let src, up, gray, blurred, corners, ids, rejected;
+          let src, up, gray, grayInv, blurred, corners, ids, rejected;
           try {
             src = cv.imread(canvas);
             up  = new cv.Mat();
@@ -1180,44 +1180,47 @@
             cv.addWeighted(gray, 2.0, blurred, -1.0, 0, gray);
             blurred.delete(); blurred = null;
 
-            corners = new cv.MatVector(); ids = new cv.Mat(); rejected = new cv.MatVector();
-            detector.detectMarkers(gray, corners, ids, rejected);
+            // Try normal then inverted — detectInvertedMarker may not be in this opencv.js build
+            grayInv = new cv.Mat();
+            cv.bitwise_not(gray, grayInv);
 
-            if (ids.rows > 0) {
-              const idsData = ids.data32S || ids.data32U;
-              const markerId = idsData[0];
+            for (const img of [gray, grayInv]) {
+              corners = new cv.MatVector(); ids = new cv.Mat(); rejected = new cv.MatVector();
+              detector.detectMarkers(img, corners, ids, rejected);
+              if (ids.rows === 0) { corners.delete(); ids.delete(); rejected.delete(); continue; }
 
-              if (markerId === 0) {
-                const cd  = corners.get(0).data32F;
-                const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4 / SCALE;
-                const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4 / SCALE;
-                const sc  = Math.max(window.innerWidth/W, window.innerHeight/H);
-                const sx  = (window.innerWidth  - W*sc)/2 + vcx*sc;
-                const sy  = (window.innerHeight - H*sc)/2 + vcy*sc;
+              const markerId = (ids.data32S || ids.data32U)[0];
+              if (markerId !== 0) { corners.delete(); ids.delete(); rejected.delete(); continue; }
 
-                showArucoLabel(sx, sy);
+              const cd  = corners.get(0).data32F;
+              const vcx = (cd[0]+cd[2]+cd[4]+cd[6]) / 4 / SCALE;
+              const vcy = (cd[1]+cd[3]+cd[5]+cd[7]) / 4 / SCALE;
+              const sc  = Math.max(window.innerWidth/W, window.innerHeight/H);
+              const sx  = (window.innerWidth  - W*sc)/2 + vcx*sc;
+              const sy  = (window.innerHeight - H*sc)/2 + vcy*sc;
+              showArucoLabel(sx, sy);
 
-                let imgPts, objPts, camMat, dist, rvec, tvec;
-                try {
-                  imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
-                  objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
-                  const f = Math.max(SW, SH);
-                  camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,SW/2, 0,f,SH/2, 0,0,1]);
-                  dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
-                  rvec   = new cv.Mat(); tvec = new cv.Mat();
-                  cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
-                  tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F));
-                } catch(pnpErr) {
-                  console.warn('[solvePnP]', pnpErr);
-                } finally {
-                  try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
-                }
+              let imgPts, objPts, camMat, dist, rvec, tvec;
+              try {
+                imgPts = cv.matFromArray(4, 1, 13, [cd[0],cd[1], cd[2],cd[3], cd[4],cd[5], cd[6],cd[7]]);
+                objPts = cv.matFromArray(4, 1, 21, MARKER_OBJ_PTS);
+                const f = Math.max(SW, SH);
+                camMat = cv.matFromArray(3, 3, cv.CV_64F, [f,0,SW/2, 0,f,SH/2, 0,0,1]);
+                dist   = cv.Mat.zeros(4, 1, cv.CV_64F);
+                rvec   = new cv.Mat(); tvec = new cv.Mat();
+                cv.solvePnP(objPts, imgPts, camMat, dist, rvec, tvec);
+                tryApply3DPose(Array.from(rvec.data64F), Array.from(tvec.data64F));
+              } catch(pnpErr) {
+                console.warn('[solvePnP]', pnpErr);
+              } finally {
+                try { imgPts?.delete(); objPts?.delete(); camMat?.delete(); dist?.delete(); rvec?.delete(); tvec?.delete(); } catch(_) {}
               }
+              break; // found marker, skip inverted pass
             }
           } catch(e) {
             console.warn('[ArUco]', e);
           } finally {
-            try { src?.delete(); up?.delete(); gray?.delete(); blurred?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
+            try { src?.delete(); up?.delete(); gray?.delete(); grayInv?.delete(); blurred?.delete(); corners?.delete(); ids?.delete(); rejected?.delete(); } catch(_) {}
           }
         })();
       }, 500);
