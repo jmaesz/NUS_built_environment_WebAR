@@ -220,9 +220,9 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '50');
+          marker.setAttribute('smoothCount', '10');
           marker.setAttribute('smoothTolerance', '0.005');
-          marker.setAttribute('smoothThreshold', '5');
+          marker.setAttribute('smoothThreshold', '2');
           marker.id = 'marker-' + idx;
 
           // Dashes — dash-track flips their Y when marker is detected upside-down
