@@ -1091,6 +1091,13 @@
       const detectors = dict4x4Keys.map(k => {
         const dict   = cv.getPredefinedDictionary(cv[k]);
         const params = new cv.aruco_DetectorParameters();
+        // Allow detection of small/distant markers
+        params.minMarkerPerimeterRate = 0.01;  // default ~0.03; lower = detect farther away
+        params.maxMarkerPerimeterRate = 4.0;
+        params.adaptiveThreshWinSizeMin  = 3;
+        params.adaptiveThreshWinSizeMax  = 53; // wider range catches more lighting conditions
+        params.adaptiveThreshWinSizeStep = 4;
+        params.errorCorrectionRate = 0.8;      // more lenient bit error correction
         let det;
         try { det = new cv.aruco_ArucoDetector(dict, params, new cv.aruco_RefineParameters(10, 3, true)); }
         catch(_) { det = new cv.aruco_ArucoDetector(dict, params); }
