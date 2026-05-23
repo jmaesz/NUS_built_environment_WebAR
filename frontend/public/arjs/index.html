@@ -175,9 +175,9 @@
           cx.fillStyle = '#000000';
           cx.font = 'bold 140px Arial, sans-serif';
           cx.fillText(b.name, 512, 180);
-          cx.font = '80px Arial, sans-serif';
+          cx.font = '110px Arial, sans-serif';
           cx.fillStyle = '#333333';
-          cx.fillText('Tap for details', 512, 360);
+          cx.fillText('Tap for details', 512, 370);
           var img = document.createElement('img');
           img.id = 'lbl-' + idx;
           img.src = cv.toDataURL('image/png');
@@ -195,10 +195,10 @@
 
           var stem = document.createElement('a-cylinder');
           stem.setAttribute('radius', '0.04');
-          stem.setAttribute('height', '1.1');
+          stem.setAttribute('height', '1.3');
           stem.setAttribute('color', '#ffffff');
           stem.setAttribute('opacity', '0.85');
-          stem.setAttribute('position', '0 0.55 0');
+          stem.setAttribute('position', '0 0.65 0');
 
           var label = document.createElement('a-entity');
           label.setAttribute('position', '0 1.8 0');
