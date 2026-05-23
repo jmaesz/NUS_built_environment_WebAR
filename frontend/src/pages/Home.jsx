@@ -154,14 +154,6 @@ export default function Home() {
               BUILDING MARKERS
               <span className="cta-arrow">→</span>
             </button>
-            <button className="home-cta" onClick={() => window.location.href = '/ar/model.html'}>
-              CAMPUS MODEL
-              <span className="cta-arrow">→</span>
-            </button>
-            <button className="home-cta" onClick={() => window.location.href = '/ar/onirix.html'}>
-              SPATIAL AR
-              <span className="cta-arrow">→</span>
-            </button>
           </div>
         </div>
       </main>
