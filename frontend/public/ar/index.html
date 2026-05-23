@@ -175,7 +175,7 @@
   </div>
 
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=33; maxTrack: 5; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 50; warmupTolerance: 2; filterMinCF: 0.00001; filterBeta: 0.001;"
+    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=33; maxTrack: 10; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 100; warmupTolerance: 1; filterMinCF: 0.00001; filterBeta: 0.0005;"
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
@@ -887,7 +887,7 @@
 
           // Stem — fixed cylinder connecting marker surface to label base
           const stem = document.createElement('a-cylinder');
-          stem.setAttribute('radius', '0.004');
+          stem.setAttribute('radius', '0.005');
           stem.setAttribute('height', String(LABEL_Z));
           stem.setAttribute('color', '#ffffff');
           stem.setAttribute('opacity', '0.85');
@@ -903,7 +903,7 @@
           label.setAttribute('animation', `property: position; from: 0 0 ${LABEL_Z}; to: 0 0 ${LABEL_Z + FLOAT}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
 
           const bg = document.createElement('a-plane');
-          bg.setAttribute('width', '0.48'); bg.setAttribute('height', '0.22');
+          bg.setAttribute('width', '0.64'); bg.setAttribute('height', '0.30');
           bg.setAttribute('color', '#ffffff');
           bg.setAttribute('opacity', '0.92');
           bg.setAttribute('position', '0 0 0');
@@ -912,16 +912,16 @@
           txt.setAttribute('value', 'SDE4');
           txt.setAttribute('align', 'center');
           txt.setAttribute('color', '#111111');
-          txt.setAttribute('width', '1.6');
-          txt.setAttribute('position', '0 0.03 0.001');
+          txt.setAttribute('width', '2.1');
+          txt.setAttribute('position', '0 0.05 0.001');
           bg.appendChild(txt);
 
           const sub = document.createElement('a-text');
           sub.setAttribute('value', 'Tap for details');
           sub.setAttribute('align', 'center');
           sub.setAttribute('color', '#888888');
-          sub.setAttribute('width', '1.0');
-          sub.setAttribute('position', '0 -0.04 0.001');
+          sub.setAttribute('width', '1.3');
+          sub.setAttribute('position', '0 -0.06 0.001');
           bg.appendChild(sub);
 
           label.appendChild(bg);
@@ -960,7 +960,7 @@
           const bName = BUILDINGS[idx].name;
 
           const stem = document.createElement('a-cylinder');
-          stem.setAttribute('radius', '0.004');
+          stem.setAttribute('radius', '0.005');
           stem.setAttribute('height', String(LABEL_Z));
           stem.setAttribute('color', '#ffffff');
           stem.setAttribute('opacity', '0.85');
@@ -975,7 +975,7 @@
           label.setAttribute('animation', `property: position; from: 0 0 ${LABEL_Z}; to: 0 0 ${LABEL_Z + FLOAT}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
 
           const bg = document.createElement('a-plane');
-          bg.setAttribute('width', '0.48'); bg.setAttribute('height', '0.22');
+          bg.setAttribute('width', '0.64'); bg.setAttribute('height', '0.30');
           bg.setAttribute('color', '#ffffff');
           bg.setAttribute('opacity', '0.92');
           bg.setAttribute('position', '0 0 0');
@@ -984,16 +984,16 @@
           txt.setAttribute('value', bName);
           txt.setAttribute('align', 'center');
           txt.setAttribute('color', '#111111');
-          txt.setAttribute('width', '1.6');
-          txt.setAttribute('position', '0 0.03 0.001');
+          txt.setAttribute('width', '2.1');
+          txt.setAttribute('position', '0 0.05 0.001');
           bg.appendChild(txt);
 
           const sub = document.createElement('a-text');
           sub.setAttribute('value', 'Tap for details');
           sub.setAttribute('align', 'center');
           sub.setAttribute('color', '#888888');
-          sub.setAttribute('width', '1.0');
-          sub.setAttribute('position', '0 -0.04 0.001');
+          sub.setAttribute('width', '1.3');
+          sub.setAttribute('position', '0 -0.06 0.001');
           bg.appendChild(sub);
 
           label.appendChild(bg);
