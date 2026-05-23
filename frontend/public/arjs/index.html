@@ -106,7 +106,7 @@
     <div id="chart-panel">
       <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
       <div id="chart-content">
-        <div id="chart-building-name">SDE4</div>
+        <div id="chart-building-name"></div>
         <div id="chart-subtitle">Annual Energy Use (kWh)</div>
         <div id="chart-row">
           <div id="chart-container"><canvas id="myChart"></canvas></div>
@@ -124,14 +124,14 @@
       </div>
     </div>
 
-    <a id="maps-panel" href="https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9" target="_blank" rel="noopener">
+    <a id="maps-panel" href="#" target="_blank" rel="noopener">
       <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
       <div id="maps-content">
         <div id="maps-panel-img-wrap">
-          <img src="https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/sde4/sde4.jpg" alt="SDE4">
-          <div id="maps-panel-top">SDE4</div>
+          <img id="maps-panel-img" src="" alt="" style="display:none">
+          <div id="maps-panel-top">—</div>
           <div id="maps-panel-bottom">
-            <div id="maps-panel-addr-lbl">School of Design and Environment 4</div>
+            <div id="maps-panel-addr-lbl"></div>
             <div id="maps-panel-cta">Open in Maps →</div>
           </div>
         </div>
@@ -146,37 +146,42 @@
     renderer="colorManagement: true; logarithmicDepthBuffer: true;"
     device-orientation-permission-ui="enabled: false"
   >
-    <a-marker
-      type="barcode" value="0"
-      id="sde4-marker"
-      emitevents="true"
-      smooth="true" smoothCount="10" smoothTolerance="0.01" smoothThreshold="5"
-    >
-      <a-cylinder id="ar-stem" radius="0.01" height="0.5" color="#ffffff" opacity="0.85" position="0 0.25 0"></a-cylinder>
-      <a-entity id="ar-label" position="0 0.5 0" look-at="[camera]"
-        animation="property: position; from: 0 0.5 0; to: 0 0.62 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine">
-        <a-plane id="ar-bg" width="0.7" height="0.32" color="#ffffff" opacity="0.92">
-          <a-text value="SDE4" align="center" color="#111111" width="3.0" position="0 0.065 0.01"></a-text>
-          <a-text value="Tap for details" align="center" color="#888888" width="1.9" position="0 -0.085 0.01"></a-text>
-        </a-plane>
-      </a-entity>
-    </a-marker>
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    const SDE4 = {
-      equipment_kWh: 1508607,
-      lighting_kWh:  754743,
-      cooling_kWh:   1164336,
-    };
+    const BUILDINGS = [
+      { name: 'CELC',  full_name: 'Centre for English Language Communication',    img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/celc/celc.jpg',   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=CELC+Centre+for+English+Language+Communication+NUS+Singapore',     equipment_kWh: 871310,  lighting_kWh: 361929,  cooling_kWh: 758033  },
+      { name: 'E1',    full_name: 'Faculty of Engineering Block 1',                img: '/ar/imgs/E1mapview.png',                                                                           mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E1+Faculty+of+Engineering+Block+1+NUS+Singapore',                  equipment_kWh: 1714696, lighting_kWh: 1123372, cooling_kWh: 2385198 },
+      { name: 'E1A',   full_name: 'Faculty of Engineering Block 1A',               img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/e1a/e1a-1.png',   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E1A+Faculty+of+Engineering+Block+1A+NUS+Singapore',               equipment_kWh: 2394083, lighting_kWh: 994465,  cooling_kWh: 1893880 },
+      { name: 'E2',    full_name: 'Faculty of Engineering Block 2',                img: '/ar/imgs/e2mapview.png',                                                                           mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E2+Faculty+of+Engineering+Block+2+NUS+Singapore',                  equipment_kWh: 777382,  lighting_kWh: 509297,  cooling_kWh: 1522584 },
+      { name: 'E2A',   full_name: 'Faculty of Engineering Block 2A',               img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/e2a/e2a-1.jpg',   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E2A+Engineering+Design+Innovation+Centre+NUS+Singapore',          equipment_kWh: 628626,  lighting_kWh: 261122,  cooling_kWh: 663876  },
+      { name: 'E3',    full_name: 'Faculty of Engineering Block 3',                img: '/ar/imgs/e3mapview.png',                                                                           mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E3+Faculty+of+Engineering+Block+3+NUS+Singapore',                  equipment_kWh: 1122637, lighting_kWh: 735489,  cooling_kWh: 1542890 },
+      { name: 'E3A',   full_name: 'Faculty of Engineering Block 3A',               img: '/ar/imgs/e3amapview.png',                                                                          mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E3A+Faculty+of+Engineering+Block+3A+NUS+Singapore',               equipment_kWh: 1722530, lighting_kWh: 715513,  cooling_kWh: 1444818 },
+      { name: 'E4',    full_name: 'Faculty of Engineering Block 4',                img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/e4/e4-1.jpg',     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E4+Faculty+of+Engineering+Block+4+NUS+Singapore',                  equipment_kWh: 2410173, lighting_kWh: 1205789, cooling_kWh: 1601209 },
+      { name: 'E4A',   full_name: 'Faculty of Engineering Block 4A',               img: null,                                                                                               mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E4A+Faculty+of+Engineering+Block+4A+NUS+Singapore',               equipment_kWh: 1478244, lighting_kWh: 614040,  cooling_kWh: 992888  },
+      { name: 'E5',    full_name: 'Faculty of Engineering Block 5',                img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/e5/e5-1.jpg',     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E5+Faculty+of+Engineering+Block+5+NUS+Singapore',                  equipment_kWh: 1090099, lighting_kWh: 545367,  cooling_kWh: 1080857 },
+      { name: 'E6',    full_name: 'Faculty of Engineering Block 6',                img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/e6/e6-1.jpg',     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E6+Faculty+of+Engineering+Block+6+NUS+Singapore',                  equipment_kWh: 3696553, lighting_kWh: 1535491, cooling_kWh: 3291141 },
+      { name: 'E8',    full_name: 'Faculty of Engineering Block 8',                img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/e8/e8-1.jpg',     mapsUrl: 'https://www.google.com/maps/search/?api=1&query=E8+Engineering+Workshop+NUS+Singapore',                            equipment_kWh: 1533068, lighting_kWh: 766981,  cooling_kWh: 1111118 },
+      { name: 'EA',    full_name: 'Engineering Auditorium',                         img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/ea/ea.jpg',       mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Engineering+Auditorium+NUS+Singapore',                             equipment_kWh: 3443582, lighting_kWh: 1430411, cooling_kWh: 2866052 },
+      { name: 'EW1',   full_name: 'Engineering Workshop 1',                         img: '/ar/imgs/ew1mpaview.png',                                                                         mapsUrl: 'https://www.google.com/maps/search/?api=1&query=EW1+Engineering+Workshop+1+NUS+Singapore',                         equipment_kWh: 810779,  lighting_kWh: 405626,  cooling_kWh: 639151  },
+      { name: 'EW1A',  full_name: 'Engineering Workshop 1A',                        img: '/ar/imgs/EW1Amapview.png',                                                                        mapsUrl: 'https://www.google.com/maps/search/?api=1&query=EW1A+Engineering+Workshop+1A+NUS+Singapore',                       equipment_kWh: 380956,  lighting_kWh: 158243,  cooling_kWh: 277351  },
+      { name: 'SDE1',  full_name: 'School of Design and Environment Block 1',      img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/sde1/sde1-1.png', mapsUrl: 'https://www.google.com/maps/search/?api=1&query=SDE1+School+of+Design+Environment+NUS+Singapore',                 equipment_kWh: 885245,  lighting_kWh: 442881,  cooling_kWh: 577684  },
+      { name: 'SDE2',  full_name: 'School of Design and Environment Block 2',      img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/sde2/sde2-1.png', mapsUrl: 'https://www.google.com/maps/search/?api=1&query=SDE2+School+of+Design+Environment+NUS+Singapore',                 equipment_kWh: 502301,  lighting_kWh: 251297,  cooling_kWh: 338453  },
+      { name: 'SDE3',  full_name: 'School of Design and Environment Block 3',      img: '/ar/imgs/sde3mapoview.png',                                                                        mapsUrl: 'https://www.google.com/maps/search/?api=1&query=SDE3+School+of+Design+Environment+NUS+Singapore',                 equipment_kWh: 1508607, lighting_kWh: 754743,  cooling_kWh: 1164336 },
+      { name: 'SDE4',  full_name: 'School of Design and Environment 4',            img: 'https://raw.githubusercontent.com/City-Syntax/nus-digital-twin/main/src/assets/sde4/sde4.jpg',   mapsUrl: 'https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9',                                                                        equipment_kWh: 1436175, lighting_kWh: 940901,  cooling_kWh: 1837480 },
+      { name: 'T-Lab', full_name: 'Temasek Laboratories at NUS',                   img: '/ar/imgs/TLabmapview.png',                                                                         mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Temasek+Laboratories+NUS+Singapore',                              equipment_kWh: 8268699, lighting_kWh: 2362486, cooling_kWh: 5668682 },
+    ];
 
     const chartPanel  = document.getElementById('chart-panel');
     const scanHint    = document.getElementById('scan-hint');
     const mapsPanel   = document.getElementById('maps-panel');
+    const mapsImg     = document.getElementById('maps-panel-img');
     let chartInstance = null;
-    let markerVisible = false;
     let mapsHideTimer = null;
+    let activeIdx     = null;
+    const visibleMarkers = new Set();
+    const arBgs = [];
 
     function fmtMWh(kwh) {
       return kwh >= 1000000 ? (kwh / 1000000).toFixed(2) + ' GWh' : (kwh / 1000).toFixed(1) + ' MWh';
@@ -189,53 +194,119 @@
       chevron.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
     }
 
-    function showChart() {
-      const b = SDE4;
+    function showChart(idx) {
+      const b = BUILDINGS[idx];
+      activeIdx = idx;
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
-      document.getElementById('total-value').textContent      = fmtMWh(total);
-      document.getElementById('lv-cooling').textContent       = fmtMWh(b.cooling_kWh);
-      document.getElementById('lv-equipment').textContent     = fmtMWh(b.equipment_kWh);
-      document.getElementById('lv-lighting').textContent      = fmtMWh(b.lighting_kWh);
+
+      document.getElementById('chart-building-name').textContent = b.name;
+      document.getElementById('total-value').textContent          = fmtMWh(total);
+      document.getElementById('lv-cooling').textContent           = fmtMWh(b.cooling_kWh);
+      document.getElementById('lv-equipment').textContent         = fmtMWh(b.equipment_kWh);
+      document.getElementById('lv-lighting').textContent          = fmtMWh(b.lighting_kWh);
 
       const ctx = document.getElementById('myChart').getContext('2d');
       if (chartInstance) chartInstance.destroy();
       chartInstance = new Chart(ctx, {
         type: 'doughnut',
-        data: {
-          datasets: [{ data: [b.cooling_kWh, b.equipment_kWh, b.lighting_kWh],
-            backgroundColor: ['#4A90D9', '#F5A623', '#7ED321'], borderWidth: 0 }]
-        },
+        data: { datasets: [{ data: [b.cooling_kWh, b.equipment_kWh, b.lighting_kWh],
+          backgroundColor: ['#4A90D9', '#F5A623', '#7ED321'], borderWidth: 0 }] },
         options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: false }
       });
 
+      chartPanel.classList.remove('collapsed');
+      document.getElementById('chart-chevron').textContent = '‹';
       chartPanel.classList.add('visible');
       scanHint.style.opacity = '0';
+
+      mapsPanel.href = b.mapsUrl;
+      document.getElementById('maps-panel-top').textContent      = b.name;
+      document.getElementById('maps-panel-addr-lbl').textContent = b.full_name;
+      if (b.img) { mapsImg.src = b.img; mapsImg.style.display = 'block'; }
+      else        { mapsImg.style.display = 'none'; }
+      mapsPanel.classList.remove('collapsed');
+      document.getElementById('maps-chevron').textContent = '‹';
       if (mapsHideTimer) { clearTimeout(mapsHideTimer); mapsHideTimer = null; }
       mapsPanel.style.display = 'flex';
       requestAnimationFrame(() => mapsPanel.classList.add('visible'));
     }
 
     function hideChart() {
+      activeIdx = null;
       chartPanel.classList.remove('visible');
       scanHint.style.opacity = '1';
       mapsPanel.classList.remove('visible');
       mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
     }
 
-    // ── Marker events ──────────────────────────────────────────────────────────
-    const marker = document.getElementById('sde4-marker');
-    marker.addEventListener('markerFound', () => {
-      markerVisible = true;
-      scanHint.style.opacity = '0';
-    });
-    marker.addEventListener('markerLost', () => {
-      markerVisible = false;
-      hideChart();
+    // ── Build markers after scene loads ────────────────────────────────────────
+    const sceneEl = document.querySelector('a-scene');
+    sceneEl.addEventListener('loaded', () => {
+      BUILDINGS.forEach((b, idx) => {
+        const marker = document.createElement('a-marker');
+        marker.setAttribute('type', 'barcode');
+        marker.setAttribute('value', String(idx));
+        marker.setAttribute('emitevents', 'true');
+        marker.setAttribute('smooth', 'true');
+        marker.setAttribute('smoothCount', '10');
+        marker.setAttribute('smoothTolerance', '0.01');
+        marker.setAttribute('smoothThreshold', '5');
+
+        const stem = document.createElement('a-cylinder');
+        stem.setAttribute('radius', '0.015');
+        stem.setAttribute('height', '0.5');
+        stem.setAttribute('color', '#ffffff');
+        stem.setAttribute('opacity', '0.85');
+        stem.setAttribute('position', '0 0.25 0');
+
+        const label = document.createElement('a-entity');
+        label.setAttribute('position', '0 0.5 0');
+        label.setAttribute('look-at', '[camera]');
+        label.setAttribute('animation', 'property: position; from: 0 0.5 0; to: 0 0.62 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
+
+        const bg = document.createElement('a-plane');
+        bg.setAttribute('width', '0.7');
+        bg.setAttribute('height', '0.32');
+        bg.setAttribute('color', '#ffffff');
+        bg.setAttribute('opacity', '0.92');
+        bg.id = `ar-bg-${idx}`;
+
+        const txt = document.createElement('a-text');
+        txt.setAttribute('value', b.name);
+        txt.setAttribute('align', 'center');
+        txt.setAttribute('color', '#111111');
+        txt.setAttribute('width', '3.0');
+        txt.setAttribute('position', '0 0.065 0.01');
+
+        const sub = document.createElement('a-text');
+        sub.setAttribute('value', 'Tap for details');
+        sub.setAttribute('align', 'center');
+        sub.setAttribute('color', '#888888');
+        sub.setAttribute('width', '1.9');
+        sub.setAttribute('position', '0 -0.085 0.01');
+
+        bg.appendChild(txt);
+        bg.appendChild(sub);
+        label.appendChild(bg);
+        marker.appendChild(stem);
+        marker.appendChild(label);
+        sceneEl.appendChild(marker);
+
+        arBgs.push({ entity: bg, idx });
+
+        marker.addEventListener('markerFound', () => {
+          visibleMarkers.add(idx);
+          scanHint.style.opacity = '0';
+        });
+        marker.addEventListener('markerLost', () => {
+          visibleMarkers.delete(idx);
+          if (activeIdx === idx) hideChart();
+          if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
+        });
+      });
     });
 
     // ── Tap detection ──────────────────────────────────────────────────────────
-    const sceneEl  = document.querySelector('a-scene');
-    const arBg     = document.getElementById('ar-bg');
     const _arVec   = new THREE.Vector3();
     let _lastTouch = 0;
     const _uiLayer = document.getElementById('ui-layer');
@@ -250,12 +321,17 @@
     }
 
     function handleTap(cx, cy) {
-      if (!markerVisible) return;
-      const sp = getScreenPos(arBg);
-      if (!sp) return;
-      const dx = cx - sp.x, dy = cy - sp.y;
-      if (Math.sqrt(dx * dx + dy * dy) < 130) {
-        chartPanel.classList.contains('visible') ? hideChart() : showChart();
+      for (const { entity, idx } of arBgs) {
+        if (!visibleMarkers.has(idx)) continue;
+        const sp = getScreenPos(entity);
+        if (!sp) continue;
+        const dx = cx - sp.x, dy = cy - sp.y;
+        if (Math.sqrt(dx * dx + dy * dy) < 130) {
+          activeIdx === idx && chartPanel.classList.contains('visible')
+            ? hideChart()
+            : showChart(idx);
+          return;
+        }
       }
     }
 
