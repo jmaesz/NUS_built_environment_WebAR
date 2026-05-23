@@ -175,7 +175,7 @@
   </div>
 
   <a-scene
-    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=32; maxTrack: 1; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 50; warmupTolerance: 2; filterMinCF: 0.00001; filterBeta: 0.001;"
+    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=32; maxTrack: 5; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 50; warmupTolerance: 2; filterMinCF: 0.00001; filterBeta: 0.001;"
     color-space="sRGB" renderer="colorManagement: true"
     vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
   >
@@ -464,7 +464,7 @@
 
     function dispatchArTap(cx, cy) {
       for (const t of arTaps) {
-        if (t.targetIdx !== activeTarget) continue;
+        if (!foundTargets.has(t.targetIdx)) continue;
         if (!t.entity || !t.entity.object3D) continue;
         const sp = arScreenPos(t.entity);
         const dx = cx - sp.x, dy = cy - sp.y;
