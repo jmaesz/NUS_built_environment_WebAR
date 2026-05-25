@@ -85,7 +85,7 @@
       font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
       writing-mode: vertical-rl; text-orientation: mixed;
       cursor: pointer; z-index: 1002; user-select: none;
-      flex-direction: column; align-items: center; gap: 6px;
+      align-items: center; opacity: 1; transition: opacity 0.3s;
     }
     @media (orientation: landscape) { #landscape-scroll-btn { display: flex; } }
     #scan-hint {
@@ -481,6 +481,22 @@ function setLabelHint(idx, isOpen) {
       if (_uiLayer.contains(e.target)) return;
       handleTap(e.clientX, e.clientY);
     });
+
+    (function () {
+      const btn = document.getElementById('landscape-scroll-btn');
+      if (!window.visualViewport) return;
+      function updateHint() {
+        const isLandscape = window.innerWidth > window.innerHeight;
+        if (!isLandscape) return;
+        const fullH = Math.min(window.screen.width, window.screen.height);
+        const collapsed = window.visualViewport.height >= fullH - 20;
+        btn.style.opacity = collapsed ? '0' : '1';
+        btn.style.pointerEvents = collapsed ? 'none' : 'auto';
+      }
+      window.visualViewport.addEventListener('resize', updateHint);
+      window.addEventListener('orientationchange', function () { setTimeout(updateHint, 300); });
+      updateHint();
+    })();
 
   </script>
 </body>
