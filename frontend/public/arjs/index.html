@@ -84,6 +84,7 @@
       transition: opacity 0.3s;
     }
     #fullscreen-btn.hidden { opacity: 0; pointer-events: none; }
+    @media (orientation: portrait) { #fullscreen-btn { display: none !important; } }
     #landscape-hint {
       position: fixed; left: 6px; top: 50%;
       transform: translateY(-50%);
