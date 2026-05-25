@@ -38,24 +38,48 @@
         this._kids.forEach(function (c, i) { c.object3D.position.y = sign * (i * p + h / 2); });
       }
     });
-    // EMA pose filter — lerps marker position/rotation each frame to kill high-freq jitter
+    // Keep marker visible for ~300 ms after AR.js loses it, preventing single-frame flicker
+    AFRAME.registerComponent('hold-visible', {
+      schema: { frames: { default: 18 } },
+      init: function () { this._lost = 0; },
+      tick: function () {
+        var obj = this.el.object3D;
+        if (!obj.visible) {
+          this._lost++;
+          if (this._lost <= this.data.frames) obj.visible = true;
+        } else {
+          this._lost = 0;
+        }
+      }
+    });
+    // EMA pose filter — distance-adaptive lerp/slerp to kill jitter, heavier at distance
     AFRAME.registerComponent('pose-filter', {
       schema: { alpha: { default: 0.15 } },
       init: function () {
-        this._pos   = new THREE.Vector3();
-        this._quat  = new THREE.Quaternion();
-        this._ready = false;
+        this._pos    = new THREE.Vector3();
+        this._quat   = new THREE.Quaternion();
+        this._ready  = false;
+        this._lostAt = 0;
       },
       tick: function () {
         var obj = this.el.object3D;
-        if (!obj.visible) { this._ready = false; return; }
+        if (!obj.visible) {
+          if (this._ready) {
+            if (!this._lostAt) this._lostAt = Date.now();
+            if (Date.now() - this._lostAt > 400) { this._ready = false; this._lostAt = 0; }
+          }
+          return;
+        }
+        this._lostAt = 0;
         if (!this._ready) {
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
           this._ready = true;
           return;
         }
-        var a = this.data.alpha;
+        // alpha scales inversely with distance: smoother when marker is farther away
+        var dist = obj.position.length();
+        var a = Math.max(0.03, Math.min(0.3, this.data.alpha / Math.max(dist, 0.5)));
         this._pos.lerp(obj.position, a);
         this._quat.slerp(obj.quaternion, a);
         obj.position.copy(this._pos);
@@ -66,6 +90,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; font-family: -apple-system, sans-serif; }
+    a-scene { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; }
     #back-btn {
       position: fixed; top: 16px; left: 16px; z-index: 1000;
       background: rgba(0,0,0,0.55); color: #fff;
@@ -223,7 +248,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; canvasWidth: 1280; canvasHeight: 960;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 30; sourceWidth: 1920; sourceHeight: 1440; canvasWidth: 1920; canvasHeight: 1440;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true;"
     device-orientation-permission-ui="enabled: false"
@@ -262,10 +287,11 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '10');
-          marker.setAttribute('smoothTolerance', '0.01');
+          marker.setAttribute('smoothCount', '30');
+          marker.setAttribute('smoothTolerance', '0.05');
           marker.setAttribute('smoothThreshold', '2');
-          marker.setAttribute('pose-filter', 'alpha: 0.15');
+          marker.setAttribute('pose-filter', 'alpha: 0.06');
+          marker.setAttribute('hold-visible', '');
           marker.id = 'marker-' + idx;
 
           // Dashes — dash-track flips their Y when marker is detected upside-down
