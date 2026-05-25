@@ -222,6 +222,7 @@
   </div>
 
   <a-scene
+    embedded
     arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; canvasWidth: 1280; canvasHeight: 960;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true;"
@@ -482,6 +483,22 @@ function setLabelHint(idx, isOpen) {
       handleTap(e.clientX, e.clientY);
     });
 
+    // Force A-Frame to recalculate canvas on orientation change
+    function _arResize() {
+      var vp = window.visualViewport;
+      var w = vp ? vp.width  : window.innerWidth;
+      var h = vp ? vp.height : window.innerHeight;
+      var isLandscape = w > h;
+      document.body.style.width  = w + 'px';
+      document.body.style.height = h + 'px';
+      window.dispatchEvent(new Event('resize'));
+      var scene = document.querySelector('a-scene');
+      if (scene && scene.resize) scene.resize();
+      if (!isLandscape) { document.body.style.width = ''; document.body.style.height = ''; }
+    }
+    window.addEventListener('orientationchange', function () {
+      [300, 700, 1200].forEach(function (d) { setTimeout(_arResize, d); });
+    });
 
     (function () {
       const btn = document.getElementById('landscape-scroll-btn');
