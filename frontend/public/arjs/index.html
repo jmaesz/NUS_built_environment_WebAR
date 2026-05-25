@@ -78,14 +78,14 @@
     #landscape-scroll-btn {
       display: none;
       position: fixed; right: 8px; top: 50%;
-      transform: translateY(-50%) rotate(-90deg);
-      transform-origin: center center;
+      transform: translateY(-50%);
       background: rgba(0,0,0,0.7); color: #fff;
       border: 1px solid rgba(255,255,255,0.25);
-      padding: 10px 14px; border-radius: 10px;
+      padding: 16px 9px; border-radius: 10px;
       font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
-      white-space: nowrap; cursor: pointer; z-index: 1002; user-select: none;
-      align-items: center; gap: 6px; transition: opacity 0.3s;
+      writing-mode: vertical-rl; text-orientation: mixed;
+      cursor: pointer; z-index: 1002; user-select: none;
+      flex-direction: column; align-items: center; gap: 6px;
     }
     @media (orientation: landscape) { #landscape-scroll-btn { display: flex; } }
     #scan-hint {
@@ -481,22 +481,6 @@ function setLabelHint(idx, isOpen) {
       if (_uiLayer.contains(e.target)) return;
       handleTap(e.clientX, e.clientY);
     });
-
-    // Hide scroll hint when Safari bar is already collapsed
-    (function () {
-      const btn = document.getElementById('landscape-scroll-btn');
-      if (!window.visualViewport) return;
-      function updateHint() {
-        const isLandscape = window.innerWidth > window.innerHeight;
-        if (!isLandscape) return;
-        const fullH = Math.min(window.screen.width, window.screen.height);
-        btn.style.opacity = window.visualViewport.height >= fullH - 20 ? '0' : '1';
-        btn.style.pointerEvents = window.visualViewport.height >= fullH - 20 ? 'none' : 'auto';
-      }
-      window.visualViewport.addEventListener('resize', updateHint);
-      window.addEventListener('orientationchange', function () { setTimeout(updateHint, 300); });
-      updateHint();
-    })();
 
   </script>
 </body>
