@@ -75,12 +75,12 @@
       display: block; width: 100px; text-align: center;
     }
     #landscape-hint {
-      position: fixed; right: 0; top: 50%;
-      transform: translateY(-50%) rotate(90deg) translateX(50%);
-      transform-origin: right center;
-      background: rgba(0,0,0,0.6); color: #fff;
-      padding: 8px 14px; border-radius: 20px 20px 0 0;
-      font-size: 10px; letter-spacing: 0.08em; white-space: nowrap;
+      position: fixed; left: 6px; top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.65); color: #fff;
+      padding: 14px 8px; border-radius: 8px;
+      font-size: 9px; letter-spacing: 0.1em; white-space: nowrap;
+      writing-mode: vertical-rl; text-orientation: mixed;
       pointer-events: none; z-index: 1002;
       opacity: 0; transition: opacity 0.4s;
     }
@@ -181,7 +181,7 @@
 <body>
   <div id="ui-layer">
     <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
-    <div id="landscape-hint">↑ SCROLL UP FOR FULL VIEW</div>
+    <div id="landscape-hint">SCROLL UP FOR FULL VIEW ↑</div>
     <div id="scan-hint">POINT CAMERA AT MODEL</div>
 
     <div id="chart-panel">
