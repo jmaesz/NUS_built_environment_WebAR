@@ -2,7 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>NUScape-AR · ArUco</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
@@ -481,6 +481,15 @@ function setLabelHint(idx, isOpen) {
       if (Date.now() - _lastTouch < 500) return;
       if (_uiLayer.contains(e.target)) return;
       handleTap(e.clientX, e.clientY);
+    });
+
+    // Force A-Frame to recalculate canvas size + camera frustum on orientation change
+    window.addEventListener('orientationchange', function () {
+      setTimeout(function () {
+        window.dispatchEvent(new Event('resize'));
+        var scene = document.querySelector('a-scene');
+        if (scene && scene.resize) scene.resize();
+      }, 300);
     });
 
     (function () {
