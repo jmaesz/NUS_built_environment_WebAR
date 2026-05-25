@@ -38,21 +38,6 @@
         this._kids.forEach(function (c, i) { c.object3D.position.y = sign * (i * p + h / 2); });
       }
     });
-    // Keep marker visible for 300 ms after AR.js loses it, preventing flicker
-    AFRAME.registerComponent('hold-visible', {
-      schema: { ms: { default: 300 } },
-      init: function () { this._lostAt = 0; },
-      tick: function () {
-        var obj = this.el.object3D;
-        if (!obj.visible) {
-          if (!this._lostAt) this._lostAt = Date.now();
-          if (Date.now() - this._lostAt < this.data.ms) obj.visible = true;
-          else this._lostAt = 0;
-        } else {
-          this._lostAt = 0;
-        }
-      }
-    });
     // EMA pose filter — distance-adaptive lerp/slerp to kill jitter, heavier at distance
     AFRAME.registerComponent('pose-filter', {
       schema: { alpha: { default: 0.15 } },
@@ -291,7 +276,6 @@
           marker.setAttribute('smoothTolerance', '0.05');
           marker.setAttribute('smoothThreshold', '2');
           marker.setAttribute('pose-filter', 'alpha: 0.06');
-          marker.setAttribute('hold-visible', '');
           marker.id = 'marker-' + idx;
 
           // Dashes — dash-track flips their Y when marker is detected upside-down
@@ -458,23 +442,17 @@ function setLabelHint(idx, isOpen) {
     let _lastTouch = 0;
     const _uiLayer = document.getElementById('ui-layer');
 
-    const _lostTimers = {};
     BUILDINGS.forEach(function (b, idx) {
       const marker = document.getElementById('marker-' + idx);
       if (!marker) return;
       marker.addEventListener('markerFound', () => {
-        if (_lostTimers[idx]) { clearTimeout(_lostTimers[idx]); delete _lostTimers[idx]; }
         visibleMarkers.add(idx);
         scanHint.style.opacity = '0';
       });
       marker.addEventListener('markerLost', () => {
-        // Delay removal to match hold-visible window — label is still visible and tappable
-        _lostTimers[idx] = setTimeout(() => {
-          delete _lostTimers[idx];
-          visibleMarkers.delete(idx);
-          if (activeIdx === idx) hideChart();
-          if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
-        }, 300);
+        visibleMarkers.delete(idx);
+        if (activeIdx === idx) hideChart();
+        if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
     });
 
