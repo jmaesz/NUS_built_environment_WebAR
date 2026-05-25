@@ -65,7 +65,7 @@
   </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 100vw; height: 100dvh; font-family: -apple-system, sans-serif; }
+    body { width: 100vw; height: 100dvh; min-height: calc(100vh + 200px); font-family: -apple-system, sans-serif; }
     #back-btn {
       position: fixed; top: 16px; left: 16px; z-index: 1000;
       background: rgba(0,0,0,0.55); color: #fff;
@@ -467,12 +467,30 @@ function setLabelHint(idx, isOpen) {
         ? hideChart() : showChart(bestIdx);
     }
 
+    // Swipe-to-scroll on camera area so Safari bar can collapse
+    let _swipeStartY = null, _didSwipe = false;
+    document.addEventListener('touchstart', function (e) {
+      if (_uiLayer.contains(e.target)) return;
+      _swipeStartY = e.touches[0].clientY;
+      _didSwipe = false;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (e) {
+      if (_swipeStartY === null || _uiLayer.contains(e.target)) return;
+      const dy = _swipeStartY - e.touches[0].clientY;
+      if (Math.abs(dy) > 8) {
+        _didSwipe = true;
+        window.scrollBy(0, dy);
+        _swipeStartY = e.touches[0].clientY;
+      }
+    }, { passive: true });
     document.addEventListener('touchend', e => {
       _lastTouch = Date.now();
       if (_uiLayer.contains(e.target)) return;
+      if (_didSwipe) { _didSwipe = false; _swipeStartY = null; return; }
       const t = e.changedTouches[0];
       handleTap(t.clientX, t.clientY);
     });
+    window.scrollTo(0, 0);
     document.addEventListener('click', e => {
       if (Date.now() - _lastTouch < 500) return;
       if (_uiLayer.contains(e.target)) return;
