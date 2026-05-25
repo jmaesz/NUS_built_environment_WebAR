@@ -38,17 +38,18 @@
         this._kids.forEach(function (c, i) { c.object3D.position.y = sign * (i * p + h / 2); });
       }
     });
-    // Keep marker visible for ~300 ms after AR.js loses it, preventing single-frame flicker
+    // Keep marker visible for 300 ms after AR.js loses it, preventing flicker
     AFRAME.registerComponent('hold-visible', {
-      schema: { frames: { default: 18 } },
-      init: function () { this._lost = 0; },
+      schema: { ms: { default: 300 } },
+      init: function () { this._lostAt = 0; },
       tick: function () {
         var obj = this.el.object3D;
         if (!obj.visible) {
-          this._lost++;
-          if (this._lost <= this.data.frames) obj.visible = true;
+          if (!this._lostAt) this._lostAt = Date.now();
+          if (Date.now() - this._lostAt < this.data.ms) obj.visible = true;
+          else this._lostAt = 0;
         } else {
-          this._lost = 0;
+          this._lostAt = 0;
         }
       }
     });
