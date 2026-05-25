@@ -66,47 +66,22 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
-    #ui-layer {
-      position: fixed; inset: 0; z-index: 999; pointer-events: none;
-      transition: transform 0.35s ease;
-    }
-    #ui-layer > * { pointer-events: auto; }
-    #back-btn, #orient-btn, #scan-hint, #chart-panel, #maps-panel { position: absolute; }
-    body.landscape #ui-layer {
-      transform: rotate(90deg);
-      width: 100vh; height: 100vw;
-      top: calc((100vh - 100vw) / 2);
-      left: calc((100vw - 100vh) / 2);
-      right: auto; bottom: auto;
-    }
-    body.landscape #chart-panel { right: 40px; }
-    body.landscape #maps-panel  { right: 40px; }
     #back-btn {
-      top: 16px; left: 16px; z-index: 1000;
+      position: fixed; top: 16px; left: 16px; z-index: 1000;
       background: rgba(0,0,0,0.55); color: #fff;
       border: 1px solid rgba(255,255,255,0.25);
       padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
       cursor: pointer; border-radius: 4px; text-decoration: none;
       display: block; width: 100px; text-align: center;
     }
-    #orient-btn {
-      top: 60px; left: 16px; z-index: 1000; width: 100px; text-align: center;
-      background: rgba(0,0,0,0.55); color: #fff;
-      border: 1px solid rgba(255,255,255,0.25);
-      padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
-      cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
-      display: none;
-    }
-    #orient-btn.active { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.6); }
-    @media (max-width: 768px) { #orient-btn { display: block; } }
     #scan-hint {
-      bottom: 36px; left: 50%; transform: translateX(-50%);
+      position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
       z-index: 1000; background: rgba(0,0,0,0.55); color: #fff;
       padding: 11px 18px; font-size: 11px; letter-spacing: 0.1em;
       border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
     }
     #chart-panel {
-      top: 16px; right: 12px; z-index: 999; width: 255px;
+      position: fixed; top: 16px; right: 12px; z-index: 999; width: 255px;
       background: rgba(12, 12, 16, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 0;
       box-shadow: 0 4px 32px rgba(0,0,0,0.45); overflow: hidden; display: flex; flex-direction: row;
@@ -138,7 +113,7 @@
     #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45); }
     #total-value { font-size: 11px; font-weight: 700; color: #fff; }
     #maps-panel {
-      bottom: 20px; right: 16px; z-index: 1000; width: 180px;
+      position: fixed; bottom: 20px; right: 16px; z-index: 1000; width: 180px;
       border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.25);
       display: none; opacity: 0; transform: translateY(8px);
       transition: opacity 0.3s ease, transform 0.3s ease, width 0.25s ease;
@@ -195,7 +170,6 @@
 <body>
   <div id="ui-layer">
     <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
-    <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
     <div id="scan-hint">POINT CAMERA AT MODEL</div>
 
     <div id="chart-panel">
@@ -339,16 +313,7 @@
       chevron.textContent = panel.classList.contains('collapsed') ? '›' : '‹';
     }
 
-    let isLandscape = false;
-    function toggleOrient() {
-      isLandscape = !isLandscape;
-      document.body.classList.toggle('landscape', isLandscape);
-      const btn = document.getElementById('orient-btn');
-      btn.textContent = isLandscape ? '⇄ PORTRAIT' : '⇄ LANDSCAPE';
-      btn.classList.toggle('active', isLandscape);
-    }
-
-    function setLabelHint(idx, isOpen) {
+function setLabelHint(idx, isOpen) {
       const bg = document.getElementById('ar-bg-' + idx);
       if (!bg || !bg.object3D) return;
       const b = BUILDINGS[idx];
