@@ -483,13 +483,15 @@ function setLabelHint(idx, isOpen) {
       handleTap(e.clientX, e.clientY);
     });
 
-    // Force A-Frame to recalculate canvas size + camera frustum on orientation change
+    // Force A-Frame to recalculate canvas size on orientation change
     window.addEventListener('orientationchange', function () {
       setTimeout(function () {
+        var isLandscape = window.innerWidth > window.innerHeight;
+        document.body.style.height = isLandscape ? window.innerHeight + 'px' : '';
         window.dispatchEvent(new Event('resize'));
         var scene = document.querySelector('a-scene');
         if (scene && scene.resize) scene.resize();
-      }, 300);
+      }, 400);
     });
 
     (function () {
