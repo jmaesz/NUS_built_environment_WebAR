@@ -74,18 +74,20 @@
       cursor: pointer; border-radius: 4px; text-decoration: none;
       display: block; width: 100px; text-align: center;
     }
-    #landscape-hint {
-      position: fixed; left: 6px; top: 50%;
+    #landscape-hint { display: none; }
+    #landscape-scroll-btn {
+      display: none;
+      position: fixed; right: 8px; top: 50%;
       transform: translateY(-50%);
-      background: rgba(0,0,0,0.75); color: #fff;
-      border: 1px solid rgba(255,255,255,0.3);
-      padding: 18px 10px; border-radius: 10px;
-      font-size: 10px; font-weight: 600; letter-spacing: 0.1em; white-space: nowrap;
+      background: rgba(0,0,0,0.7); color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 16px 9px; border-radius: 10px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
       writing-mode: vertical-rl; text-orientation: mixed;
-      cursor: pointer; z-index: 1002;
-      opacity: 0; transition: opacity 0.4s;
+      cursor: pointer; z-index: 1002; user-select: none;
+      flex-direction: column; align-items: center; gap: 6px;
     }
-    #landscape-hint.visible { opacity: 1; }
+    @media (orientation: landscape) { #landscape-scroll-btn { display: flex; } }
     #scan-hint {
       position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
       z-index: 1000; background: rgba(0,0,0,0.55); color: #fff;
@@ -182,7 +184,7 @@
 <body>
   <div id="ui-layer">
     <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
-    <button id="landscape-hint">⛶ FULL SCREEN</button>
+    <div id="landscape-scroll-btn">^ MAX VIEW</div>
     <div id="scan-hint">POINT CAMERA AT MODEL</div>
 
     <div id="chart-panel">
@@ -480,58 +482,6 @@ function setLabelHint(idx, isOpen) {
       handleTap(e.clientX, e.clientY);
     });
 
-    // Safari-only: fullscreen button + landscape scroll hint
-    (function () {
-      const isIOSSafari = /iP(hone|ad|od)/.test(navigator.userAgent)
-        && /WebKit/.test(navigator.userAgent)
-        && !/CriOS|FxiOS|OPiOS/.test(navigator.userAgent);
-      if (!isIOSSafari) return;
-
-      const hint = document.getElementById('landscape-hint');
-      let baseVH = 0, hintShown = false;
-
-      hint.addEventListener('click', function () {
-        document.body.style.height = (window.screen.height + 200) + 'px';
-        window.scrollTo(0, 1);
-      });
-
-      function showHint() {
-        if (hintShown) return;
-        hintShown = true;
-        hint.classList.add('visible');
-      }
-      function hideHint() {
-        hint.classList.remove('visible');
-      }
-
-      function onOrientationChange() {
-        setTimeout(function () {
-          const isLandscape = window.innerWidth > window.innerHeight;
-          if (isLandscape) {
-            baseVH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-            showHint();
-          } else {
-            hintShown = false;
-            hideHint();
-            baseVH = 0;
-          }
-          document.body.style.height = '';
-        }, 300);
-      }
-
-      if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', function () {
-          if (baseVH && window.innerWidth > window.innerHeight
-              && window.visualViewport.height > baseVH + 30) hideHint();
-        });
-      }
-
-      window.addEventListener('orientationchange', onOrientationChange);
-      if (window.innerWidth > window.innerHeight) {
-        baseVH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        showHint();
-      }
-    })();
   </script>
 </body>
 </html>
