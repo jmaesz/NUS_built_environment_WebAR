@@ -227,15 +227,15 @@
           <div id="chart-container"><canvas id="myChart"></canvas></div>
           <div class="legend">
             <div class="legend-item"><div class="legend-dot" style="background:#107b7f"></div><span class="legend-label">Cooling</span><span class="legend-value" id="lv-cooling"></span></div>
-            <div class="legend-item"><div class="legend-dot" style="background:#6badb0"></div><span class="legend-label">Equipment</span><span class="legend-value" id="lv-equipment"></span></div>
-            <div class="legend-item"><div class="legend-dot" style="background:#b3d5d6"></div><span class="legend-label">Lighting</span><span class="legend-value" id="lv-lighting"></span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#b3d5d6"></div><span class="legend-label">Equipment</span><span class="legend-value" id="lv-equipment"></span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:#6badb0"></div><span class="legend-label">Lighting</span><span class="legend-value" id="lv-lighting"></span></div>
           </div>
         </div>
         <div id="eui-container">
           <div id="eui-canvas-wrap"><canvas id="euiChart"></canvas></div>
           <div class="eui-legend">
-            <div class="eui-legend-item"><div class="eui-legend-dot" style="background:#6badb0"></div><span class="eui-legend-lbl">Equipment</span></div>
-            <div class="eui-legend-item"><div class="eui-legend-dot" style="background:#b3d5d6"></div><span class="eui-legend-lbl">Lighting</span></div>
+            <div class="eui-legend-item"><div class="eui-legend-dot" style="background:#b3d5d6"></div><span class="eui-legend-lbl">Equipment</span></div>
+            <div class="eui-legend-item"><div class="eui-legend-dot" style="background:#6badb0"></div><span class="eui-legend-lbl">Lighting</span></div>
             <div class="eui-legend-item"><div class="eui-legend-dot" style="background:#107b7f"></div><span class="eui-legend-lbl">Cooling</span></div>
           </div>
         </div>
@@ -394,8 +394,8 @@
         data: {
           labels: EUI_MONTHS,
           datasets: [
-            { label: 'Equipment', data: b.monthly_EUI.map(function(m){ return m.equipment; }), backgroundColor: '#6badb0', stack: 's' },
-            { label: 'Lighting',  data: b.monthly_EUI.map(function(m){ return m.lighting;  }), backgroundColor: '#b3d5d6', stack: 's' },
+            { label: 'Equipment', data: b.monthly_EUI.map(function(m){ return m.equipment; }), backgroundColor: '#b3d5d6', stack: 's' },
+            { label: 'Lighting',  data: b.monthly_EUI.map(function(m){ return m.lighting;  }), backgroundColor: '#6badb0', stack: 's' },
             { label: 'Cooling',   data: b.monthly_EUI.map(function(m){ return m.cooling;   }), backgroundColor: '#107b7f', stack: 's' },
           ]
         },
@@ -491,7 +491,7 @@
         chartInstance = new Chart(ctx, {
           type: 'doughnut',
           data: { datasets: [{ data: [b.cooling_kWh, b.equipment_kWh, b.lighting_kWh],
-            backgroundColor: ['#107b7f', '#6badb0', '#b3d5d6'], borderWidth: 0 }] },
+            backgroundColor: ['#107b7f', '#b3d5d6', '#6badb0'], borderWidth: 0 }] },
           options: { cutout: '72%', plugins: { legend: { display: false }, tooltip: { enabled: false } }, animation: false }
         });
       } else {
