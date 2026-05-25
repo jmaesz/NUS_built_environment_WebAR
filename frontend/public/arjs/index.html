@@ -483,21 +483,9 @@ function setLabelHint(idx, isOpen) {
       handleTap(e.clientX, e.clientY);
     });
 
-    // Reinit AR.js on orientation change by removing + re-adding the arjs component
+    // Reload page on orientation change so AR.js reinitialises in the correct orientation
     window.addEventListener('orientationchange', function () {
-      setTimeout(function () {
-        var sceneEl = document.querySelector('a-scene');
-        if (!sceneEl) return;
-        var w = window.innerWidth, h = window.innerHeight;
-        document.body.style.width  = w + 'px';
-        document.body.style.height = h + 'px';
-        var arjsVal = sceneEl.getAttribute('arjs');
-        sceneEl.removeAttribute('arjs');
-        setTimeout(function () {
-          sceneEl.setAttribute('arjs', arjsVal);
-          if (w <= h) { document.body.style.width = ''; document.body.style.height = ''; }
-        }, 500);
-      }, 400);
+      setTimeout(function () { window.location.reload(); }, 400);
     });
 
     (function () {
