@@ -453,6 +453,7 @@ function setLabelHint(idx, isOpen) {
     // ── Wire up marker events + tap detection after scene loads ────────────────
     const sceneEl  = document.querySelector('a-scene');
     const _arVec   = new THREE.Vector3();
+    const _tapV    = new THREE.Vector3();
     let _lastTouch = 0;
     const _uiLayer = document.getElementById('ui-layer');
 
@@ -485,15 +486,34 @@ function setLabelHint(idx, isOpen) {
                y: (-_arVec.y + 1) / 2 * r.height + r.top };
     }
 
+    function getLabelAABB(bgEl) {
+      if (!bgEl || !bgEl.object3D) return null;
+      bgEl.object3D.updateWorldMatrix(true, false);
+      const m = bgEl.object3D.matrixWorld;
+      const r = sceneEl.canvas.getBoundingClientRect();
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      [[-1.1, -0.55], [1.1, -0.55], [1.1, 0.55], [-1.1, 0.55]].forEach(function (c) {
+        _tapV.set(c[0], c[1], 0).applyMatrix4(m).project(sceneEl.camera);
+        const sx = (_tapV.x + 1) / 2 * r.width  + r.left;
+        const sy = (-_tapV.y + 1) / 2 * r.height + r.top;
+        if (sx < minX) minX = sx; if (sx > maxX) maxX = sx;
+        if (sy < minY) minY = sy; if (sy > maxY) maxY = sy;
+      });
+      return { minX, minY, maxX, maxY, cx: (minX + maxX) / 2, cy: (minY + maxY) / 2 };
+    }
+
     function handleTap(cx, cy) {
-      let bestIdx = -1, bestDist = 120;
+      let bestIdx = -1, bestDist = Infinity;
+      const margin = 28;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         if (!visibleMarkers.has(idx)) continue;
         const bg = document.getElementById('ar-bg-' + idx);
         if (!bg) continue;
-        const sp = getScreenPos(bg);
-        if (!sp) continue;
-        const dist = Math.sqrt((cx - sp.x) ** 2 + (cy - sp.y) ** 2);
+        const bb = getLabelAABB(bg);
+        if (!bb) continue;
+        if (cx < bb.minX - margin || cx > bb.maxX + margin ||
+            cy < bb.minY - margin || cy > bb.maxY + margin) continue;
+        const dist = Math.sqrt((cx - bb.cx) ** 2 + (cy - bb.cy) ** 2);
         if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
       }
       if (bestIdx === -1) return;
