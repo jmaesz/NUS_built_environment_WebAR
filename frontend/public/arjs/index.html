@@ -74,25 +74,15 @@
       cursor: pointer; border-radius: 4px; text-decoration: none;
       display: block; width: 100px; text-align: center;
     }
-    #fullscreen-btn {
-      position: fixed; top: 60px; left: 16px; z-index: 1000;
-      background: rgba(0,0,0,0.55); color: #fff;
-      border: 1px solid rgba(255,255,255,0.25);
-      padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
-      cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
-      display: none; width: 100px; text-align: center;
-      transition: opacity 0.3s;
-    }
-    #fullscreen-btn.hidden { opacity: 0; pointer-events: none; }
-    @media (orientation: portrait) { #fullscreen-btn { display: none !important; } }
     #landscape-hint {
       position: fixed; left: 6px; top: 50%;
       transform: translateY(-50%);
-      background: rgba(0,0,0,0.65); color: #fff;
-      padding: 14px 8px; border-radius: 8px;
-      font-size: 9px; letter-spacing: 0.1em; white-space: nowrap;
+      background: rgba(0,0,0,0.75); color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 18px 10px; border-radius: 10px;
+      font-size: 10px; font-weight: 600; letter-spacing: 0.1em; white-space: nowrap;
       writing-mode: vertical-rl; text-orientation: mixed;
-      pointer-events: none; z-index: 1002;
+      cursor: pointer; z-index: 1002;
       opacity: 0; transition: opacity 0.4s;
     }
     #landscape-hint.visible { opacity: 1; }
@@ -192,8 +182,7 @@
 <body>
   <div id="ui-layer">
     <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
-    <button id="fullscreen-btn">⛶ FULL SCREEN</button>
-    <div id="landscape-hint">SCROLL UP FOR FULL VIEW ↑</div>
+    <button id="landscape-hint">⛶ FULL SCREEN</button>
     <div id="scan-hint">POINT CAMERA AT MODEL</div>
 
     <div id="chart-panel">
@@ -498,14 +487,10 @@ function setLabelHint(idx, isOpen) {
         && !/CriOS|FxiOS|OPiOS/.test(navigator.userAgent);
       if (!isIOSSafari) return;
 
-      const hint  = document.getElementById('landscape-hint');
-      const fsBtn = document.getElementById('fullscreen-btn');
+      const hint = document.getElementById('landscape-hint');
       let baseVH = 0, hintShown = false;
 
-      // Show fullscreen button on Safari
-      fsBtn.style.display = 'block';
-
-      fsBtn.addEventListener('click', function () {
+      hint.addEventListener('click', function () {
         document.body.style.minHeight = (window.innerHeight + 100) + 'px';
         setTimeout(function () { window.scrollTo({ top: 1 }); }, 50);
       });
@@ -537,14 +522,6 @@ function setLabelHint(idx, isOpen) {
 
       if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', function () {
-          const barGone = window.visualViewport.height > (baseVH || window.innerHeight) - 30;
-          if (barGone) {
-            fsBtn.classList.add('hidden');
-            hideHint();
-          } else {
-            fsBtn.classList.remove('hidden');
-          }
-          // Update baseVH for landscape hint
           if (baseVH && window.innerWidth > window.innerHeight
               && window.visualViewport.height > baseVH + 30) hideHint();
         });
