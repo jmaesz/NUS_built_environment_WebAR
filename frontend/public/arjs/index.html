@@ -456,17 +456,23 @@ function setLabelHint(idx, isOpen) {
     let _lastTouch = 0;
     const _uiLayer = document.getElementById('ui-layer');
 
+    const _lostTimers = {};
     BUILDINGS.forEach(function (b, idx) {
       const marker = document.getElementById('marker-' + idx);
       if (!marker) return;
       marker.addEventListener('markerFound', () => {
+        if (_lostTimers[idx]) { clearTimeout(_lostTimers[idx]); delete _lostTimers[idx]; }
         visibleMarkers.add(idx);
         scanHint.style.opacity = '0';
       });
       marker.addEventListener('markerLost', () => {
-        visibleMarkers.delete(idx);
-        if (activeIdx === idx) hideChart();
-        if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
+        // Delay removal to match hold-visible window — label is still visible and tappable
+        _lostTimers[idx] = setTimeout(() => {
+          delete _lostTimers[idx];
+          visibleMarkers.delete(idx);
+          if (activeIdx === idx) hideChart();
+          if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
+        }, 300);
       });
     });
 
@@ -480,7 +486,7 @@ function setLabelHint(idx, isOpen) {
     }
 
     function handleTap(cx, cy) {
-      let bestIdx = -1, bestDist = 200;
+      let bestIdx = -1, bestDist = 120;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         if (!visibleMarkers.has(idx)) continue;
         const bg = document.getElementById('ar-bg-' + idx);
