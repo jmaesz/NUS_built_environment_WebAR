@@ -483,21 +483,26 @@ function setLabelHint(idx, isOpen) {
       handleTap(e.clientX, e.clientY);
     });
 
-    // Force A-Frame to recalculate canvas on orientation change
+    // Recalibrate AR.js projection matrix + A-Frame canvas on orientation change
     function _arResize() {
-      var vp = window.visualViewport;
-      var w = vp ? vp.width  : window.innerWidth;
-      var h = vp ? vp.height : window.innerHeight;
+      var w = window.innerWidth, h = window.innerHeight;
       var isLandscape = w > h;
       document.body.style.width  = w + 'px';
       document.body.style.height = h + 'px';
-      window.dispatchEvent(new Event('resize'));
       var scene = document.querySelector('a-scene');
-      if (scene && scene.resize) scene.resize();
+      if (scene) {
+        var arSys = scene.systems && scene.systems.arjs;
+        if (arSys && arSys.arToolkitSource) {
+          arSys.arToolkitSource.onResizeElement();
+          if (scene.renderer) arSys.arToolkitSource.copyElementSizeTo(scene.renderer.domElement);
+        }
+        if (scene.resize) scene.resize();
+      }
+      window.dispatchEvent(new Event('resize'));
       if (!isLandscape) { document.body.style.width = ''; document.body.style.height = ''; }
     }
     window.addEventListener('orientationchange', function () {
-      [300, 700, 1200].forEach(function (d) { setTimeout(_arResize, d); });
+      [350, 800].forEach(function (d) { setTimeout(_arResize, d); });
     });
 
     (function () {
