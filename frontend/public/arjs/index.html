@@ -65,7 +65,12 @@
   </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { width: 100vw; height: 100dvh; font-family: -apple-system, sans-serif; }
+    body { width: 100vw; height: 100dvh; min-height: calc(100vh + 500px); font-family: -apple-system, sans-serif; }
+    /* Canvas pinned — never moves when page scrolls */
+    a-scene, a-scene canvas, .a-canvas { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; }
+    /* Landscape-only scroll intercept layer */
+    #scroll-layer { position: fixed; inset: 0; z-index: 2; pointer-events: none; }
+    @media (orientation: landscape) { #scroll-layer { pointer-events: auto; } }
     #back-btn {
       position: fixed; top: 16px; left: 16px; z-index: 1000;
       background: rgba(0,0,0,0.55); color: #fff;
@@ -217,6 +222,7 @@
       </div>
     </a>
   </div>
+  <div id="scroll-layer"></div>
 
   <a-scene
     embedded
@@ -468,9 +474,25 @@ function setLabelHint(idx, isOpen) {
         ? hideChart() : showChart(bestIdx);
     }
 
+    let _slY = null, _slScrolled = false;
+    const _scrollLayer = document.getElementById('scroll-layer');
+    _scrollLayer.addEventListener('touchstart', function (e) {
+      _slY = e.touches[0].clientY;
+      _slScrolled = false;
+    }, { passive: true });
+    _scrollLayer.addEventListener('touchmove', function (e) {
+      if (_slY === null) return;
+      const dy = _slY - e.touches[0].clientY;
+      if (Math.abs(dy) > 8) {
+        _slScrolled = true;
+        window.scrollBy(0, dy);
+        _slY = e.touches[0].clientY;
+      }
+    }, { passive: true });
     document.addEventListener('touchend', e => {
       _lastTouch = Date.now();
       if (_uiLayer.contains(e.target)) return;
+      if (_slScrolled) { _slScrolled = false; _slY = null; return; }
       const t = e.changedTouches[0];
       handleTap(t.clientX, t.clientY);
     });
