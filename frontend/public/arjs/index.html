@@ -74,6 +74,16 @@
       cursor: pointer; border-radius: 4px; text-decoration: none;
       display: block; width: 100px; text-align: center;
     }
+    #fullscreen-btn {
+      position: fixed; top: 60px; left: 16px; z-index: 1000;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
+      cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
+      display: none; width: 100px; text-align: center;
+      transition: opacity 0.3s;
+    }
+    #fullscreen-btn.hidden { opacity: 0; pointer-events: none; }
     #landscape-hint {
       position: fixed; left: 6px; top: 50%;
       transform: translateY(-50%);
@@ -181,6 +191,7 @@
 <body>
   <div id="ui-layer">
     <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
+    <button id="fullscreen-btn">⛶ FULL SCREEN</button>
     <div id="landscape-hint">SCROLL UP FOR FULL VIEW ↑</div>
     <div id="scan-hint">POINT CAMERA AT MODEL</div>
 
@@ -479,15 +490,24 @@ function setLabelHint(idx, isOpen) {
       handleTap(e.clientX, e.clientY);
     });
 
-    // Safari-only landscape scroll hint
+    // Safari-only: fullscreen button + landscape scroll hint
     (function () {
       const isIOSSafari = /iP(hone|ad|od)/.test(navigator.userAgent)
         && /WebKit/.test(navigator.userAgent)
         && !/CriOS|FxiOS|OPiOS/.test(navigator.userAgent);
       if (!isIOSSafari) return;
 
-      const hint = document.getElementById('landscape-hint');
+      const hint  = document.getElementById('landscape-hint');
+      const fsBtn = document.getElementById('fullscreen-btn');
       let baseVH = 0, hintShown = false;
+
+      // Show fullscreen button on Safari
+      fsBtn.style.display = 'block';
+
+      fsBtn.addEventListener('click', function () {
+        document.body.style.minHeight = (window.innerHeight + 100) + 'px';
+        setTimeout(function () { window.scrollTo({ top: 1 }); }, 50);
+      });
 
       function showHint() {
         if (hintShown) return;
@@ -509,18 +529,27 @@ function setLabelHint(idx, isOpen) {
             hideHint();
             baseVH = 0;
           }
+          // Reset body height so button works fresh after rotation
+          document.body.style.minHeight = '';
         }, 300);
       }
 
       if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', function () {
-          if (!baseVH || window.innerWidth <= window.innerHeight) return;
-          if (window.visualViewport.height > baseVH + 30) hideHint();
+          const barGone = window.visualViewport.height > (baseVH || window.innerHeight) - 30;
+          if (barGone) {
+            fsBtn.classList.add('hidden');
+            hideHint();
+          } else {
+            fsBtn.classList.remove('hidden');
+          }
+          // Update baseVH for landscape hint
+          if (baseVH && window.innerWidth > window.innerHeight
+              && window.visualViewport.height > baseVH + 30) hideHint();
         });
       }
 
       window.addEventListener('orientationchange', onOrientationChange);
-      // Check on load in case page opens in landscape
       if (window.innerWidth > window.innerHeight) {
         baseVH = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         showHint();
