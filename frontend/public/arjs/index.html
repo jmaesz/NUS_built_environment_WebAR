@@ -770,7 +770,7 @@
     }
 
     function handleTap(cx, cy) {
-      sceneEl.object3D.updateMatrixWorld();
+      sceneEl.object3D.updateMatrixWorld(true);
       if (activeIdx !== null) {
         const play = document.getElementById('ar-play-' + activeIdx);
         if (play && play.object3D && play.object3D.visible) {
@@ -791,9 +791,10 @@
 
       // No panel open — screen-distance hit test against visible labels
       const r = sceneEl.canvas.getBoundingClientRect();
-      let bestIdx = -1, bestDist = 60;
+      let bestIdx = -1, bestDist = 40;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
-        if (!visibleMarkers.has(idx)) continue;
+        const marker = document.getElementById('marker-' + idx);
+        if (!marker || !marker.object3D.visible) continue;
         const bg = document.getElementById('ar-bg-' + idx);
         if (!bg) continue;
         bg.object3D.getWorldPosition(_arVec);
