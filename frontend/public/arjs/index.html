@@ -21,12 +21,14 @@
     });
     // Reliable per-frame billboard — direct lookAt, no lag
     AFRAME.registerComponent('billboard', {
-      init: function () { this._v = new THREE.Vector3(); },
+      init: function () { this._camPos = new THREE.Vector3(); this._objPos = new THREE.Vector3(); },
       tick: function () {
         var cam = this.el.sceneEl.camera;
         if (!cam) return;
-        cam.getWorldPosition(this._v);
-        this.el.object3D.lookAt(this._v);
+        cam.getWorldPosition(this._camPos);
+        this.el.object3D.getWorldPosition(this._objPos);
+        this._camPos.y = this._objPos.y;
+        this.el.object3D.lookAt(this._camPos);
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
