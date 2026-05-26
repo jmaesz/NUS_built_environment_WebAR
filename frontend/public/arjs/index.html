@@ -377,23 +377,37 @@
           dx.fillStyle = 'rgba(255,255,255,0.85)';
           dx.font = '129px Arial, sans-serif';
           justifyText(dx, desc, 70, divY + 28, DW - 140, 165);
-          // Play button — teal circle with white triangle, bottom-right
+          // Play/pause button textures — clone base canvas, draw icon on top
           var bx = DW - 170, by = DH - 170, br = 140;
-          dx.fillStyle = '#107b7f';
-          dx.beginPath(); dx.arc(bx, by, br, 0, Math.PI * 2); dx.fill();
-          dx.fillStyle = '#ffffff';
-          dx.beginPath();
-          dx.moveTo(bx - 45, by - 62); dx.lineTo(bx - 45, by + 62); dx.lineTo(bx + 66, by);
-          dx.closePath(); dx.fill();
-          // "TAP TO HEAR" label above play button
-          dx.fillStyle = 'rgba(255,255,255,0.55)';
-          dx.font = '58px Arial, sans-serif';
-          dx.textAlign = 'center';
-          dx.fillText('TAP TO HEAR', bx, by - br - 18);
+          // Play texture (triangle)
+          var playCanvas = document.createElement('canvas');
+          playCanvas.width = DW; playCanvas.height = DH;
+          var pc = playCanvas.getContext('2d');
+          pc.drawImage(dv, 0, 0);
+          pc.fillStyle = '#107b7f';
+          pc.beginPath(); pc.arc(bx, by, br, 0, Math.PI * 2); pc.fill();
+          pc.fillStyle = '#ffffff';
+          pc.beginPath();
+          pc.moveTo(bx - 45, by - 62); pc.lineTo(bx - 45, by + 62); pc.lineTo(bx + 66, by);
+          pc.closePath(); pc.fill();
           var dimg = document.createElement('img');
           dimg.id = 'dlbl-' + idx;
-          dimg.src = dv.toDataURL('image/png');
+          dimg.src = playCanvas.toDataURL('image/png');
           assets.appendChild(dimg);
+          // Pause texture (two bars)
+          var pauseCanvas = document.createElement('canvas');
+          pauseCanvas.width = DW; pauseCanvas.height = DH;
+          var pauc = pauseCanvas.getContext('2d');
+          pauc.drawImage(dv, 0, 0);
+          pauc.fillStyle = '#107b7f';
+          pauc.beginPath(); pauc.arc(bx, by, br, 0, Math.PI * 2); pauc.fill();
+          pauc.fillStyle = '#ffffff';
+          pauc.fillRect(bx - 52, by - 58, 32, 116);
+          pauc.fillRect(bx + 20, by - 58, 32, 116);
+          var dpimg = document.createElement('img');
+          dpimg.id = 'dlbl-pause-' + idx;
+          dpimg.src = pauseCanvas.toDataURL('image/png');
+          assets.appendChild(dpimg);
 
           // ── Marker setup ───────────────────────────────────────────────────
           var marker = document.createElement('a-marker');
@@ -446,6 +460,7 @@
 
           // Description panel — 3.5 × 2.2 units, positioned to the LEFT of the main label
           var descPlane = document.createElement('a-plane');
+          descPlane.id = 'ar-desc-plane-' + idx;
           descPlane.setAttribute('width', '7.0');
           descPlane.setAttribute('height', '4.4');
           descPlane.setAttribute('position', '-5.0 0 0');
@@ -557,15 +572,29 @@
     // ── Audio playback ─────────────────────────────────────────────────────────
     var _audio = null;
 
+    function setPlayBtn(idx, playing) {
+      var plane = document.getElementById('ar-desc-plane-' + idx);
+      if (!plane) return;
+      var src = playing ? '#dlbl-pause-' + idx : '#dlbl-' + idx;
+      plane.setAttribute('material', 'src: ' + src + '; side: double; transparent: false; shader: flat');
+    }
+
     function speakDescription(idx) {
       if (_audio && !_audio.paused) {
-        if (_speechIdx === idx) { _audio.pause(); _audio.currentTime = 0; _speaking = false; _speechIdx = -1; return; }
+        if (_speechIdx === idx) {
+          _audio.pause(); _audio.currentTime = 0;
+          setPlayBtn(idx, false);
+          _speaking = false; _speechIdx = -1;
+          return;
+        }
         _audio.pause(); _audio.currentTime = 0;
+        setPlayBtn(_speechIdx, false);
       }
       var name = BUILDINGS[idx].name;
       _audio = new Audio('/audio/' + name + '.mp3');
-      _audio.onended = function () { _speaking = false; _speechIdx = -1; };
-      _audio.onerror = function () { _speaking = false; _speechIdx = -1; };
+      _audio.onended = function () { setPlayBtn(idx, false); _speaking = false; _speechIdx = -1; };
+      _audio.onerror = function () { setPlayBtn(idx, false); _speaking = false; _speechIdx = -1; };
+      setPlayBtn(idx, true);
       _speaking = true; _speechIdx = idx;
       _audio.play();
     }
@@ -678,7 +707,7 @@
         setLabelHint(activeIdx, false);
         hideDescPanel(activeIdx);
       }
-      if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; _speaking = false; _speechIdx = -1; }
+      if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; setPlayBtn(_speechIdx, false); _speaking = false; _speechIdx = -1; }
       setOtherLabelsVisible(-1, true);
       activeIdx = null;
       chartPanel.classList.remove('visible');
