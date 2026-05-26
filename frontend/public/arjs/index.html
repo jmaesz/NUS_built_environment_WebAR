@@ -15,19 +15,25 @@
       tick: function () {
         this._q.copy(this.el.parentEl.object3D.quaternion).invert();
         this._v.set(0, this.data.y, 0).applyQuaternion(this._q);
+        if (this._v.y < 0) this._v.negate();
         this.el.object3D.position.copy(this._v);
       }
     });
     // Reliable per-frame billboard — direct lookAt, no lag
     AFRAME.registerComponent('billboard', {
-      init: function () { this._camPos = new THREE.Vector3(); this._objPos = new THREE.Vector3(); },
+      init: function () { this._camPos = new THREE.Vector3(); this._objPos = new THREE.Vector3(); this._dir = new THREE.Vector3(); },
       tick: function () {
         var cam = this.el.sceneEl.camera;
         if (!cam) return;
         cam.getWorldPosition(this._camPos);
         this.el.object3D.getWorldPosition(this._objPos);
-        this._camPos.y = this._objPos.y;
-        this.el.object3D.lookAt(this._camPos);
+        this._dir.subVectors(this._camPos, this._objPos);
+        var xzLen = Math.sqrt(this._dir.x * this._dir.x + this._dir.z * this._dir.z);
+        if (xzLen > 0.001) {
+          var maxY = xzLen * Math.tan(75 * Math.PI / 180);
+          if (this._dir.y > maxY) this._dir.y = maxY;
+        }
+        this.el.object3D.lookAt(this._objPos.clone().add(this._dir));
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
