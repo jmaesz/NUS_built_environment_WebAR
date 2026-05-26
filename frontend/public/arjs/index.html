@@ -110,10 +110,11 @@
       border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 0;
       box-shadow: 0 4px 32px rgba(0,0,0,0.45); overflow: hidden; display: flex; flex-direction: row;
       opacity: 0; transform: translateX(16px);
-      transition: opacity 0.35s ease, transform 0.35s ease, width 0.25s ease, height 0.25s ease; pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.35s ease, width 0.25s ease; pointer-events: none;
+      height: 235px;
     }
     #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
-    #chart-panel.collapsed { width: 22px; height: 110px; }
+    #chart-panel.collapsed { width: 22px; }
     .panel-tab {
       width: 22px; flex-shrink: 0; cursor: pointer; display: flex; align-items: center; justify-content: center;
       background: rgba(255,255,255,0.07); border-right: 1px solid rgba(255,255,255,0.12);
@@ -424,10 +425,9 @@
           upContainer.id = 'ar-up-' + idx;
           upContainer.setAttribute('up-track', 'y: 1.8');
 
-          // Billboard + bob animation
+          // Billboard
           var label = document.createElement('a-entity');
           label.setAttribute('billboard', '');
-          label.setAttribute('animation', 'property: position; from: 0 0 0; to: 0 0.3 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
 
           // Main label plane
           var bg = document.createElement('a-plane');
