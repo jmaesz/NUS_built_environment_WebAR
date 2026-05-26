@@ -52,7 +52,13 @@
         if (!obj.visible) {
           if (this._ready) {
             if (!this._lostAt) this._lostAt = Date.now();
-            if (Date.now() - this._lostAt > 400) { this._ready = false; this._lostAt = 0; }
+            if (Date.now() - this._lostAt < 500) {
+              obj.visible = true;
+              obj.position.copy(this._pos);
+              obj.quaternion.copy(this._quat);
+            } else {
+              this._ready = false; this._lostAt = 0;
+            }
           }
           return;
         }
