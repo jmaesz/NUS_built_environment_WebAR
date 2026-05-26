@@ -377,37 +377,20 @@
           dx.fillStyle = 'rgba(255,255,255,0.85)';
           dx.font = '129px Arial, sans-serif';
           justifyText(dx, desc, 70, divY + 28, DW - 140, 165);
-          // Play/pause button textures — clone base canvas, draw icon on top
+          // Play button drawn on dv; store canvas reference for live toggle updates
           var bx = DW - 170, by = DH - 170, br = 140;
-          // Play texture (triangle)
-          var playCanvas = document.createElement('canvas');
-          playCanvas.width = DW; playCanvas.height = DH;
-          var pc = playCanvas.getContext('2d');
-          pc.drawImage(dv, 0, 0);
-          pc.fillStyle = '#107b7f';
-          pc.beginPath(); pc.arc(bx, by, br, 0, Math.PI * 2); pc.fill();
-          pc.fillStyle = '#ffffff';
-          pc.beginPath();
-          pc.moveTo(bx - 45, by - 62); pc.lineTo(bx - 45, by + 62); pc.lineTo(bx + 66, by);
-          pc.closePath(); pc.fill();
+          dx.fillStyle = '#107b7f';
+          dx.beginPath(); dx.arc(bx, by, br, 0, Math.PI * 2); dx.fill();
+          dx.fillStyle = '#ffffff';
+          dx.beginPath();
+          dx.moveTo(bx - 45, by - 62); dx.lineTo(bx - 45, by + 62); dx.lineTo(bx + 66, by);
+          dx.closePath(); dx.fill();
+          if (!window._descCanvases) window._descCanvases = [];
+          window._descCanvases[idx] = dv;
           var dimg = document.createElement('img');
           dimg.id = 'dlbl-' + idx;
-          dimg.src = playCanvas.toDataURL('image/png');
+          dimg.src = dv.toDataURL('image/png');
           assets.appendChild(dimg);
-          // Pause texture (two bars)
-          var pauseCanvas = document.createElement('canvas');
-          pauseCanvas.width = DW; pauseCanvas.height = DH;
-          var pauc = pauseCanvas.getContext('2d');
-          pauc.drawImage(dv, 0, 0);
-          pauc.fillStyle = '#107b7f';
-          pauc.beginPath(); pauc.arc(bx, by, br, 0, Math.PI * 2); pauc.fill();
-          pauc.fillStyle = '#ffffff';
-          pauc.fillRect(bx - 52, by - 58, 32, 116);
-          pauc.fillRect(bx + 20, by - 58, 32, 116);
-          var dpimg = document.createElement('img');
-          dpimg.id = 'dlbl-pause-' + idx;
-          dpimg.src = pauseCanvas.toDataURL('image/png');
-          assets.appendChild(dpimg);
 
           // ── Marker setup ───────────────────────────────────────────────────
           var marker = document.createElement('a-marker');
@@ -573,10 +556,29 @@
     var _audio = null;
 
     function setPlayBtn(idx, playing) {
+      var canvas = window._descCanvases && window._descCanvases[idx];
       var plane = document.getElementById('ar-desc-plane-' + idx);
-      if (!plane) return;
-      var src = playing ? '#dlbl-pause-' + idx : '#dlbl-' + idx;
-      plane.setAttribute('material', 'src: ' + src + '; side: double; transparent: false; shader: flat');
+      if (!canvas || !plane) return;
+      var ctx = canvas.getContext('2d');
+      var bx = canvas.width - 170, by = canvas.height - 170, br = 140;
+      ctx.fillStyle = '#0d1a1c';
+      ctx.beginPath(); ctx.arc(bx, by, br + 12, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#107b7f';
+      ctx.beginPath(); ctx.arc(bx, by, br, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      if (playing) {
+        ctx.fillRect(bx - 52, by - 58, 32, 116);
+        ctx.fillRect(bx + 20, by - 58, 32, 116);
+      } else {
+        ctx.beginPath();
+        ctx.moveTo(bx - 45, by - 62); ctx.lineTo(bx - 45, by + 62); ctx.lineTo(bx + 66, by);
+        ctx.closePath(); ctx.fill();
+      }
+      var mesh = plane.getObject3D('mesh');
+      if (mesh && mesh.material && mesh.material.map) {
+        mesh.material.map.image = canvas;
+        mesh.material.map.needsUpdate = true;
+      }
     }
 
     function speakDescription(idx) {
