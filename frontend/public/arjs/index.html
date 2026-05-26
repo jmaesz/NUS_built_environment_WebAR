@@ -780,17 +780,25 @@
         return;
       }
 
-      // No panel open — raycast against visible labels
+      // No panel open — screen-distance hit test against visible labels
+      const r = sceneEl.canvas.getBoundingClientRect();
+      let bestIdx = -1, bestDist = 80;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         if (!visibleMarkers.has(idx)) continue;
         const bg = document.getElementById('ar-bg-' + idx);
-        if (bg && rayHits(cx, cy, bg)) {
-          pulseTap(idx);
-          activeIdx === idx && chartPanel.classList.contains('visible')
-            ? hideChart() : showChart(idx);
-          return;
-        }
+        if (!bg) continue;
+        bg.object3D.getWorldPosition(_arVec);
+        _arVec.project(sceneEl.camera);
+        if (_arVec.z > 1) continue;
+        const sx = (_arVec.x + 1) / 2 * r.width + r.left;
+        const sy = (-_arVec.y + 1) / 2 * r.height + r.top;
+        const dist = Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2);
+        if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
       }
+      if (bestIdx === -1) return;
+      pulseTap(bestIdx);
+      activeIdx === bestIdx && chartPanel.classList.contains('visible')
+        ? hideChart() : showChart(bestIdx);
     }
 
     document.addEventListener('touchend', e => {
