@@ -730,8 +730,9 @@
         }
       }
 
-      // Main label hit test
-      let bestIdx = -1, bestDist = 200;
+      // Main label hit test — tighter radius when a panel is already open to avoid accidental close
+      const _hitRadius = activeIdx !== null ? 80 : 200;
+      let bestIdx = -1, bestDist = _hitRadius;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         if (!visibleMarkers.has(idx)) continue;
         const bg = document.getElementById('ar-bg-' + idx);
