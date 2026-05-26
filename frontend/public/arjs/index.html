@@ -773,8 +773,17 @@
       sceneEl.object3D.updateMatrixWorld();
       if (activeIdx !== null) {
         const play = document.getElementById('ar-play-' + activeIdx);
-        if (play && play.object3D && play.object3D.visible && rayHits(cx, cy, play)) {
-          speakDescription(activeIdx); return;
+        if (play && play.object3D && play.object3D.visible) {
+          play.object3D.getWorldPosition(_arVec);
+          _arVec.project(sceneEl.camera);
+          if (_arVec.z <= 1) {
+            const rr = sceneEl.canvas.getBoundingClientRect();
+            const sx = (_arVec.x + 1) / 2 * rr.width + rr.left;
+            const sy = (-_arVec.y + 1) / 2 * rr.height + rr.top;
+            if (Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2) < 110) {
+              speakDescription(activeIdx); return;
+            }
+          }
         }
         hideChart();
         return;
