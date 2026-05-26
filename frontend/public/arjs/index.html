@@ -349,8 +349,8 @@
           // Description text
           var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
           dx.fillStyle = 'rgba(255,255,255,0.85)';
-          dx.font = '43px Arial, sans-serif';
-          wrapText(dx, desc, 70, divY + 28, DW - 140, 58);
+          dx.font = '54px Arial, sans-serif';
+          wrapText(dx, desc, 70, divY + 28, DW - 140, 72);
           // Play button — teal circle with white triangle, bottom-right
           var bx = DW - 110, by = DH - 110, br = 68;
           dx.fillStyle = '#107b7f';
@@ -529,6 +529,38 @@
     }
 
     // ── Speech synthesis ───────────────────────────────────────────────────────
+    function getBestVoice() {
+      var voices = window.speechSynthesis.getVoices();
+      if (!voices.length) return null;
+      // Preferred smooth female voices across platforms
+      var preferred = [
+        'Google UK English Female',
+        'Microsoft Zira',
+        'Samantha',
+        'Karen',
+        'Victoria',
+        'Moira',
+        'Tessa',
+        'Fiona',
+        'Google US English',
+      ];
+      for (var p = 0; p < preferred.length; p++) {
+        for (var v = 0; v < voices.length; v++) {
+          if (voices[v].name.indexOf(preferred[p]) !== -1) return voices[v];
+        }
+      }
+      // Any English voice with "female" in the name
+      for (var v = 0; v < voices.length; v++) {
+        if (voices[v].lang.startsWith('en') && voices[v].name.toLowerCase().indexOf('female') !== -1)
+          return voices[v];
+      }
+      // First English voice available
+      for (var v = 0; v < voices.length; v++) {
+        if (voices[v].lang.startsWith('en')) return voices[v];
+      }
+      return voices[0];
+    }
+
     function speakDescription(idx) {
       if (!('speechSynthesis' in window)) return;
       if (_speaking && _speechIdx === idx) {
@@ -539,10 +571,21 @@
       window.speechSynthesis.cancel();
       var text = (window.BUILDING_DESCS && window.BUILDING_DESCS[BUILDINGS[idx].name]) || BUILDINGS[idx].full_name;
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.9;
+      u.rate = 0.88;
+      u.pitch = 1.05;
+      var voice = getBestVoice();
+      if (voice) u.voice = voice;
       u.onend = u.onerror = function () { _speaking = false; _speechIdx = -1; };
       _speaking = true; _speechIdx = idx;
       window.speechSynthesis.speak(u);
+    }
+
+    // Pre-load voices so they're ready on first tap
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.addEventListener('voiceschanged', function () {
+        window.speechSynthesis.getVoices();
+      });
     }
 
     // ── Description panel show/hide ────────────────────────────────────────────
