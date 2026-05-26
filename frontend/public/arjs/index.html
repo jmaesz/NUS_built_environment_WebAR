@@ -755,6 +755,8 @@
           if (sp) {
             const d = Math.sqrt((cx - sp.x) ** 2 + (cy - sp.y) ** 2);
             if (d < 110) { speakDescription(activeIdx); return; }
+            // Dead zone around play button — ignore taps that are close but not close enough
+            if (d < 160) return;
           }
         }
       }
