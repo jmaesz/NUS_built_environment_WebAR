@@ -21,12 +21,19 @@
     });
     // Reliable per-frame billboard — direct lookAt, no lag
     AFRAME.registerComponent('billboard', {
-      init: function () { this._v = new THREE.Vector3(); },
+      init: function () { this._dir = new THREE.Vector3(); this._tgt = new THREE.Vector3(); this._obj = new THREE.Vector3(); },
       tick: function () {
         var cam = this.el.sceneEl.camera;
         if (!cam) return;
-        cam.getWorldPosition(this._v);
-        this.el.object3D.lookAt(this._v);
+        cam.getWorldPosition(this._tgt);
+        this.el.object3D.getWorldPosition(this._obj);
+        this._dir.subVectors(this._tgt, this._obj);
+        var xzLen = Math.sqrt(this._dir.x * this._dir.x + this._dir.z * this._dir.z);
+        if (xzLen < 0.001) xzLen = 0.001;
+        var maxY = xzLen * 1.19; // cap elevation at ~50° — never goes flat
+        if (this._dir.y > maxY) this._dir.y = maxY;
+        this._tgt.addVectors(this._obj, this._dir);
+        this.el.object3D.lookAt(this._tgt);
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
