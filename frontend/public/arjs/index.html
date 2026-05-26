@@ -327,7 +327,7 @@
           assets.appendChild(img);
 
           // ── Description canvas ─────────────────────────────────────────────
-          var DW = 1600, DH = 1400;
+          var DW = 1600, DH = 1000;
           var dv = document.createElement('canvas');
           dv.width = DW; dv.height = DH;
           var dx = dv.getContext('2d');
@@ -340,8 +340,8 @@
           // Full name
           dx.fillStyle = '#ffffff';
           dx.textAlign = 'left'; dx.textBaseline = 'top';
-          dx.font = 'bold 68px Arial, sans-serif';
-          var nl = wrapText(dx, b.full_name, 70, 58, DW - 140, 88);
+          dx.font = 'bold 60px Arial, sans-serif';
+          var nl = wrapText(dx, b.full_name, 70, 58, DW - 140, 78);
           var divY = 58 + nl * 78 + 14;
           // Divider
           dx.strokeStyle = '#107b7f'; dx.lineWidth = 3;
@@ -349,8 +349,8 @@
           // Description text
           var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
           dx.fillStyle = 'rgba(255,255,255,0.85)';
-          dx.font = '68px Arial, sans-serif';
-          wrapText(dx, desc, 70, divY + 28, DW - 140, 88);
+          dx.font = '43px Arial, sans-serif';
+          wrapText(dx, desc, 70, divY + 28, DW - 140, 58);
           // Play button — teal circle with white triangle, bottom-right
           var bx = DW - 110, by = DH - 110, br = 68;
           dx.fillStyle = '#107b7f';
@@ -421,7 +421,7 @@
           // Description panel — 3.5 × 2.2 units, positioned to the LEFT of the main label
           var descPlane = document.createElement('a-plane');
           descPlane.setAttribute('width', '3.5');
-          descPlane.setAttribute('height', '3.0');
+          descPlane.setAttribute('height', '2.2');
           descPlane.setAttribute('position', '-3.2 0 0');
           descPlane.setAttribute('material', 'src: #dlbl-' + idx + '; side: double; transparent: false; shader: flat');
 
@@ -431,7 +431,7 @@
           playHitbox.id = 'ar-play-' + idx;
           playHitbox.setAttribute('width', '0.8');
           playHitbox.setAttribute('height', '0.8');
-          playHitbox.setAttribute('position', '-1.69 -1.26 0.02');
+          playHitbox.setAttribute('position', '-1.69 -0.87 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat');
 
           descGroup.appendChild(descPlane);
@@ -529,38 +529,6 @@
     }
 
     // ── Speech synthesis ───────────────────────────────────────────────────────
-    function getBestVoice() {
-      var voices = window.speechSynthesis.getVoices();
-      if (!voices.length) return null;
-      // Preferred smooth female voices across platforms
-      var preferred = [
-        'Google UK English Female',
-        'Microsoft Zira',
-        'Samantha',
-        'Karen',
-        'Victoria',
-        'Moira',
-        'Tessa',
-        'Fiona',
-        'Google US English',
-      ];
-      for (var p = 0; p < preferred.length; p++) {
-        for (var v = 0; v < voices.length; v++) {
-          if (voices[v].name.indexOf(preferred[p]) !== -1) return voices[v];
-        }
-      }
-      // Any English voice with "female" in the name
-      for (var v = 0; v < voices.length; v++) {
-        if (voices[v].lang.startsWith('en') && voices[v].name.toLowerCase().indexOf('female') !== -1)
-          return voices[v];
-      }
-      // First English voice available
-      for (var v = 0; v < voices.length; v++) {
-        if (voices[v].lang.startsWith('en')) return voices[v];
-      }
-      return voices[0];
-    }
-
     function speakDescription(idx) {
       if (!('speechSynthesis' in window)) return;
       if (_speaking && _speechIdx === idx) {
@@ -571,21 +539,10 @@
       window.speechSynthesis.cancel();
       var text = (window.BUILDING_DESCS && window.BUILDING_DESCS[BUILDINGS[idx].name]) || BUILDINGS[idx].full_name;
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.88;
-      u.pitch = 1.05;
-      var voice = getBestVoice();
-      if (voice) u.voice = voice;
+      u.rate = 0.9;
       u.onend = u.onerror = function () { _speaking = false; _speechIdx = -1; };
       _speaking = true; _speechIdx = idx;
       window.speechSynthesis.speak(u);
-    }
-
-    // Pre-load voices so they're ready on first tap
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.addEventListener('voiceschanged', function () {
-        window.speechSynthesis.getVoices();
-      });
     }
 
     // ── Description panel show/hide ────────────────────────────────────────────
