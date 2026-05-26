@@ -327,7 +327,7 @@
           assets.appendChild(img);
 
           // ── Description canvas ─────────────────────────────────────────────
-          var DW = 1600, DH = 1000;
+          var DW = 1600, DH = 3600;
           var dv = document.createElement('canvas');
           dv.width = DW; dv.height = DH;
           var dx = dv.getContext('2d');
@@ -349,8 +349,8 @@
           // Description text
           var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
           dx.fillStyle = 'rgba(255,255,255,0.85)';
-          dx.font = '43px Arial, sans-serif';
-          wrapText(dx, desc, 70, divY + 28, DW - 140, 58);
+          dx.font = '129px Arial, sans-serif';
+          wrapText(dx, desc, 70, divY + 28, DW - 140, 165);
           // Play button — teal circle with white triangle, bottom-right
           var bx = DW - 110, by = DH - 110, br = 68;
           dx.fillStyle = '#107b7f';
@@ -421,7 +421,7 @@
           // Description panel — 3.5 × 2.2 units, positioned to the LEFT of the main label
           var descPlane = document.createElement('a-plane');
           descPlane.setAttribute('width', '3.5');
-          descPlane.setAttribute('height', '2.2');
+          descPlane.setAttribute('height', '7.9');
           descPlane.setAttribute('position', '-3.2 0 0');
           descPlane.setAttribute('material', 'src: #dlbl-' + idx + '; side: double; transparent: false; shader: flat');
 
@@ -431,7 +431,7 @@
           playHitbox.id = 'ar-play-' + idx;
           playHitbox.setAttribute('width', '0.8');
           playHitbox.setAttribute('height', '0.8');
-          playHitbox.setAttribute('position', '-1.69 -0.87 0.02');
+          playHitbox.setAttribute('position', '-1.69 -3.71 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat');
 
           descGroup.appendChild(descPlane);
