@@ -747,23 +747,23 @@
     }
 
     function handleTap(cx, cy) {
-      // Play button takes priority — only check for active building
       if (activeIdx !== null) {
+        // Play button check
         const play = document.getElementById('ar-play-' + activeIdx);
         if (play && play.object3D && play.object3D.visible) {
           const sp = getScreenPos(play);
           if (sp) {
             const d = Math.sqrt((cx - sp.x) ** 2 + (cy - sp.y) ** 2);
             if (d < 110) { speakDescription(activeIdx); return; }
-            // Dead zone around play button — ignore taps that are close but not close enough
-            if (d < 160) return;
           }
         }
+        // Any other tap while panel is open → close
+        hideChart();
+        return;
       }
 
-      // Main label hit test — tighter radius when a panel is already open to avoid accidental close
-      const _hitRadius = activeIdx !== null ? 55 : 200;
-      let bestIdx = -1, bestDist = _hitRadius;
+      // No panel open — normal label hit test
+      let bestIdx = -1, bestDist = 200;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         if (!visibleMarkers.has(idx)) continue;
         const bg = document.getElementById('ar-bg-' + idx);
