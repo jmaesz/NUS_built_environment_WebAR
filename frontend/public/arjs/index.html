@@ -448,7 +448,7 @@
           var descPlane = document.createElement('a-plane');
           descPlane.setAttribute('width', '7.0');
           descPlane.setAttribute('height', '4.4');
-          descPlane.setAttribute('position', '-3.2 0 0');
+          descPlane.setAttribute('position', '-5.0 0 0');
           descPlane.setAttribute('material', 'src: #dlbl-' + idx + '; side: double; transparent: false; shader: flat');
 
           // Invisible play-button hitbox — mapped to where the circle sits on the canvas
@@ -457,7 +457,7 @@
           playHitbox.id = 'ar-play-' + idx;
           playHitbox.setAttribute('width', '0.8');
           playHitbox.setAttribute('height', '0.8');
-          playHitbox.setAttribute('position', '0.06 -1.96 0.02');
+          playHitbox.setAttribute('position', '-1.74 -1.96 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat');
 
           descGroup.appendChild(descPlane);
