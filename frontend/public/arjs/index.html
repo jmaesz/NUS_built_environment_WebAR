@@ -63,7 +63,6 @@
           this._ready = true;
           return;
         }
-        // alpha scales inversely with distance: smoother when marker is farther away
         var dist = obj.position.length();
         var a = Math.max(0.03, Math.min(0.3, this.data.alpha / Math.max(dist, 0.5)));
         this._pos.lerp(obj.position, a);
@@ -125,7 +124,6 @@
     #chart-panel.collapsed #chart-content { visibility: hidden; }
     #chart-panel.collapsed #chart-tab { border-right: none; }
     #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; margin-bottom: 6px; }
-    /* View toggle */
     #view-toggle { display: flex; gap: 4px; margin-bottom: 8px; }
     .vt-btn {
       flex: 1; padding: 4px 0; font-size: 8px; font-weight: 700; letter-spacing: 0.07em;
@@ -146,7 +144,6 @@
     #total-row { display: flex; justify-content: space-between; align-items: center; }
     #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45); }
     #total-value { font-size: 11px; font-weight: 700; color: #fff; }
-    /* EUI bar chart */
     #eui-container { width: 100%; display: none; margin-bottom: 8px; }
     #eui-canvas-wrap { position: relative; width: 100%; height: 148px; }
     .eui-legend { display: flex; gap: 10px; justify-content: center; margin-top: 7px; }
@@ -182,7 +179,6 @@
     #maps-panel-cta { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em; }
   </style>
 
-  <!-- Define buildings before anything else so the inline scene script can use it -->
   <script>
     window.BUILDINGS = [
       { name: 'CELC',  full_name: 'Centre for English Language Communication',    img: '/ar/imgs/celc.jpg',   mapsUrl: 'https://www.google.com/maps/search/?api=1&query=CELC+NUS+Singapore',    equipment_kWh: 871310,  lighting_kWh: 361929,  cooling_kWh: 758033,  monthly_EUI: [{month:1,equipment:23.46,lighting:9.74,cooling:17.16},{month:2,equipment:21.19,lighting:8.8,cooling:16},{month:3,equipment:23.46,lighting:9.74,cooling:19.94},{month:4,equipment:22.7,lighting:9.43,cooling:20.13},{month:5,equipment:23.46,lighting:9.74,cooling:23.71},{month:6,equipment:22.7,lighting:9.43,cooling:22.76},{month:7,equipment:23.46,lighting:9.74,cooling:22.01},{month:8,equipment:23.46,lighting:9.74,cooling:20.45},{month:9,equipment:22.7,lighting:9.43,cooling:19.09},{month:10,equipment:23.46,lighting:9.74,cooling:21.3},{month:11,equipment:22.7,lighting:9.43,cooling:19.86},{month:12,equipment:23.46,lighting:9.74,cooling:17.9}] },
@@ -206,6 +202,29 @@
       { name: 'SDE4',  full_name: 'School of Design and Environment 4',             img: '/ar/imgs/sde4.jpg',   mapsUrl: 'https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9',                             equipment_kWh: 1436175, lighting_kWh: 940901,  cooling_kWh: 1837480, monthly_EUI: [{month:1,equipment:6.23,lighting:4.08,cooling:6.55},{month:2,equipment:5.63,lighting:3.69,cooling:6.19},{month:3,equipment:6.23,lighting:4.08,cooling:7.65},{month:4,equipment:6.03,lighting:3.95,cooling:7.82},{month:5,equipment:6.23,lighting:4.08,cooling:9.28},{month:6,equipment:6.03,lighting:3.95,cooling:8.94},{month:7,equipment:6.23,lighting:4.08,cooling:8.95},{month:8,equipment:6.23,lighting:4.08,cooling:8.26},{month:9,equipment:6.03,lighting:3.95,cooling:7.35},{month:10,equipment:6.23,lighting:4.08,cooling:8.29},{month:11,equipment:6.03,lighting:3.95,cooling:7.73},{month:12,equipment:6.23,lighting:4.08,cooling:6.91}] },
       { name: 'T-Lab', full_name: 'Temasek Laboratories at NUS',                   img: '/ar/imgs/TLabmapview.png', mapsUrl: 'https://www.google.com/maps/search/?api=1&query=Temasek+Laboratories+NUS+Singapore', equipment_kWh: 8268699, lighting_kWh: 2362486, cooling_kWh: 5668682, monthly_EUI: [{month:1,equipment:27.08,lighting:7.74,cooling:15.91},{month:2,equipment:24.46,lighting:6.99,cooling:15.09},{month:3,equipment:27.08,lighting:7.74,cooling:18.06},{month:4,equipment:26.21,lighting:7.49,cooling:18.47},{month:5,equipment:27.08,lighting:7.74,cooling:20.58},{month:6,equipment:26.21,lighting:7.49,cooling:19.78},{month:7,equipment:27.08,lighting:7.74,cooling:20.5},{month:8,equipment:27.08,lighting:7.74,cooling:18.74},{month:9,equipment:26.21,lighting:7.49,cooling:17.77},{month:10,equipment:27.08,lighting:7.74,cooling:18.88},{month:11,equipment:26.21,lighting:7.49,cooling:17.91},{month:12,equipment:27.08,lighting:7.74,cooling:16.91}] },
     ];
+
+    window.BUILDING_DESCS = {
+      'CELC':  `NUS's dedicated academic unit for English language and communication skills, serving students across all faculties. Located at 10 Architecture Drive within the SDE precinct, the building benefits from surrounding greenery and tree canopy that moderates the urban heat island effect around the site.`,
+      'E1':    `One of the core teaching and office blocks of NUS's College of Design and Engineering. The building is part of the 1970s Kent Ridge campus masterplan and is connected via sheltered corridors; mature trees along Engineering Drive provide partial shading to the building envelope.`,
+      'E1A':   `Houses the Department of Civil and Environmental Engineering and the Department of Industrial Systems Engineering and Management, along with EDIC's assembly and training workshops. The building's research focus on environmental engineering aligns with ongoing campus-wide sustainability initiatives to reduce embodied carbon in civil infrastructure.`,
+      'E2':    `A large central engineering block forming the spine of the engineering precinct, housing faculty offices and a canteen. Its central position on the hillside campus means it is shaded by surrounding blocks in the morning, but the west-facing facades receive significant afternoon solar gain.`,
+      'E2A':   `Home of the Engineering Design and Innovation Centre, featuring design studios, an electronics workshop, and an immersive reality lab. The colourful vertical banner facade also serves a passive function, providing partial shading to the building's glazed surfaces.`,
+      'E3':    `Contains the Central Workshop, seminar rooms, active learning rooms, and student amenities serving the wider engineering precinct. The building is connected to E4 via sheltered walkways with yellow-painted ceilings — a campus landmark — that also reduce direct solar exposure for pedestrians.`,
+      'E3A':   `Houses the Department of Materials Science and Engineering's lab offices and research laboratories. The department's research into sustainable materials, including low-carbon concrete and recyclable composites, directly supports Singapore's Green Plan 2030 goals.`,
+      'E4':    `Houses the Department of Electrical and Computer Engineering and an Engineering Fabrication Lab. Retrofitted with a distinctive faceted aluminium screen facade by AR43 Architects, the building received the BCA Green Mark Platinum award in 2015 — one of the highest green building ratings in Singapore.`,
+      'E4A':   `A supplementary engineering block adjacent to E4, providing additional office, laboratory, and teaching space for the College of Design and Engineering. Like E4, its location within the engineering precinct benefits from the extensive mature tree canopy along Engineering Drive 3.`,
+      'E5':    `Primary home of the Department of Chemical and Biomolecular Engineering, housing teaching labs, research facilities, and faculty offices. Research in green chemistry and sustainable bioprocessing at E5 contributes to Singapore's circular economy and net-zero carbon ambitions.`,
+      'E6':    `An engineering block associated with the Department of Civil and Environmental Engineering, providing large-format structural, hydraulic, and environmental testing laboratories. Research on flood-resilient infrastructure and sustainable drainage systems conducted here supports Singapore's climate adaptation planning.`,
+      'E8':    `Located at 1 Engineering Drive 3, E8 functions as Engineering Workshop 2, supporting fabrication, prototyping, and machining activities. Workshop buildings like E8 are being studied as part of NUS's campus sustainability programme to identify opportunities for waste heat recovery from machining operations.`,
+      'EA':    `The flagship administrative and events building of NUS's College of Design and Engineering, housing the Dean's Office, student programme offices, the Innovation and Design Hub, and the Engineering Auditorium lecture theatre. A rooftop garden and planted terraces on the upper levels contribute to biodiversity and passive cooling of the building envelope.`,
+      'EW1':   `A dedicated workshop block in the SDE precinct area, supporting practical fabrication and prototyping activities for College of Design and Engineering students. Its proximity to the SDE green precinct exposes it to the landscape buffer that moderates heat and noise from workshop operations.`,
+      'EW1A':  `An annex workshop block adjacent to EW1, providing supplementary fabrication and storage space for the College of Design and Engineering. As the smallest building by total energy in this dataset, it is a candidate for electrification and solar panel installation under NUS's campus decarbonisation roadmap.`,
+      'SDE1':  `A net-zero energy retrofit of a 1970s building completed in 2023, housing the Department of Architecture. Features light shelves, solar radiation screens, a hybrid cooling system, and a lush courtyard jungle garden. Achieved an EUI of 41 kWh/m2/yr in 2022 and holds the BCA Green Mark Platinum award.`,
+      'SDE2':  `One of the original SDE campus buildings at 2 Architecture Drive, housing departments including Real Estate and other Built Environment disciplines. Surrounded by the mature landscaping of the Architecture Drive corridor, which provides significant shading to the building's east and west facades throughout the day.`,
+      'SDE3':  `The primary architecture studio building, renovated in 2023 with an exposed structural frame retained to minimise embodied carbon, alongside new maker spaces, flexible studios, and a hybrid cooling system. Achieved an EUI of 43 kWh/m2/yr and won the 2024 Society of Facade Engineers Project of the Year International Sustainability Award.`,
+      'SDE4':  `Southeast Asia's first net-zero energy building, opened in 2019 and designed by Serie Architects and Multiply Architects. Features a large rooftop PV array generating ~500 kWh/day, chilled ceilings, natural ventilation, a smart BMS, and exposed building services as a living learning tool. Holds the BCA Green Mark 2021 Platinum Positive Energy Award.`,
+      'T-Lab': `A national defence R&D institute established in 2000 through a partnership between MINDEF and NUS, conducting research in aeronautical sciences, electromagnetics, and information security. As the highest energy consumer on campus by a wide margin, T-Lab is a priority target for NUS's campus decarbonisation strategy.`,
+    };
   </script>
 </head>
 <body>
@@ -266,7 +285,6 @@
     renderer="colorManagement: true;"
     device-orientation-permission-ui="enabled: false"
   >
-    <!-- Markers injected synchronously before A-Frame initialises -->
     <script>
       (function () {
         var scene = document.currentScript.parentElement;
@@ -275,15 +293,28 @@
         assets.setAttribute('timeout', '10000');
         scene.insertBefore(assets, scene.firstChild);
 
+        // Word-wrap helper: draws text, returns line count
+        function wrapText(cx, text, x, y, maxW, lh) {
+          var words = text.split(' '), line = '', count = 0;
+          for (var i = 0; i < words.length; i++) {
+            var test = line + words[i] + ' ';
+            if (cx.measureText(test).width > maxW && line !== '') {
+              cx.fillText(line.trim(), x, y + count * lh);
+              line = words[i] + ' '; count++;
+            } else { line = test; }
+          }
+          if (line.trim()) { cx.fillText(line.trim(), x, y + count * lh); count++; }
+          return count;
+        }
+
         window.BUILDINGS.forEach(function (b, idx) {
-          // Canvas texture — guaranteed black text, no MSDF issues
+          // ── Main label canvas ──────────────────────────────────────────────
           var cv = document.createElement('canvas');
           cv.width = 1024; cv.height = 512;
           var cx = cv.getContext('2d');
           cx.fillStyle = '#ffffff';
           cx.fillRect(0, 0, 1024, 512);
-          cx.textAlign = 'center';
-          cx.textBaseline = 'middle';
+          cx.textAlign = 'center'; cx.textBaseline = 'middle';
           cx.fillStyle = '#000000';
           cx.font = 'bold 140px Arial, sans-serif';
           cx.fillText(b.name, 512, 180);
@@ -295,6 +326,50 @@
           img.src = cv.toDataURL('image/png');
           assets.appendChild(img);
 
+          // ── Description canvas ─────────────────────────────────────────────
+          var DW = 1600, DH = 1000;
+          var dv = document.createElement('canvas');
+          dv.width = DW; dv.height = DH;
+          var dx = dv.getContext('2d');
+          // Background
+          dx.fillStyle = '#0d1a1c';
+          dx.fillRect(0, 0, DW, DH);
+          // Teal border
+          dx.strokeStyle = '#107b7f'; dx.lineWidth = 8;
+          dx.strokeRect(4, 4, DW - 8, DH - 8);
+          // Full name
+          dx.fillStyle = '#ffffff';
+          dx.textAlign = 'left'; dx.textBaseline = 'top';
+          dx.font = 'bold 60px Arial, sans-serif';
+          var nl = wrapText(dx, b.full_name, 70, 58, DW - 140, 78);
+          var divY = 58 + nl * 78 + 14;
+          // Divider
+          dx.strokeStyle = '#107b7f'; dx.lineWidth = 3;
+          dx.beginPath(); dx.moveTo(70, divY); dx.lineTo(DW - 70, divY); dx.stroke();
+          // Description text
+          var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
+          dx.fillStyle = 'rgba(255,255,255,0.85)';
+          dx.font = '43px Arial, sans-serif';
+          wrapText(dx, desc, 70, divY + 28, DW - 140, 58);
+          // Play button — teal circle with white triangle, bottom-right
+          var bx = DW - 110, by = DH - 110, br = 68;
+          dx.fillStyle = '#107b7f';
+          dx.beginPath(); dx.arc(bx, by, br, 0, Math.PI * 2); dx.fill();
+          dx.fillStyle = '#ffffff';
+          dx.beginPath();
+          dx.moveTo(bx - 22, by - 30); dx.lineTo(bx - 22, by + 30); dx.lineTo(bx + 32, by);
+          dx.closePath(); dx.fill();
+          // "TAP TO HEAR" label above play button
+          dx.fillStyle = 'rgba(255,255,255,0.55)';
+          dx.font = '28px Arial, sans-serif';
+          dx.textAlign = 'center';
+          dx.fillText('TAP TO HEAR', bx, by - br - 14);
+          var dimg = document.createElement('img');
+          dimg.id = 'dlbl-' + idx;
+          dimg.src = dv.toDataURL('image/png');
+          assets.appendChild(dimg);
+
+          // ── Marker setup ───────────────────────────────────────────────────
           var marker = document.createElement('a-marker');
           marker.setAttribute('type', 'barcode');
           marker.setAttribute('value', String(idx));
@@ -306,7 +381,7 @@
           marker.setAttribute('pose-filter', 'alpha: 0.06');
           marker.id = 'marker-' + idx;
 
-          // Dashes — dash-track flips their Y when marker is detected upside-down
+          // Dashes
           var dashContainer = document.createElement('a-entity');
           dashContainer.id = 'ar-dash-' + idx;
           dashContainer.setAttribute('dash-track', '');
@@ -321,22 +396,48 @@
           }
           marker.appendChild(dashContainer);
 
-          // up-track keeps label on the world-up side of the marker
+          // Up-track container
           var upContainer = document.createElement('a-entity');
           upContainer.id = 'ar-up-' + idx;
           upContainer.setAttribute('up-track', 'y: 1.8');
 
+          // Billboard + bob animation
           var label = document.createElement('a-entity');
           label.setAttribute('billboard', '');
           label.setAttribute('animation', 'property: position; from: 0 0 0; to: 0 0.3 0; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine');
 
+          // Main label plane
           var bg = document.createElement('a-plane');
           bg.id = 'ar-bg-' + idx;
           bg.setAttribute('width', '2.2');
           bg.setAttribute('height', '1.1');
           bg.setAttribute('material', 'src: #lbl-' + idx + '; side: double; transparent: false; shader: flat');
 
+          // Description group (hidden until tap)
+          var descGroup = document.createElement('a-entity');
+          descGroup.id = 'ar-desc-' + idx;
+          descGroup.setAttribute('visible', 'false');
+
+          // Description panel — 3.5 × 2.2 units, positioned to the LEFT of the main label
+          var descPlane = document.createElement('a-plane');
+          descPlane.setAttribute('width', '3.5');
+          descPlane.setAttribute('height', '2.2');
+          descPlane.setAttribute('position', '-3.2 0 0');
+          descPlane.setAttribute('material', 'src: #dlbl-' + idx + '; side: double; transparent: false; shader: flat');
+
+          // Invisible play-button hitbox — mapped to where the circle sits on the canvas
+          // Canvas play centre: (1490/1600, 890/1000) → offset from plane centre → world pos
+          var playHitbox = document.createElement('a-plane');
+          playHitbox.id = 'ar-play-' + idx;
+          playHitbox.setAttribute('width', '0.8');
+          playHitbox.setAttribute('height', '0.8');
+          playHitbox.setAttribute('position', '-1.69 -0.87 0.02');
+          playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat');
+
+          descGroup.appendChild(descPlane);
+          descGroup.appendChild(playHitbox);
           label.appendChild(bg);
+          label.appendChild(descGroup);
           upContainer.appendChild(label);
           marker.appendChild(upContainer);
           scene.appendChild(marker);
@@ -356,6 +457,8 @@
     let mapsHideTimer = null;
     let activeIdx     = null;
     let currentView   = 'pie';
+    let _speaking     = false;
+    let _speechIdx    = -1;
     const visibleMarkers = new Set();
 
     const EUI_MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -425,6 +528,33 @@
       });
     }
 
+    // ── Speech synthesis ───────────────────────────────────────────────────────
+    function speakDescription(idx) {
+      if (!('speechSynthesis' in window)) return;
+      if (_speaking && _speechIdx === idx) {
+        window.speechSynthesis.cancel();
+        _speaking = false; _speechIdx = -1;
+        return;
+      }
+      window.speechSynthesis.cancel();
+      var text = (window.BUILDING_DESCS && window.BUILDING_DESCS[BUILDINGS[idx].name]) || BUILDINGS[idx].full_name;
+      var u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.9;
+      u.onend = u.onerror = function () { _speaking = false; _speechIdx = -1; };
+      _speaking = true; _speechIdx = idx;
+      window.speechSynthesis.speak(u);
+    }
+
+    // ── Description panel show/hide ────────────────────────────────────────────
+    function showDescPanel(idx) {
+      var g = document.getElementById('ar-desc-' + idx);
+      if (g && g.object3D) g.object3D.visible = true;
+    }
+    function hideDescPanel(idx) {
+      var g = document.getElementById('ar-desc-' + idx);
+      if (g && g.object3D) g.object3D.visible = false;
+    }
+
     function setLabelHint(idx, isOpen) {
       const bg = document.getElementById('ar-bg-' + idx);
       if (!bg || !bg.object3D) return;
@@ -470,6 +600,7 @@
         const dash = document.getElementById('ar-dash-' + i);
         if (up)   up.object3D.visible   = visible;
         if (dash) dash.object3D.visible = visible;
+        if (!visible) hideDescPanel(i);
       });
     }
 
@@ -478,6 +609,8 @@
       activeIdx = idx;
       setLabelHint(idx, true);
       setOtherLabelsVisible(idx, false);
+      showDescPanel(idx);
+
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
       document.getElementById('chart-building-name').textContent = b.name;
       document.getElementById('total-value').textContent         = fmtMWh(total);
@@ -516,7 +649,11 @@
     }
 
     function hideChart() {
-      if (activeIdx !== null) setLabelHint(activeIdx, false);
+      if (activeIdx !== null) {
+        setLabelHint(activeIdx, false);
+        hideDescPanel(activeIdx);
+      }
+      if (_speaking) { window.speechSynthesis.cancel(); _speaking = false; _speechIdx = -1; }
       setOtherLabelsVisible(-1, true);
       activeIdx = null;
       chartPanel.classList.remove('visible');
@@ -526,10 +663,9 @@
       mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
     }
 
-    // ── Wire up marker events + tap detection after scene loads ────────────────
+    // ── Marker events + tap detection ──────────────────────────────────────────
     const sceneEl  = document.querySelector('a-scene');
     const _arVec   = new THREE.Vector3();
-    const _tapV    = new THREE.Vector3();
     let _lastTouch = 0;
     const _uiLayer = document.getElementById('ui-layer');
 
@@ -557,6 +693,19 @@
     }
 
     function handleTap(cx, cy) {
+      // Play button takes priority — only check for active building
+      if (activeIdx !== null) {
+        const play = document.getElementById('ar-play-' + activeIdx);
+        if (play && play.object3D && play.object3D.visible) {
+          const sp = getScreenPos(play);
+          if (sp) {
+            const d = Math.sqrt((cx - sp.x) ** 2 + (cy - sp.y) ** 2);
+            if (d < 90) { speakDescription(activeIdx); return; }
+          }
+        }
+      }
+
+      // Main label hit test
       let bestIdx = -1, bestDist = 200;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         if (!visibleMarkers.has(idx)) continue;
@@ -585,7 +734,6 @@
       handleTap(e.clientX, e.clientY);
     });
 
-    // Reload page on orientation change so AR.js reinitialises in the correct orientation
     window.addEventListener('orientationchange', function () {
       setTimeout(function () { window.location.reload(); }, 400);
     });
