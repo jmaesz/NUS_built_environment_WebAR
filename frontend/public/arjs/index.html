@@ -746,16 +746,27 @@
                y: (-_arVec.y + 1) / 2 * r.height + r.top };
     }
 
+    const _ray = new THREE.Raycaster();
+    const _mouse = new THREE.Vector2();
+
+    function hitTestPlay(cx, cy, playEl) {
+      if (!playEl || !playEl.object3D) return false;
+      const canvas = sceneEl.canvas;
+      const rect = canvas.getBoundingClientRect();
+      _mouse.set(((cx - rect.left) / rect.width) * 2 - 1,
+                 -((cy - rect.top) / rect.height) * 2 + 1);
+      _ray.setFromCamera(_mouse, sceneEl.camera);
+      const mesh = playEl.getObject3D('mesh');
+      if (!mesh) return false;
+      return _ray.intersectObject(mesh).length > 0;
+    }
+
     function handleTap(cx, cy) {
       if (activeIdx !== null) {
-        // Play button check
+        // Raycast against the play hitbox — accurate at any distance
         const play = document.getElementById('ar-play-' + activeIdx);
-        if (play && play.object3D && play.object3D.visible) {
-          const sp = getScreenPos(play);
-          if (sp) {
-            const d = Math.sqrt((cx - sp.x) ** 2 + (cy - sp.y) ** 2);
-            if (d < 110) { speakDescription(activeIdx); return; }
-          }
+        if (play && play.object3D && play.object3D.visible && hitTestPlay(cx, cy, play)) {
+          speakDescription(activeIdx); return;
         }
         // Any other tap while panel is open → close
         hideChart();
