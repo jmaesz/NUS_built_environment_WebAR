@@ -554,41 +554,20 @@
       });
     }
 
-    // ── Speech synthesis ───────────────────────────────────────────────────────
-    function getBestFemaleVoice() {
-      var voices = window.speechSynthesis.getVoices();
-      var preferred = [
-        'Samantha', 'Karen', 'Moira', 'Tessa', 'Fiona',
-        'Google UK English Female', 'Microsoft Zira', 'Google US English'
-      ];
-      for (var p = 0; p < preferred.length; p++) {
-        for (var v = 0; v < voices.length; v++) {
-          if (voices[v].name.indexOf(preferred[p]) !== -1) return voices[v];
-        }
-      }
-      for (var v = 0; v < voices.length; v++) {
-        if (voices[v].lang.indexOf('en') === 0) return voices[v];
-      }
-      return null;
-    }
+    // ── Audio playback ─────────────────────────────────────────────────────────
+    var _audio = null;
 
     function speakDescription(idx) {
-      if (!('speechSynthesis' in window)) return;
-      if (_speaking && _speechIdx === idx) {
-        window.speechSynthesis.cancel();
-        _speaking = false; _speechIdx = -1;
-        return;
+      if (_audio && !_audio.paused) {
+        if (_speechIdx === idx) { _audio.pause(); _audio.currentTime = 0; _speaking = false; _speechIdx = -1; return; }
+        _audio.pause(); _audio.currentTime = 0;
       }
-      window.speechSynthesis.cancel();
-      var text = (window.BUILDING_DESCS && window.BUILDING_DESCS[BUILDINGS[idx].name]) || BUILDINGS[idx].full_name;
-      var u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.85;
-      u.pitch = 1.1;
-      var voice = getBestFemaleVoice();
-      if (voice) u.voice = voice;
-      u.onend = u.onerror = function () { _speaking = false; _speechIdx = -1; };
+      var name = BUILDINGS[idx].name;
+      _audio = new Audio('/audio/' + name + '.mp3');
+      _audio.onended = function () { _speaking = false; _speechIdx = -1; };
+      _audio.onerror = function () { _speaking = false; _speechIdx = -1; };
       _speaking = true; _speechIdx = idx;
-      window.speechSynthesis.speak(u);
+      _audio.play();
     }
 
     // ── Description panel show/hide ────────────────────────────────────────────
@@ -699,7 +678,7 @@
         setLabelHint(activeIdx, false);
         hideDescPanel(activeIdx);
       }
-      if (_speaking) { window.speechSynthesis.cancel(); _speaking = false; _speechIdx = -1; }
+      if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; _speaking = false; _speechIdx = -1; }
       setOtherLabelsVisible(-1, true);
       activeIdx = null;
       chartPanel.classList.remove('visible');
