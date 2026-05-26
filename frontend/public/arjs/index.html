@@ -378,7 +378,7 @@
           dx.font = '129px Arial, sans-serif';
           justifyText(dx, desc, 70, divY + 28, DW - 140, 165);
           // Play button — draw on dv, store canvas ref for live play/pause toggle
-          var bx = DW - 170, by = DH - 170, br = 140;
+          var bx = 170, by = DH - 170, br = 140;
           dx.fillStyle = '#107b7f';
           dx.beginPath(); dx.arc(bx, by, br, 0, Math.PI * 2); dx.fill();
           dx.fillStyle = '#ffffff';
@@ -455,7 +455,7 @@
           playHitbox.id = 'ar-play-' + idx;
           playHitbox.setAttribute('width', '1.5');
           playHitbox.setAttribute('height', '1.5');
-          playHitbox.setAttribute('position', '-1.87 -1.83 0.02');
+          playHitbox.setAttribute('position', '-8.13 -1.83 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat');
 
           descGroup.appendChild(descPlane);
@@ -560,7 +560,7 @@
       var plane = document.getElementById('ar-desc-plane-' + idx);
       if (!canvas || !plane) return;
       var ctx = canvas.getContext('2d');
-      var bx = canvas.width - 170, by = canvas.height - 170, br = 140;
+      var bx = 170, by = canvas.height - 170, br = 140;
       ctx.fillStyle = '#0d1a1c';
       ctx.beginPath(); ctx.arc(bx, by, br + 12, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#107b7f';
@@ -746,27 +746,15 @@
                y: (-_arVec.y + 1) / 2 * r.height + r.top };
     }
 
-    const _ray = new THREE.Raycaster();
-    const _mouse = new THREE.Vector2();
-
-    function hitTestPlay(cx, cy, playEl) {
-      if (!playEl || !playEl.object3D) return false;
-      const canvas = sceneEl.canvas;
-      const rect = canvas.getBoundingClientRect();
-      _mouse.set(((cx - rect.left) / rect.width) * 2 - 1,
-                 -((cy - rect.top) / rect.height) * 2 + 1);
-      _ray.setFromCamera(_mouse, sceneEl.camera);
-      const mesh = playEl.getObject3D('mesh');
-      if (!mesh) return false;
-      return _ray.intersectObject(mesh).length > 0;
-    }
-
     function handleTap(cx, cy) {
       if (activeIdx !== null) {
-        // Raycast against the play hitbox — accurate at any distance
         const play = document.getElementById('ar-play-' + activeIdx);
-        if (play && play.object3D && play.object3D.visible && hitTestPlay(cx, cy, play)) {
-          speakDescription(activeIdx); return;
+        if (play && play.object3D && play.object3D.visible) {
+          const sp = getScreenPos(play);
+          if (sp) {
+            const d = Math.sqrt((cx - sp.x) ** 2 + (cy - sp.y) ** 2);
+            if (d < 110) { speakDescription(activeIdx); return; }
+          }
         }
         // Any other tap while panel is open → close
         hideChart();
