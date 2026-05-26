@@ -29,9 +29,10 @@
         this.el.object3D.getWorldPosition(this._obj);
         this._dir.subVectors(this._tgt, this._obj);
         var xzLen = Math.sqrt(this._dir.x * this._dir.x + this._dir.z * this._dir.z);
-        if (xzLen < 0.001) xzLen = 0.001;
-        var maxY = xzLen * 1.19; // cap elevation at ~50° — never goes flat
-        if (this._dir.y > maxY) this._dir.y = maxY;
+        if (xzLen > 0.05) {
+          var maxY = xzLen * 1.19; // cap elevation at ~50°
+          if (this._dir.y > maxY) this._dir.y = maxY;
+        }
         this._tgt.addVectors(this._obj, this._dir);
         this.el.object3D.lookAt(this._tgt);
       }
