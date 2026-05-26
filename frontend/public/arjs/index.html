@@ -794,6 +794,15 @@
       setTimeout(function () { window.location.reload(); }, 400);
     });
 
+    // Release camera tracks before page unloads so refresh gets a clean stream
+    function _stopCamera() {
+      document.querySelectorAll('video').forEach(function (v) {
+        if (v.srcObject) v.srcObject.getTracks().forEach(function (t) { t.stop(); });
+      });
+    }
+    window.addEventListener('pagehide', _stopCamera);
+    window.addEventListener('beforeunload', _stopCamera);
+
     (function () {
       const btn = document.getElementById('landscape-scroll-btn');
       if (!window.visualViewport) return;
