@@ -791,7 +791,7 @@
 
       // No panel open — screen-distance hit test against visible labels
       const r = sceneEl.canvas.getBoundingClientRect();
-      let bestIdx = -1, bestDist = 40;
+      let bestIdx = -1, bestDist = 60;
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         if (!visibleMarkers.has(idx)) continue;
         const bg = document.getElementById('ar-bg-' + idx);
