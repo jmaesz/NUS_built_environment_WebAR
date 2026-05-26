@@ -378,18 +378,18 @@
           dx.font = '129px Arial, sans-serif';
           justifyText(dx, desc, 70, divY + 28, DW - 140, 165);
           // Play button — teal circle with white triangle, bottom-right
-          var bx = DW - 110, by = DH - 110, br = 68;
+          var bx = DW - 170, by = DH - 170, br = 140;
           dx.fillStyle = '#107b7f';
           dx.beginPath(); dx.arc(bx, by, br, 0, Math.PI * 2); dx.fill();
           dx.fillStyle = '#ffffff';
           dx.beginPath();
-          dx.moveTo(bx - 22, by - 30); dx.lineTo(bx - 22, by + 30); dx.lineTo(bx + 32, by);
+          dx.moveTo(bx - 45, by - 62); dx.lineTo(bx - 45, by + 62); dx.lineTo(bx + 66, by);
           dx.closePath(); dx.fill();
           // "TAP TO HEAR" label above play button
           dx.fillStyle = 'rgba(255,255,255,0.55)';
-          dx.font = '28px Arial, sans-serif';
+          dx.font = '58px Arial, sans-serif';
           dx.textAlign = 'center';
-          dx.fillText('TAP TO HEAR', bx, by - br - 14);
+          dx.fillText('TAP TO HEAR', bx, by - br - 18);
           var dimg = document.createElement('img');
           dimg.id = 'dlbl-' + idx;
           dimg.src = dv.toDataURL('image/png');
@@ -455,9 +455,9 @@
           // Canvas play centre: (1490/1600, 890/1000) → offset from plane centre → world pos
           var playHitbox = document.createElement('a-plane');
           playHitbox.id = 'ar-play-' + idx;
-          playHitbox.setAttribute('width', '0.8');
-          playHitbox.setAttribute('height', '0.8');
-          playHitbox.setAttribute('position', '-1.74 -1.96 0.02');
+          playHitbox.setAttribute('width', '1.5');
+          playHitbox.setAttribute('height', '1.5');
+          playHitbox.setAttribute('position', '-1.87 -1.83 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat');
 
           descGroup.appendChild(descPlane);
@@ -555,6 +555,23 @@
     }
 
     // ── Speech synthesis ───────────────────────────────────────────────────────
+    function getBestFemaleVoice() {
+      var voices = window.speechSynthesis.getVoices();
+      var preferred = [
+        'Samantha', 'Karen', 'Moira', 'Tessa', 'Fiona',
+        'Google UK English Female', 'Microsoft Zira', 'Google US English'
+      ];
+      for (var p = 0; p < preferred.length; p++) {
+        for (var v = 0; v < voices.length; v++) {
+          if (voices[v].name.indexOf(preferred[p]) !== -1) return voices[v];
+        }
+      }
+      for (var v = 0; v < voices.length; v++) {
+        if (voices[v].lang.indexOf('en') === 0) return voices[v];
+      }
+      return null;
+    }
+
     function speakDescription(idx) {
       if (!('speechSynthesis' in window)) return;
       if (_speaking && _speechIdx === idx) {
@@ -565,7 +582,10 @@
       window.speechSynthesis.cancel();
       var text = (window.BUILDING_DESCS && window.BUILDING_DESCS[BUILDINGS[idx].name]) || BUILDINGS[idx].full_name;
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.9;
+      u.rate = 0.85;
+      u.pitch = 1.1;
+      var voice = getBestFemaleVoice();
+      if (voice) u.voice = voice;
       u.onend = u.onerror = function () { _speaking = false; _speechIdx = -1; };
       _speaking = true; _speechIdx = idx;
       window.speechSynthesis.speak(u);
@@ -726,7 +746,7 @@
           const sp = getScreenPos(play);
           if (sp) {
             const d = Math.sqrt((cx - sp.x) ** 2 + (cy - sp.y) ** 2);
-            if (d < 90) { speakDescription(activeIdx); return; }
+            if (d < 110) { speakDescription(activeIdx); return; }
           }
         }
       }
