@@ -64,23 +64,24 @@
         }
       }
     });
-    // Pose filter — sticky hold until out of camera view, snap on large shift, EMA for jitter
+    // Pose filter — stability gate + sticky hold + EMA
     AFRAME.registerComponent('pose-filter', {
-      schema: { alpha: { default: 0.15 }, snapDist: { default: 0.5 } },
+      schema: { alpha: { default: 0.15 } },
       init: function () {
-        this._pos       = new THREE.Vector3();
-        this._quat      = new THREE.Quaternion();
-        this._screenPos = new THREE.Vector3();
-        this._ready     = false;
+        this._pos         = new THREE.Vector3();
+        this._quat        = new THREE.Quaternion();
+        this._screenPos   = new THREE.Vector3();
+        this._ready       = false;
+        this._stableCount = 0;
       },
       tick: function () {
         var obj = this.el.object3D;
         if (!obj.visible) {
+          this._stableCount = 0;
           if (this._ready) {
             var cam = this.el.sceneEl.camera;
             if (cam) {
               this._screenPos.copy(this._pos).project(cam);
-              // Only release when marker is behind camera or well outside viewport
               if (this._screenPos.z > 1 || Math.abs(this._screenPos.x) > 1.5 || Math.abs(this._screenPos.y) > 1.5) {
                 this._ready = false;
                 return;
@@ -92,21 +93,22 @@
           }
           return;
         }
+        this._stableCount++;
         if (!this._ready) {
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
           this._ready = true;
+        }
+        // Require 3 consecutive detection frames before tracking — filters flicker noise
+        if (this._stableCount < 3) {
+          obj.position.copy(this._pos);
+          obj.quaternion.copy(this._quat);
           return;
         }
-        if (this._pos.distanceTo(obj.position) > this.data.snapDist) {
-          this._pos.copy(obj.position);
-          this._quat.copy(obj.quaternion);
-        } else {
-          var dist = obj.position.length();
-          var a = Math.max(0.03, Math.min(0.3, this.data.alpha / Math.max(dist, 0.5)));
-          this._pos.lerp(obj.position, a);
-          this._quat.slerp(obj.quaternion, a);
-        }
+        var dist = obj.position.length();
+        var a = Math.max(0.03, Math.min(0.3, this.data.alpha / Math.max(dist, 0.5)));
+        this._pos.lerp(obj.position, a);
+        this._quat.slerp(obj.quaternion, a);
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
       }
