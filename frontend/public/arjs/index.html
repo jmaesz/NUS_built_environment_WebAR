@@ -57,9 +57,9 @@
         }
       }
     });
-    // Pose filter — snap on large shift, EMA for small jitter
+    // EMA pose filter — distance-adaptive lerp/slerp to kill jitter, heavier at distance
     AFRAME.registerComponent('pose-filter', {
-      schema: { alpha: { default: 0.15 }, snapDist: { default: 0.12 } },
+      schema: { alpha: { default: 0.15 } },
       init: function () {
         this._pos    = new THREE.Vector3();
         this._quat   = new THREE.Quaternion();
@@ -88,15 +88,10 @@
           this._ready = true;
           return;
         }
-        if (this._pos.distanceTo(obj.position) > this.data.snapDist) {
-          this._pos.copy(obj.position);
-          this._quat.copy(obj.quaternion);
-        } else {
-          var dist = obj.position.length();
-          var a = Math.max(0.03, Math.min(0.3, this.data.alpha / Math.max(dist, 0.5)));
-          this._pos.lerp(obj.position, a);
-          this._quat.slerp(obj.quaternion, a);
-        }
+        var dist = obj.position.length();
+        var a = Math.max(0.03, Math.min(0.3, this.data.alpha / Math.max(dist, 0.5)));
+        this._pos.lerp(obj.position, a);
+        this._quat.slerp(obj.quaternion, a);
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
       }
@@ -433,10 +428,10 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '5');
+          marker.setAttribute('smoothCount', '30');
           marker.setAttribute('smoothTolerance', '0.05');
           marker.setAttribute('smoothThreshold', '2');
-          marker.setAttribute('pose-filter', 'alpha: 0.15');
+          marker.setAttribute('pose-filter', 'alpha: 0.06');
           marker.id = 'marker-' + idx;
 
           // Dashes
