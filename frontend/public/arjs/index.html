@@ -82,7 +82,7 @@
             var cam = this.el.sceneEl.camera;
             if (cam) {
               this._screenPos.copy(this._pos).project(cam);
-              if (this._screenPos.z > 1 || Math.abs(this._screenPos.x) > 1.5 || Math.abs(this._screenPos.y) > 1.5) {
+              if (this._screenPos.z > 1 || Math.abs(this._screenPos.x) > 2.0 || Math.abs(this._screenPos.y) > 2.0) {
                 this._ready = false;
                 return;
               }
@@ -99,8 +99,8 @@
           this._quat.copy(obj.quaternion);
           this._ready = true;
         }
-        // Require 3 consecutive detection frames before tracking — filters flicker noise
-        if (this._stableCount < 3) {
+        // Require 5 consecutive detection frames before tracking — filters flicker noise
+        if (this._stableCount < 5) {
           obj.position.copy(this._pos);
           obj.quaternion.copy(this._quat);
           return;
