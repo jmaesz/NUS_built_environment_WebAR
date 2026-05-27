@@ -35,6 +35,8 @@
         if (!this.el.parentEl.parentEl.object3D.visible) return;
         var cam = this.el.sceneEl.camera;
         if (!cam) return;
+        // Rebuild this label's world matrix branch so pose-filter + up-track changes are visible
+        this.el.object3D.updateWorldMatrix(true, false);
         cam.getWorldPosition(this._camPos);
         this.el.object3D.getWorldPosition(this._obj);
         this._dir.subVectors(this._camPos, this._obj);
