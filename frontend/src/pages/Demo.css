@@ -23,12 +23,31 @@
   display: block;
 }
 
+.demo-header-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .demo-step {
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.15em;
   color: #888;
 }
+
+.demo-skip {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: #107b7f;
+  cursor: pointer;
+  padding: 0;
+}
+.demo-skip:hover { opacity: 0.7; }
 
 /* ── Main ── */
 .demo-main {
@@ -53,8 +72,8 @@
   margin: 0;
 }
 
-.demo-section-label--padded {
-  padding: 0 24px 20px;
+.demo-section-label--p2 {
+  padding: 0 0 20px;
 }
 
 /* ── Step 1 tips ── */
@@ -117,7 +136,8 @@
 /* ── Step 2: annotated image ── */
 .demo-annotated {
   position: relative;
-  width: 100%;
+  width: calc(100% + 48px);
+  margin: 0 -24px;
   flex-shrink: 0;
 }
 
@@ -185,7 +205,7 @@
   background: #0a0a0a;
   color: #f5f4f0;
   transition: background 0.25s;
-  margin-bottom: 20px;
+  margin: 0 -24px 20px;
 }
 
 .anno-info--visible {

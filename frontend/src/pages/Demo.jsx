@@ -16,7 +16,12 @@ export default function Demo() {
           onClick={() => navigate('/')}
           style={{ cursor: 'pointer' }}
         />
-        <span className="demo-step">0{step} / 02</span>
+        <div className="demo-header-right">
+          <span className="demo-step">0{step} / 02</span>
+          <button className="demo-skip" onClick={() => { window.location.href = '/arjs/index.html' }}>
+            SKIP →
+          </button>
+        </div>
       </header>
 
       {step === 1
@@ -111,7 +116,7 @@ function Step2() {
 
   return (
     <main className="demo-main demo-main--p2">
-      <p className="demo-section-label demo-section-label--padded">WHAT YOU'LL SEE</p>
+      <p className="demo-section-label demo-section-label--p2">WHAT YOU'LL SEE</p>
 
       <div
         className="demo-annotated"
