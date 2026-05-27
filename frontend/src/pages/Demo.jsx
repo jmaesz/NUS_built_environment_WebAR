@@ -20,8 +20,8 @@ export default function Demo() {
       </header>
 
       {step === 1
-        ? <Step1 onBack={() => navigate('/')} onNext={() => setStep(2)} />
-        : <Step2 onBack={() => setStep(1)} />
+        ? <Step1 onNext={() => setStep(2)} />
+        : <Step2 />
       }
 
       <footer className="demo-footer">
@@ -33,24 +33,23 @@ export default function Demo() {
   )
 }
 
-function Step1({ onBack, onNext }) {
+function Step1({ onNext }) {
   return (
     <main className="demo-main">
       <p className="demo-section-label">BEFORE YOU START</p>
 
-      <div className="demo-tips-grid">
-        <div className="demo-tip">
-          <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
-          <p className="demo-tip-caption">
-            Point your camera at the ArUco markers on the physical model — works in portrait mode
-          </p>
-        </div>
-        <div className="demo-tip">
-          <img src="/demo-landscape.png" alt="Landscape mode" className="demo-tip-img" />
-          <p className="demo-tip-caption">
-            Rotate your phone for a wider view — landscape mode is fully supported too
-          </p>
-        </div>
+      <div className="demo-tip">
+        <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
+        <p className="demo-tip-caption">
+          Point your camera at the ArUco markers on the physical model — works in portrait mode
+        </p>
+      </div>
+
+      <div className="demo-tip">
+        <img src="/demo-landscape.png" alt="Landscape mode" className="demo-tip-img landscape" />
+        <p className="demo-tip-caption">
+          Rotate your phone for a wider view — landscape orientation is fully supported
+        </p>
       </div>
 
       <div className="demo-warning">
@@ -73,22 +72,35 @@ function Step1({ onBack, onNext }) {
   )
 }
 
-function Step2({ onBack }) {
+const ANNOTATIONS = [
+  { label: 'Back to home',           top: '3%',  left: '2%'  },
+  { label: 'Energy & architect data', top: '3%',  right: '2%' },
+  { label: 'Building description',   top: '38%', left: '2%'  },
+  { label: 'AR label — tap to open', top: '52%', right: '2%' },
+  { label: 'Open in Google Maps',    top: '79%', left: '2%'  },
+]
+
+function Step2() {
   return (
-    <main className="demo-main">
-      <p className="demo-section-label">WHAT YOU'LL SEE</p>
+    <main className="demo-main demo-main--p2">
+      <p className="demo-section-label demo-section-label--padded">WHAT YOU'LL SEE</p>
 
-      <img src="/demo-ar.png" alt="AR experience demo" className="demo-ar-img" />
-
-      <div className="demo-desc-block">
-        <p className="demo-desc">
-          Tap any building label to reveal its energy breakdown, monthly usage chart, building description, and a direct link to Google Maps.
-        </p>
+      <div className="demo-annotated">
+        <img src="/demo-ar.png" alt="AR experience demo" className="demo-ar-img" />
+        {ANNOTATIONS.map((a, i) => (
+          <span
+            key={i}
+            className="demo-anno"
+            style={{ top: a.top, left: a.left, right: a.right }}
+          >
+            {a.label}
+          </span>
+        ))}
       </div>
 
       <div className="demo-spacer" />
 
-      <button className="demo-cta" onClick={() => { window.location.href = '/arjs/index.html' }}>
+      <button className="demo-cta demo-cta--padded" onClick={() => { window.location.href = '/arjs/index.html' }}>
         START AR
         <span className="demo-cta-arrow">→</span>
       </button>
