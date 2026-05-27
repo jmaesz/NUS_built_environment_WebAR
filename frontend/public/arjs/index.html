@@ -15,6 +15,7 @@
       tick: function () {
         var mo = this.el.parentEl.object3D;
         if (!mo.visible) return;
+        mo.updateWorldMatrix(true, false);
         mo.getWorldPosition(this._wp);
         this._wp.y += this.data.y;
         mo.worldToLocal(this._wp);
@@ -56,6 +57,7 @@
       tick: function () {
         var mo = this.el.parentEl.object3D;
         if (!mo.visible) return;
+        mo.updateWorldMatrix(true, false);
         if (!this._kids) this._kids = Array.from(this.el.children);
         var p = this.data.pitch, h = this.data.dashH;
         for (var i = 0; i < this._kids.length; i++) {
@@ -84,7 +86,7 @@
             var cam = this.el.sceneEl.camera;
             if (cam) {
               this._screenPos.copy(this._pos).project(cam);
-              if (this._screenPos.z > 1 || Math.abs(this._screenPos.x) > 2.0 || Math.abs(this._screenPos.y) > 2.0) {
+              if (this._screenPos.z > 1) {
                 this._ready = false;
                 return;
               }
