@@ -14,7 +14,6 @@
       init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
         var mo = this.el.parentEl.object3D;
-        if (!mo.visible) return;
         mo.getWorldPosition(this._wp);
         this._wp.y += this.data.y;
         mo.worldToLocal(this._wp);
@@ -25,7 +24,6 @@
     AFRAME.registerComponent('billboard', {
       init: function () { this._dir = new THREE.Vector3(); this._tgt = new THREE.Vector3(); this._obj = new THREE.Vector3(); },
       tick: function () {
-        if (!this.el.parentEl.parentEl.object3D.visible) return;
         var cam = this.el.sceneEl.camera;
         if (!cam) return;
         cam.getWorldPosition(this._tgt);
@@ -45,9 +43,8 @@
       schema: { dashH: { default: 0.1 }, pitch: { default: 0.2 } },
       init: function () { this._wp = new THREE.Vector3(); this._kids = null; },
       tick: function () {
-        var mo = this.el.parentEl.object3D;
-        if (!mo.visible) return;
         if (!this._kids) this._kids = Array.from(this.el.children);
+        var mo = this.el.parentEl.object3D;
         var p = this.data.pitch, h = this.data.dashH;
         for (var i = 0; i < this._kids.length; i++) {
           mo.getWorldPosition(this._wp);
@@ -258,10 +255,6 @@
     <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
     <div id="landscape-scroll-btn"><span class="hint-arrow">↑</span><span class="hint-text">SCROLL<br>UP</span></div>
     <div id="scan-hint">POINT CAMERA AT MODEL</div>
-    <div id="camera-retry" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.88);flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:-apple-system,sans-serif;">
-      <p style="font-size:13px;letter-spacing:0.12em;margin-bottom:18px;text-align:center;">CAMERA UNAVAILABLE<br><span style="font-size:11px;opacity:0.55;letter-spacing:0.06em;">Check permissions and try again</span></p>
-      <button onclick="window.location.reload()" style="padding:12px 28px;font-size:11px;font-weight:700;letter-spacing:0.1em;background:#107b7f;color:#fff;border:none;border-radius:4px;cursor:pointer;">RETRY</button>
-    </div>
 
     <div id="chart-panel">
       <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
@@ -842,20 +835,6 @@
     }
     window.addEventListener('pagehide', _stopCamera);
     window.addEventListener('beforeunload', _stopCamera);
-
-    // If iOS restores this page from bfcache, AR.js/Three.js state is stale — force a fresh load
-    window.addEventListener('pageshow', function (e) {
-      if (e.persisted) window.location.reload();
-    });
-
-    // Show retry overlay if camera never starts within 10s
-    setTimeout(function () {
-      var video = document.querySelector('video');
-      if (!video || video.readyState < 2) {
-        var el = document.getElementById('camera-retry');
-        if (el) el.style.display = 'flex';
-      }
-    }, 10000);
 
     (function () {
       const btn = document.getElementById('landscape-scroll-btn');
