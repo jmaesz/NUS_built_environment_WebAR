@@ -21,23 +21,30 @@
         this.el.object3D.position.copy(this._wp);
       }
     });
-    // Reliable per-frame billboard — direct lookAt, no lag
+    // Yaw-only billboard — rotates around world Y only, zero roll, no random tilt
     AFRAME.registerComponent('billboard', {
-      init: function () { this._dir = new THREE.Vector3(); this._tgt = new THREE.Vector3(); this._obj = new THREE.Vector3(); },
+      init: function () {
+        this._dir        = new THREE.Vector3();
+        this._camPos     = new THREE.Vector3();
+        this._obj        = new THREE.Vector3();
+        this._euler      = new THREE.Euler(0, 0, 0, 'YXZ');
+        this._worldQuat  = new THREE.Quaternion();
+        this._parentQuat = new THREE.Quaternion();
+      },
       tick: function () {
         if (!this.el.parentEl.parentEl.object3D.visible) return;
         var cam = this.el.sceneEl.camera;
         if (!cam) return;
-        cam.getWorldPosition(this._tgt);
+        cam.getWorldPosition(this._camPos);
         this.el.object3D.getWorldPosition(this._obj);
-        this._dir.subVectors(this._tgt, this._obj);
-        var xzLen = Math.sqrt(this._dir.x * this._dir.x + this._dir.z * this._dir.z);
-        if (xzLen > 0.05) {
-          var maxY = xzLen * 1.19; // cap elevation at ~50°
-          if (this._dir.y > maxY) this._dir.y = maxY;
-        }
-        this._tgt.addVectors(this._obj, this._dir);
-        this.el.object3D.lookAt(this._tgt);
+        this._dir.subVectors(this._camPos, this._obj);
+        // Only yaw — label stays perfectly upright, no roll possible
+        this._euler.set(0, Math.atan2(this._dir.x, this._dir.z), 0);
+        this._worldQuat.setFromEuler(this._euler);
+        // Convert world rotation to local by removing parent's world rotation
+        this.el.object3D.parent.getWorldQuaternion(this._parentQuat);
+        this._parentQuat.invert();
+        this.el.object3D.quaternion.multiplyQuaternions(this._parentQuat, this._worldQuat);
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
