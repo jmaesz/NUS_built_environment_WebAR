@@ -5,6 +5,7 @@ import './Demo.css'
 export default function Demo() {
   const [step, setStep] = useState(1)
   const navigate = useNavigate()
+  const handleSkip = () => { window.location.href = '/arjs/index.html' }
 
   return (
     <div className="demo">
@@ -16,17 +17,12 @@ export default function Demo() {
           onClick={() => navigate('/')}
           style={{ cursor: 'pointer' }}
         />
-        <div className="demo-header-right">
-          <span className="demo-step">0{step} / 02</span>
-          <button className="demo-skip" onClick={() => { window.location.href = '/arjs/index.html' }}>
-            SKIP →
-          </button>
-        </div>
+        <span className="demo-step">0{step} / 02</span>
       </header>
 
       {step === 1
-        ? <Step1 onNext={() => setStep(2)} />
-        : <Step2 />
+        ? <Step1 onNext={() => setStep(2)} onBack={() => navigate('/')} onSkip={handleSkip} />
+        : <Step2 onBack={() => setStep(1)} onSkip={handleSkip} />
       }
 
       <footer className="demo-footer">
@@ -38,10 +34,13 @@ export default function Demo() {
   )
 }
 
-function Step1({ onNext }) {
+function Step1({ onNext, onBack, onSkip }) {
   return (
     <main className="demo-main">
-      <p className="demo-section-label">BEFORE YOU START</p>
+      <div className="demo-label-row">
+        <p className="demo-section-label">BEFORE YOU START</p>
+        <button className="demo-skip-box" onClick={onSkip}>SKIP →</button>
+      </div>
 
       <div className="demo-tip">
         <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
@@ -69,10 +68,10 @@ function Step1({ onNext }) {
 
       <div className="demo-spacer" />
 
-      <button className="demo-cta" onClick={onNext}>
-        NEXT
-        <span className="demo-cta-arrow">→</span>
-      </button>
+      <div className="demo-nav-row">
+        <button className="demo-nav-btn demo-nav-btn--back" onClick={onBack}>← BACK</button>
+        <button className="demo-nav-btn demo-nav-btn--next" onClick={onNext}>NEXT →</button>
+      </div>
     </main>
   )
 }
@@ -110,13 +109,16 @@ const ANNOTATIONS = [
   },
 ]
 
-function Step2() {
+function Step2({ onBack, onSkip }) {
   const [active, setActive] = useState(null)
   const info = ANNOTATIONS.find(a => a.id === active)
 
   return (
     <main className="demo-main demo-main--p2">
-      <p className="demo-section-label demo-section-label--p2">WHAT YOU'LL SEE</p>
+      <div className="demo-label-row demo-label-row--p2">
+        <p className="demo-section-label">WHAT YOU'LL SEE</p>
+        <button className="demo-skip-box" onClick={onSkip}>SKIP →</button>
+      </div>
 
       <div
         className="demo-annotated"
@@ -146,10 +148,10 @@ function Step2() {
         )}
       </div>
 
-      <button className="demo-cta demo-cta--padded" onClick={() => { window.location.href = '/arjs/index.html' }}>
-        START AR
-        <span className="demo-cta-arrow">→</span>
-      </button>
+      <div className="demo-nav-row">
+        <button className="demo-nav-btn demo-nav-btn--back" onClick={onBack}>← BACK</button>
+        <button className="demo-nav-btn demo-nav-btn--start" onClick={onSkip}>START AR →</button>
+      </div>
     </main>
   )
 }

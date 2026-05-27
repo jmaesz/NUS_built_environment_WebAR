@@ -23,12 +23,6 @@
   display: block;
 }
 
-.demo-header-right {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
 .demo-step {
   font-size: 10px;
   font-weight: 500;
@@ -36,18 +30,31 @@
   color: #888;
 }
 
-.demo-skip {
-  background: none;
-  border: none;
+/* ── Label row (section label + skip box) ── */
+.demo-label-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.demo-label-row--p2 {
+  padding-bottom: 20px;
+}
+
+.demo-skip-box {
+  background: rgba(16,123,127,0.08);
+  border: 1px solid #107b7f;
+  border-radius: 4px;
+  padding: 6px 12px;
   font-family: inherit;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;
   color: #107b7f;
   cursor: pointer;
-  padding: 0;
+  flex-shrink: 0;
 }
-.demo-skip:hover { opacity: 0.7; }
+.demo-skip-box:hover { background: rgba(16,123,127,0.15); }
 
 /* ── Main ── */
 .demo-main {
@@ -72,9 +79,6 @@
   margin: 0;
 }
 
-.demo-section-label--p2 {
-  padding: 0 0 20px;
-}
 
 /* ── Step 1 tips ── */
 .demo-tip {
@@ -136,8 +140,7 @@
 /* ── Step 2: annotated image ── */
 .demo-annotated {
   position: relative;
-  width: calc(100% + 48px);
-  margin: 0 -24px;
+  width: 100%;
   flex-shrink: 0;
 }
 
@@ -205,7 +208,7 @@
   background: #0a0a0a;
   color: #f5f4f0;
   transition: background 0.25s;
-  margin: 0 -24px 20px;
+  margin-bottom: 20px;
 }
 
 .anno-info--visible {
@@ -250,6 +253,43 @@
 
 /* ── Spacer ── */
 .demo-spacer { flex: 1; min-height: 8px; }
+
+/* ── Bottom nav row (BACK / NEXT or START AR) ── */
+.demo-nav-row {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.demo-nav-btn {
+  flex: 1;
+  padding: 18px 24px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  border: none;
+  transition: background 0.2s, letter-spacing 0.2s;
+}
+
+.demo-nav-btn--back {
+  background: #e8e7e3;
+  color: #0a0a0a;
+  text-align: left;
+}
+.demo-nav-btn--back:hover  { background: #d5d4d0; }
+.demo-nav-btn--back:active { background: #c8c7c3; }
+
+.demo-nav-btn--next,
+.demo-nav-btn--start {
+  background: #0a0a0a;
+  color: #f5f4f0;
+  text-align: right;
+}
+.demo-nav-btn--next:hover,
+.demo-nav-btn--start:hover  { background: #2a2a2a; letter-spacing: 0.18em; }
+.demo-nav-btn--next:active,
+.demo-nav-btn--start:active { background: #444; }
 
 /* ── CTA ── */
 .demo-cta {
