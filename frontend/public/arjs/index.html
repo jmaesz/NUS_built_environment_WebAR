@@ -857,14 +857,20 @@
       if (e.persisted) window.location.reload();
     });
 
-    // Show retry overlay if camera never starts within 10s
-    setTimeout(function () {
-      var video = document.querySelector('video');
-      if (!video || video.readyState < 2) {
-        var el = document.getElementById('camera-retry');
-        if (el) el.style.display = 'flex';
-      }
-    }, 10000);
+    // Poll every 2s — show retry if camera has no valid frame after 3 checks (~6s)
+    (function () {
+      var checks = 0;
+      var timer = setInterval(function () {
+        var v = document.querySelector('video');
+        var ok = v && v.videoWidth > 0 && !v.paused && v.readyState >= 3;
+        if (ok) { clearInterval(timer); return; }
+        if (++checks >= 3) {
+          clearInterval(timer);
+          var el = document.getElementById('camera-retry');
+          if (el) el.style.display = 'flex';
+        }
+      }, 2000);
+    })();
 
     (function () {
       const btn = document.getElementById('landscape-scroll-btn');
