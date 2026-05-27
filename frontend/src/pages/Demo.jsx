@@ -75,31 +75,31 @@ function Step1({ onNext }) {
 const ANNOTATIONS = [
   {
     id: 'back',
-    top: '3.5%', left: '7%',
+    top: '2.0%', left: '18.1%',
     title: 'Back Button',
     desc: 'Return to the home screen at any time without losing your camera session.',
   },
   {
     id: 'panel',
-    top: '25%', left: '76%',
+    top: '14.2%', left: '75.1%',
     title: 'Energy Use & EUI Panel',
     desc: 'Toggle between Energy Use (annual or monthly breakdown by cooling, equipment, and lighting) and Monthly EUI to compare energy efficiency across buildings.',
   },
   {
     id: 'desc',
-    top: '57%', left: '10%',
+    top: '54.9%', left: '9.7%',
     title: 'Building Description & Audio',
     desc: 'Read the building caption to understand its design and sustainability features — then tap ▶ to listen to a recorded audio guide.',
   },
   {
     id: 'label',
-    top: '54%', left: '63%',
+    top: '38.3%', left: '77.3%',
     title: 'AR Building Label',
     desc: 'Tap any floating label to open its data panel. Tap again or tap elsewhere to close.',
   },
   {
     id: 'maps',
-    top: '88%', left: '70%',
+    top: '92.1%', left: '77.8%',
     title: 'Google Maps Link',
     desc: 'Opens turn-by-turn directions to the building directly in Google Maps.',
   },
