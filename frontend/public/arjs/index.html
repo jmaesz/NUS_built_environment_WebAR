@@ -68,14 +68,14 @@
         }
       }
     });
-    // Pose filter: snap on first detection, tiny EMA only after 5 consecutive stable frames
+    // Pose hold: let AR.js smoothing handle stability; only add sticky hold when marker lost
     AFRAME.registerComponent('pose-filter', {
-      schema: { alpha: { default: 0.03 } },
+      schema: {},
       init: function () {
-        this._pos         = new THREE.Vector3();
-        this._quat        = new THREE.Quaternion();
-        this._screenPos   = new THREE.Vector3();
-        this._ready = false;
+        this._pos       = new THREE.Vector3();
+        this._quat      = new THREE.Quaternion();
+        this._screenPos = new THREE.Vector3();
+        this._ready     = false;
       },
       tick: function () {
         var obj = this.el.object3D;
@@ -84,10 +84,7 @@
             var cam = this.el.sceneEl.camera;
             if (cam) {
               this._screenPos.copy(this._pos).project(cam);
-              if (this._screenPos.z > 1) {
-                this._ready = false;
-                return;
-              }
+              if (this._screenPos.z > 1) { this._ready = false; return; }
             }
             obj.visible = true;
             obj.position.copy(this._pos);
@@ -95,16 +92,10 @@
           }
           return;
         }
-        if (!this._ready) {
-          this._pos.copy(obj.position);
-          this._quat.copy(obj.quaternion);
-          this._ready = true;
-        } else {
-          this._pos.lerp(obj.position, this.data.alpha);
-          this._quat.slerp(obj.quaternion, this.data.alpha);
-        }
-        obj.position.copy(this._pos);
-        obj.quaternion.copy(this._quat);
+        // Marker detected: store AR.js's already-smoothed pose, no extra filtering
+        this._pos.copy(obj.position);
+        this._quat.copy(obj.quaternion);
+        this._ready = true;
       }
     });
   </script>
@@ -439,10 +430,10 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '5');
-          marker.setAttribute('smoothTolerance', '0.05');
+          marker.setAttribute('smoothCount', '10');
+          marker.setAttribute('smoothTolerance', '0.01');
           marker.setAttribute('smoothThreshold', '2');
-          marker.setAttribute('pose-filter', 'alpha: 0.03');
+          marker.setAttribute('pose-filter', '');
           marker.id = 'marker-' + idx;
 
           // Dashes
