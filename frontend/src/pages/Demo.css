@@ -72,7 +72,7 @@
 }
 
 .demo-tip-img.landscape {
-  max-height: 180px;
+  /* same full width as portrait, no height cap */
 }
 
 .demo-tip-caption {
@@ -126,11 +126,35 @@
   display: block;
 }
 
-/* Blinking annotation dot */
-@keyframes anno-ping {
-  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.9; }
-  70%  { transform: translate(-50%, -50%) scale(2.4); opacity: 0;   }
-  100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0;   }
+/* Multi-ring ripple pulse */
+@keyframes anno-ripple {
+  0% {
+    box-shadow:
+      0 0 0 0px  rgba(255,255,255,0.9),
+      0 0 0 5px  rgba(255,255,255,0.5),
+      0 0 0 11px rgba(255,255,255,0.2);
+  }
+  100% {
+    box-shadow:
+      0 0 0 7px  rgba(255,255,255,0),
+      0 0 0 15px rgba(255,255,255,0),
+      0 0 0 23px rgba(255,255,255,0);
+  }
+}
+
+@keyframes anno-ripple-active {
+  0% {
+    box-shadow:
+      0 0 0 0px  rgba(245,197,24,0.9),
+      0 0 0 5px  rgba(245,197,24,0.5),
+      0 0 0 11px rgba(245,197,24,0.2);
+  }
+  100% {
+    box-shadow:
+      0 0 0 7px  rgba(245,197,24,0),
+      0 0 0 15px rgba(245,197,24,0),
+      0 0 0 23px rgba(245,197,24,0);
+  }
 }
 
 .anno-dot {
@@ -144,29 +168,12 @@
   padding: 0;
   transform: translate(-50%, -50%);
   z-index: 10;
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.35);
-}
-
-.anno-dot::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.55);
-  transform: translate(0, 0) scale(1);
-  animation: anno-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
-  /* override the transform origin so ping stays centered */
-  transform-origin: center center;
+  animation: anno-ripple 1.8s ease-out infinite;
 }
 
 .anno-dot--active {
   background: #f5c518;
-  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.4);
-}
-
-.anno-dot--active::after {
-  background: rgba(245, 197, 24, 0.5);
-  animation: none;
+  animation: anno-ripple-active 1.8s ease-out infinite;
 }
 
 /* Info panel below image */
