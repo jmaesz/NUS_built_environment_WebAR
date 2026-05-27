@@ -68,9 +68,9 @@
         }
       }
     });
-    // Pose filter — show on first detect, freeze during flicker, EMA only on stable runs
+    // Pose filter — show on first detect, freeze during flicker, dead-zone EMA on stable runs
     AFRAME.registerComponent('pose-filter', {
-      schema: { alpha: { default: 0.15 } },
+      schema: { alpha: { default: 0.08 } },
       init: function () {
         this._pos         = new THREE.Vector3();
         this._quat        = new THREE.Quaternion();
@@ -102,13 +102,20 @@
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
           this._ready = true;
+          return;
         }
-        // Position EMA only after 5 consecutive frames — brief flicker detections don't move the label
         if (this._stableCount >= 5) {
-          var dist = obj.position.length();
-          var a = Math.max(0.03, Math.min(0.3, this.data.alpha / Math.max(dist, 0.5)));
-          this._pos.lerp(obj.position, a);
-          this._quat.slerp(obj.quaternion, a);
+          var posDelta = obj.position.distanceTo(this._pos);
+          // Dead zone: ignore noise < 6 cm — only EMA if the marker genuinely moved
+          if (posDelta > 0.06) {
+            var dist = this._pos.length();
+            var a = Math.max(0.02, Math.min(0.08, this.data.alpha / Math.max(dist, 0.5)));
+            this._pos.lerp(obj.position, a);
+          }
+          // Quat dead zone: skip if rotation change < ~2 degrees
+          if (Math.abs(this._quat.dot(obj.quaternion)) < 0.9994) {
+            this._quat.slerp(obj.quaternion, 0.05);
+          }
         }
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
@@ -449,7 +456,7 @@
           marker.setAttribute('smoothCount', '5');
           marker.setAttribute('smoothTolerance', '0.05');
           marker.setAttribute('smoothThreshold', '2');
-          marker.setAttribute('pose-filter', 'alpha: 0.15');
+          marker.setAttribute('pose-filter', 'alpha: 0.08');
           marker.id = 'marker-' + idx;
 
           // Dashes
