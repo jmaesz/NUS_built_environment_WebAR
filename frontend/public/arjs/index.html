@@ -75,13 +75,11 @@
         this._pos         = new THREE.Vector3();
         this._quat        = new THREE.Quaternion();
         this._screenPos   = new THREE.Vector3();
-        this._ready       = false;
-        this._stableCount = 0;
+        this._ready = false;
       },
       tick: function () {
         var obj = this.el.object3D;
         if (!obj.visible) {
-          this._stableCount = 0;
           if (this._ready) {
             var cam = this.el.sceneEl.camera;
             if (cam) {
@@ -97,18 +95,14 @@
           }
           return;
         }
-        this._stableCount++;
         if (!this._ready) {
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
           this._ready = true;
-        } else if (this._stableCount >= 5) {
-          // alpha=0.03: moves 3% per frame — noise causes ~1mm jitter (imperceptible),
-          // but a bad initial pose still self-corrects over ~3s of consistent detection
+        } else {
           this._pos.lerp(obj.position, this.data.alpha);
           this._quat.slerp(obj.quaternion, this.data.alpha);
         }
-        // stableCount < 5 (far-distance intermittent detection): label stays completely frozen
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
       }
