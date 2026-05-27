@@ -83,7 +83,7 @@ const ANNOTATIONS = [
     id: 'panel',
     top: '14.2%', left: '75.1%',
     title: 'Energy Use & EUI Panel',
-    desc: 'Toggle between Energy Use (annual or monthly breakdown by cooling, equipment, and lighting) and Monthly EUI to compare energy efficiency across buildings.',
+    desc: 'Energy Use shows the annual breakdown by cooling, equipment, and lighting. Monthly EUI (Energy Use Intensity) charts all 12 months to show how energy efficiency varies across the year.',
   },
   {
     id: 'desc',
