@@ -39,11 +39,10 @@
   gap: 22px;
 }
 
-/* Page 2 removes side padding so image can bleed full width */
 .demo-main--p2 {
   padding-left: 0;
   padding-right: 0;
-  gap: 20px;
+  gap: 0;
 }
 
 .demo-section-label {
@@ -55,10 +54,10 @@
 }
 
 .demo-section-label--padded {
-  padding: 0 24px;
+  padding: 0 24px 20px;
 }
 
-/* ── Step 1: stacked tips ── */
+/* ── Step 1 tips ── */
 .demo-tip {
   display: flex;
   flex-direction: column;
@@ -69,7 +68,6 @@
   width: 100%;
   object-fit: contain;
   border-radius: 6px;
-  /* multiply blend removes white background against #f5f4f0 */
   mix-blend-mode: multiply;
 }
 
@@ -84,7 +82,7 @@
   margin: 0;
 }
 
-/* ── Warning card ── */
+/* ── Warning ── */
 .demo-warning {
   display: flex;
   align-items: flex-start;
@@ -116,32 +114,114 @@
   margin: 0;
 }
 
-/* ── Step 2: annotated full-bleed image ── */
+/* ── Step 2: annotated image ── */
 .demo-annotated {
   position: relative;
   width: 100%;
+  flex-shrink: 0;
 }
 
 .demo-ar-img {
   width: 100%;
   display: block;
-  object-fit: cover;
 }
 
-.demo-anno {
+/* Blinking annotation dot */
+@keyframes anno-ping {
+  0%   { transform: translate(-50%, -50%) scale(1);   opacity: 0.9; }
+  70%  { transform: translate(-50%, -50%) scale(2.4); opacity: 0;   }
+  100% { transform: translate(-50%, -50%) scale(2.4); opacity: 0;   }
+}
+
+.anno-dot {
   position: absolute;
-  background: rgba(10, 10, 10, 0.82);
-  color: #fff;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #fff;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.35);
+}
+
+.anno-dot::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.55);
+  transform: translate(0, 0) scale(1);
+  animation: anno-ping 1.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+  /* override the transform origin so ping stays centered */
+  transform-origin: center center;
+}
+
+.anno-dot--active {
+  background: #f5c518;
+  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.4);
+}
+
+.anno-dot--active::after {
+  background: rgba(245, 197, 24, 0.5);
+  animation: none;
+}
+
+/* Info panel below image */
+.anno-info {
+  padding: 16px 24px;
+  min-height: 80px;
+  border-top: 1px solid rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: #0a0a0a;
+  color: #f5f4f0;
+  transition: background 0.25s;
+  margin-bottom: 20px;
+}
+
+.anno-info--visible {
+  background: #111;
+}
+
+.anno-info-title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  padding: 4px 8px;
-  border-radius: 3px;
-  white-space: nowrap;
-  pointer-events: none;
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
+  color: #f5c518;
+  margin: 0;
+}
+
+.anno-info-desc {
+  font-size: 12px;
+  line-height: 1.65;
+  color: rgba(255,255,255,0.8);
+  margin: 0;
+}
+
+.anno-info-hint {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  letter-spacing: 0.04em;
+}
+
+.anno-hint-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #fff;
+  flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
 }
 
 /* ── Spacer ── */

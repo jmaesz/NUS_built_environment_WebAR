@@ -73,32 +73,73 @@ function Step1({ onNext }) {
 }
 
 const ANNOTATIONS = [
-  { label: 'Back to home',           top: '3%',  left: '2%'  },
-  { label: 'Energy & architect data', top: '3%',  right: '2%' },
-  { label: 'Building description',   top: '38%', left: '2%'  },
-  { label: 'AR label — tap to open', top: '52%', right: '2%' },
-  { label: 'Open in Google Maps',    top: '79%', left: '2%'  },
+  {
+    id: 'back',
+    top: '3.5%', left: '7%',
+    title: 'Back Button',
+    desc: 'Return to the home screen at any time without losing your camera session.',
+  },
+  {
+    id: 'panel',
+    top: '4%', left: '72%',
+    title: 'Energy & Architect Panel',
+    desc: 'Toggle between Energy Use (monthly/annual breakdown by type) and Architect Info for the selected building.',
+  },
+  {
+    id: 'desc',
+    top: '40%', left: '3%',
+    title: 'Building Description',
+    desc: 'Sustainability highlights and design context for the building — scroll to read more.',
+  },
+  {
+    id: 'label',
+    top: '51%', left: '64%',
+    title: 'AR Building Label',
+    desc: 'Tap any floating label to open its data panel. Tap again or tap elsewhere to close.',
+  },
+  {
+    id: 'maps',
+    top: '80%', left: '44%',
+    title: 'Google Maps Link',
+    desc: 'Opens turn-by-turn directions to the building directly in Google Maps.',
+  },
 ]
 
 function Step2() {
+  const [active, setActive] = useState(null)
+  const info = ANNOTATIONS.find(a => a.id === active)
+
   return (
     <main className="demo-main demo-main--p2">
       <p className="demo-section-label demo-section-label--padded">WHAT YOU'LL SEE</p>
 
-      <div className="demo-annotated">
+      <div
+        className="demo-annotated"
+        onClick={() => setActive(null)}
+      >
         <img src="/demo-ar.png" alt="AR experience demo" className="demo-ar-img" />
-        {ANNOTATIONS.map((a, i) => (
-          <span
-            key={i}
-            className="demo-anno"
-            style={{ top: a.top, left: a.left, right: a.right }}
-          >
-            {a.label}
-          </span>
+
+        {ANNOTATIONS.map(a => (
+          <button
+            key={a.id}
+            className={`anno-dot${active === a.id ? ' anno-dot--active' : ''}`}
+            style={{ top: a.top, left: a.left }}
+            onClick={e => { e.stopPropagation(); setActive(prev => prev === a.id ? null : a.id) }}
+            aria-label={a.title}
+          />
         ))}
       </div>
 
-      <div className="demo-spacer" />
+      <div className={`anno-info${info ? ' anno-info--visible' : ''}`}>
+        {info ? (
+          <>
+            <p className="anno-info-title">{info.title}</p>
+            <p className="anno-info-desc">{info.desc}</p>
+          </>
+        ) : (
+          <p className="anno-info-hint">Tap the <span className="anno-hint-dot" /> dots to learn more</p>
+        )}
+      </div>
 
       <button className="demo-cta demo-cta--padded" onClick={() => { window.location.href = '/arjs/index.html' }}>
         START AR
