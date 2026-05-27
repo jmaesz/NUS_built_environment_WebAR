@@ -77,7 +77,7 @@ const ANNOTATIONS = [
     id: 'back',
     top: '2.0%', left: '18.1%',
     title: 'Back Button',
-    desc: 'Return to the home screen at any time without losing your camera session.',
+    desc: 'Return to the home screen.',
   },
   {
     id: 'panel',
@@ -95,7 +95,7 @@ const ANNOTATIONS = [
     id: 'label',
     top: '38.3%', left: '77.3%',
     title: 'AR Building Label',
-    desc: 'Tap any floating label to open its data panel. Tap again or tap elsewhere to close.',
+    desc: 'Tap any floating label to open its data panel. Tap the "Tap to close" label to close it.',
   },
   {
     id: 'maps',
