@@ -1,0 +1,176 @@
+.demo {
+  min-height: 100dvh;
+  background: #f5f4f0;
+  color: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  padding: 0 24px;
+}
+
+.demo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #0a0a0a;
+  flex-shrink: 0;
+}
+
+.demo-header-logo {
+  height: 20px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.demo-step {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: #888;
+}
+
+.demo-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 28px;
+  gap: 24px;
+}
+
+.demo-section-label {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  color: #888;
+  margin: 0;
+}
+
+/* Step 1 */
+.demo-tips-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.demo-tip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.demo-tip-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+  border-radius: 4px;
+  background: #ebe9e4;
+  padding: 8px;
+}
+
+.demo-tip-caption {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #444;
+  margin: 0;
+}
+
+.demo-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: #fffbec;
+  border: 1px solid #dfc96a;
+  border-radius: 6px;
+  padding: 14px;
+}
+
+.demo-warning-img {
+  width: 44px;
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.demo-warning-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #7a5c00;
+  margin: 0 0 5px;
+}
+
+.demo-warning-text {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #5a4400;
+  margin: 0;
+}
+
+/* Step 2 */
+.demo-ar-img {
+  width: 100%;
+  max-height: 52vh;
+  object-fit: contain;
+  object-position: top center;
+  border-radius: 6px;
+  background: #ebe9e4;
+}
+
+.demo-desc-block {
+  border-left: 2px solid #0a0a0a;
+  padding-left: 14px;
+}
+
+.demo-desc {
+  font-size: 13px;
+  line-height: 1.75;
+  color: #333;
+  margin: 0;
+}
+
+/* Spacer to push CTA down */
+.demo-spacer { flex: 1; }
+
+/* CTA */
+.demo-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0a0a0a;
+  color: #f5f4f0;
+  border: none;
+  padding: 18px 24px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  width: 100%;
+  transition: background 0.2s, letter-spacing 0.2s;
+  flex-shrink: 0;
+}
+
+.demo-cta:hover  { background: #2a2a2a; letter-spacing: 0.18em; }
+.demo-cta:active { background: #444; }
+
+.demo-cta-arrow { font-size: 18px; font-weight: 300; }
+
+/* Footer */
+.demo-footer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 0;
+  border-top: 1px solid #0a0a0a;
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.15em;
+  color: #555;
+  flex-shrink: 0;
+}
+
+.demo-footer-line {
+  flex: 1;
+  height: 1px;
+  background: #ccc;
+}

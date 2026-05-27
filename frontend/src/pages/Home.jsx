@@ -150,7 +150,7 @@ export default function Home() {
           </div>
 
           <div className="home-cta-row">
-            <button className="home-cta" onClick={() => window.location.href = '/arjs/index.html'}>
+            <button className="home-cta" onClick={() => navigate('/demo')}>
               LAUNCH AR
               <span className="cta-arrow">→</span>
             </button>
