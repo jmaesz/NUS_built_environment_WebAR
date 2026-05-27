@@ -68,15 +68,16 @@
         }
       }
     });
-    // Pose filter — settling phase then dead-zone lock
+    // Pose filter: freeze on intermittent detection, settle on consistent, lock when stable
     AFRAME.registerComponent('pose-filter', {
-      schema: { alpha: { default: 0.08 } },
+      schema: { alpha: { default: 0.25 } },
       init: function () {
         this._pos         = new THREE.Vector3();
         this._quat        = new THREE.Quaternion();
         this._screenPos   = new THREE.Vector3();
         this._ready       = false;
         this._stableCount = 0;
+        this._settleCount = 0;
       },
       tick: function () {
         var obj = this.el.object3D;
@@ -88,6 +89,7 @@
               this._screenPos.copy(this._pos).project(cam);
               if (this._screenPos.z > 1) {
                 this._ready = false;
+                this._settleCount = 0;
                 return;
               }
             }
@@ -102,22 +104,24 @@
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
           this._ready = true;
-          return;
-        }
-        if (this._stableCount < 20) {
-          // Settling phase: aggressive EMA so a bad first-frame pose self-corrects quickly
-          this._pos.lerp(obj.position, 0.25);
-          this._quat.slerp(obj.quaternion, 0.25);
-        } else {
-          // Locked phase: dead zones resist per-frame noise
-          if (obj.position.distanceTo(this._pos) > 0.1) {
-            var dist = this._pos.length();
-            var a = Math.max(0.02, Math.min(0.08, this.data.alpha / Math.max(dist, 0.5)));
+        } else if (this._stableCount >= 5) {
+          // Only EMA after 5 consecutive frames — far-distance intermittent detection never
+          // reaches this, so the label stays frozen instead of chasing noisy poses
+          this._settleCount++;
+          var t = Math.min(this._settleCount / 25, 1.0);
+          if (t < 1.0) {
+            // Settling: alpha decays 0.25→0.05 over first 25 quality frames — corrects bad initial pose
+            var a = this.data.alpha * (1 - t) + 0.05 * t;
             this._pos.lerp(obj.position, a);
-          }
-          // ~3 degree threshold
-          if (Math.abs(this._quat.dot(obj.quaternion)) < 0.9986) {
-            this._quat.slerp(obj.quaternion, 0.05);
+            this._quat.slerp(obj.quaternion, a);
+          } else {
+            // Locked: dead zones resist per-frame noise
+            if (obj.position.distanceTo(this._pos) > 0.1) {
+              this._pos.lerp(obj.position, 0.05);
+            }
+            if (Math.abs(this._quat.dot(obj.quaternion)) < 0.9986) {
+              this._quat.slerp(obj.quaternion, 0.05);
+            }
           }
         }
         obj.position.copy(this._pos);
@@ -459,7 +463,7 @@
           marker.setAttribute('smoothCount', '5');
           marker.setAttribute('smoothTolerance', '0.05');
           marker.setAttribute('smoothThreshold', '2');
-          marker.setAttribute('pose-filter', 'alpha: 0.08');
+          marker.setAttribute('pose-filter', 'alpha: 0.25');
           marker.id = 'marker-' + idx;
 
           // Dashes
