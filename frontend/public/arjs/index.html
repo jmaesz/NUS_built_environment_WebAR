@@ -57,31 +57,34 @@
         }
       }
     });
-    // Pose filter — snap on large shift, EMA for small jitter
+    // Pose filter — sticky hold until out of camera view, snap on large shift, EMA for jitter
     AFRAME.registerComponent('pose-filter', {
       schema: { alpha: { default: 0.15 }, snapDist: { default: 0.12 } },
       init: function () {
-        this._pos    = new THREE.Vector3();
-        this._quat   = new THREE.Quaternion();
-        this._ready  = false;
-        this._lostAt = 0;
+        this._pos       = new THREE.Vector3();
+        this._quat      = new THREE.Quaternion();
+        this._screenPos = new THREE.Vector3();
+        this._ready     = false;
       },
       tick: function () {
         var obj = this.el.object3D;
         if (!obj.visible) {
           if (this._ready) {
-            if (!this._lostAt) this._lostAt = Date.now();
-            if (Date.now() - this._lostAt < 500) {
-              obj.visible = true;
-              obj.position.copy(this._pos);
-              obj.quaternion.copy(this._quat);
-            } else {
-              this._ready = false; this._lostAt = 0;
+            var cam = this.el.sceneEl.camera;
+            if (cam) {
+              this._screenPos.copy(this._pos).project(cam);
+              // Only release when marker is behind camera or well outside viewport
+              if (this._screenPos.z > 1 || Math.abs(this._screenPos.x) > 1.5 || Math.abs(this._screenPos.y) > 1.5) {
+                this._ready = false;
+                return;
+              }
             }
+            obj.visible = true;
+            obj.position.copy(this._pos);
+            obj.quaternion.copy(this._quat);
           }
           return;
         }
-        this._lostAt = 0;
         if (!this._ready) {
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
