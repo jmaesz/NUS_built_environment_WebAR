@@ -635,6 +635,8 @@
 
               var flDotGroup = document.createElement('a-entity');
               flDotGroup.id = 'fl-dot-' + idx + '-' + fl.key;
+              var yMid = daylightFloors[Math.floor(daylightFloors.length / 2)].yUp;
+              flDotGroup.setAttribute('position', '0 ' + ((yMid - fl.yUp) * 0.6).toFixed(2) + ' 0');
 
               var tapIconEl = document.createElement('a-plane');
               tapIconEl.setAttribute('width', '0.40');
