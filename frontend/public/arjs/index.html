@@ -582,19 +582,14 @@
             daylightFloors.forEach(function (fl) {
               // Floor button canvas
               var fc = document.createElement('canvas');
-              fc.width = 1024; fc.height = 512;
+              fc.width = 512; fc.height = 512;
               var fx = fc.getContext('2d');
               fx.fillStyle = '#ffffff';
-              fx.fillRect(0, 0, 1024, 512);
+              fx.fillRect(0, 0, 512, 512);
               fx.textAlign = 'center'; fx.textBaseline = 'middle';
-              fx.fillStyle = '#000000';
-              fx.font = 'bold 165px Arial, sans-serif';
-              fx.fillText(fl.key, 512, 175);
-              fx.strokeStyle = '#107b7f'; fx.lineWidth = 4;
-              fx.beginPath(); fx.moveTo(80, 285); fx.lineTo(944, 285); fx.stroke();
-              fx.font = '95px Arial, sans-serif';
-              fx.fillStyle = '#107b7f';
-              fx.fillText('Daylight', 512, 400);
+              fx.fillStyle = '#0a0a0a';
+              fx.font = 'bold 260px Arial, sans-serif';
+              fx.fillText(fl.key, 256, 256);
               var fimg = document.createElement('img');
               fimg.id = 'flbl-' + idx + '-' + fl.key;
               fimg.src = fc.toDataURL('image/png');
@@ -625,37 +620,43 @@
               // Floor button plane
               var flBtn = document.createElement('a-plane');
               flBtn.id = 'fl-btn-' + idx + '-' + fl.key;
-              flBtn.setAttribute('width', '1.8');
+              flBtn.setAttribute('width', '0.9');
               flBtn.setAttribute('height', '0.9');
               flBtn.setAttribute('position', '-2.5 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
-              // "Tap here" button icon beside floor label
+              // "Tap here" hand-cursor icon (LEFT of floor label)
               if (!document.getElementById('tap-icon-shared')) {
                 var tic = document.createElement('canvas');
-                tic.width = 128; tic.height = 128;
+                tic.width = 256; tic.height = 256;
                 var tt = tic.getContext('2d');
-                // Circle background
+                // Teal circle
                 tt.fillStyle = '#107b7f';
-                tt.beginPath(); tt.arc(64, 64, 62, 0, Math.PI * 2); tt.fill();
-                // White hand icon
+                tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
+                // Subtle inner ring
+                tt.strokeStyle = 'rgba(255,255,255,0.22)';
+                tt.lineWidth = 5;
+                tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
+                // White pointer hand cursor
                 tt.fillStyle = '#ffffff';
-                // Index finger tip
-                tt.beginPath(); tt.arc(64, 28, 12, 0, Math.PI * 2); tt.fill();
-                // Index finger shaft
-                tt.fillRect(52, 28, 24, 38);
-                // Middle finger
-                tt.beginPath(); tt.arc(86, 36, 10, 0, Math.PI * 2); tt.fill();
-                tt.fillRect(76, 36, 20, 32);
-                // Ring finger
-                tt.beginPath(); tt.arc(106, 44, 9, 0, Math.PI * 2); tt.fill();
-                tt.fillRect(97, 44, 18, 28);
-                // Thumb
-                tt.beginPath(); tt.arc(38, 64, 10, 0, Math.PI * 2); tt.fill();
-                tt.fillRect(28, 56, 20, 30);
-                // Palm
-                tt.fillRect(38, 66, 77, 42);
-                tt.beginPath(); tt.arc(64, 108, 22, 0, Math.PI * 2); tt.fill();
+                // Index finger (rounded top)
+                tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
+                tt.fillRect(102, 52, 32, 74);
+                // Fist body (other fingers curled)
+                tt.beginPath();
+                tt.moveTo(92, 120); tt.lineTo(182, 120);
+                tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
+                tt.lineTo(92, 156);
+                tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
+                tt.closePath(); tt.fill();
+                tt.fillRect(92, 138, 108, 52);
+                tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
+                // Connect finger to fist
+                tt.fillRect(102, 118, 32, 8);
+                // Thumb (left side)
+                tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
+                tt.fillRect(66, 126, 28, 46);
+                tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
                 var tishared = document.createElement('img');
                 tishared.id = 'tap-icon-shared';
                 tishared.src = tic.toDataURL('image/png');
@@ -666,11 +667,11 @@
               flDotGroup.id = 'fl-dot-' + idx + '-' + fl.key;
 
               var tapIconEl = document.createElement('a-plane');
-              tapIconEl.setAttribute('width', '0.38');
-              tapIconEl.setAttribute('height', '0.38');
-              tapIconEl.setAttribute('position', '-1.35 0 0.01');
-              tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.1; shader: flat; side: double');
-              tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.25 1.25 1; dir: alternate; dur: 850; loop: true; easing: easeInOutSine');
+              tapIconEl.setAttribute('width', '0.40');
+              tapIconEl.setAttribute('height', '0.40');
+              tapIconEl.setAttribute('position', '-3.18 0 0.01');
+              tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
+              tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               flDotGroup.appendChild(tapIconEl);
 
