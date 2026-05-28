@@ -256,11 +256,11 @@
 
     window.DAYLIGHT_FLOORS = {
       'SDE4': [
-        { key: '5F', yUp: -0.30, img: '/daylight/SDE4/SDE4-5F.png' },
-        { key: '4F', yUp: -0.80, img: '/daylight/SDE4/SDE4-4F.png' },
-        { key: '3F', yUp: -1.30, img: '/daylight/SDE4/SDE4-3F.png' },
-        { key: '2F', yUp: -1.80, img: '/daylight/SDE4/SDE4-2F.png' },
-        { key: '1F', yUp: -2.30, img: '/daylight/SDE4/SDE4-1F.png' },
+        { key: '5F', yUp: -0.35, img: '/daylight/SDE4/SDE4-5F.png' },
+        { key: '4F', yUp: -1.00, img: '/daylight/SDE4/SDE4-4F.png' },
+        { key: '3F', yUp: -1.65, img: '/daylight/SDE4/SDE4-3F.png' },
+        { key: '2F', yUp: -2.30, img: '/daylight/SDE4/SDE4-2F.png' },
+        { key: '1F', yUp: -2.95, img: '/daylight/SDE4/SDE4-1F.png' },
       ]
     };
   </script>
@@ -605,23 +605,11 @@
               var flBb = document.createElement('a-entity');
               flBb.setAttribute('billboard', '');
 
-              // Dashes going downward from floor button to marker level
-              var numFlDashes = Math.round(Math.abs(fl.yUp) / 0.2);
-              for (var fdi = 0; fdi < numFlDashes; fdi++) {
-                var fdash = document.createElement('a-cylinder');
-                fdash.setAttribute('radius', '0.025');
-                fdash.setAttribute('height', '0.1');
-                fdash.setAttribute('color', '#ffffff');
-                fdash.setAttribute('opacity', '0.85');
-                fdash.setAttribute('position', '-2.5 ' + (0.15 + fdi * 0.2).toFixed(2) + ' 0');
-                flBb.appendChild(fdash);
-              }
-
               // Floor button plane
               var flBtn = document.createElement('a-plane');
               flBtn.id = 'fl-btn-' + idx + '-' + fl.key;
-              flBtn.setAttribute('width', '0.9');
-              flBtn.setAttribute('height', '0.9');
+              flBtn.setAttribute('width', '0.75');
+              flBtn.setAttribute('height', '0.75');
               flBtn.setAttribute('position', '-2.5 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
@@ -674,6 +662,19 @@
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               flDotGroup.appendChild(tapIconEl);
+
+              // Horizontal dashes extending LEFT from the label (leader lines)
+              var hDashX = [-3.65, -3.92, -4.19];
+              for (var hdi = 0; hdi < hDashX.length; hdi++) {
+                var hdash = document.createElement('a-cylinder');
+                hdash.setAttribute('radius', '0.018');
+                hdash.setAttribute('height', '0.15');
+                hdash.setAttribute('color', '#ffffff');
+                hdash.setAttribute('opacity', '0.75');
+                hdash.setAttribute('rotation', '0 0 90');
+                hdash.setAttribute('position', hDashX[hdi] + ' 0 0');
+                flDotGroup.appendChild(hdash);
+              }
 
               // Daylight group (hidden until tapped)
               var flDg = document.createElement('a-entity');
