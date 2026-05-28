@@ -645,19 +645,22 @@
 
               flDotGroup.appendChild(tapIconEl);
 
-              // Diagonal dashes extending RIGHT from the label (slope down toward marker)
-              var diagDashes = [
-                [-3.85, 0.40], [-3.53, 0.32], [-3.21, 0.24],
-                [-2.89, 0.16], [-2.57, 0.08], [-2.25, 0.00]
-              ];
-              for (var hdi = 0; hdi < diagDashes.length; hdi++) {
+              // Fan dashes — each floor angles toward the marker above (natural convergence)
+              var yConv = Math.abs(fl.yUp);          // marker is this far above this floor's billboard
+              var slope = yConv / 4.2;               // dy/dx from button (-4.2,0) toward marker (0, yConv)
+              var dashRotZ = Math.round(90 - Math.atan(slope) * 180 / Math.PI);
+              var xS = -3.85, xE = -2.25, nFanDashes = 6;
+              for (var hdi = 0; hdi < nFanDashes; hdi++) {
+                var t = hdi / (nFanDashes - 1);
+                var xd = xS + t * (xE - xS);
+                var yd = slope * (xd + 4.2);
                 var hdash = document.createElement('a-cylinder');
                 hdash.setAttribute('radius', '0.018');
                 hdash.setAttribute('height', '0.15');
                 hdash.setAttribute('color', '#ffffff');
                 hdash.setAttribute('opacity', '0.75');
-                hdash.setAttribute('rotation', '0 0 76');
-                hdash.setAttribute('position', diagDashes[hdi][0] + ' ' + diagDashes[hdi][1] + ' 0');
+                hdash.setAttribute('rotation', '0 0 ' + dashRotZ);
+                hdash.setAttribute('position', xd.toFixed(2) + ' ' + yd.toFixed(2) + ' 0');
                 flDotGroup.appendChild(hdash);
               }
 
