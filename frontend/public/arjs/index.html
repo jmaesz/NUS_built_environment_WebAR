@@ -588,16 +588,16 @@
               fx.fillRect(0, 0, 1024, 512);
               fx.textAlign = 'center'; fx.textBaseline = 'middle';
               fx.fillStyle = '#000000';
-              fx.font = 'bold 190px Arial, sans-serif';
-              fx.fillText(fl.key, 512, 168);
+              fx.font = 'bold 120px Arial, sans-serif';
+              fx.fillText(fl.key, 512, 145);
               fx.strokeStyle = '#107b7f'; fx.lineWidth = 4;
-              fx.beginPath(); fx.moveTo(80, 265); fx.lineTo(944, 265); fx.stroke();
-              fx.font = '95px Arial, sans-serif';
+              fx.beginPath(); fx.moveTo(80, 225); fx.lineTo(944, 225); fx.stroke();
+              fx.font = '72px Arial, sans-serif';
               fx.fillStyle = '#107b7f';
-              fx.fillText('Daylight', 512, 350);
-              fx.font = '80px Arial, sans-serif';
+              fx.fillText('Daylight', 512, 305);
+              fx.font = '60px Arial, sans-serif';
               fx.fillStyle = '#555555';
-              fx.fillText('Tap for details', 512, 450);
+              fx.fillText('Tap for details', 512, 405);
               var fimg = document.createElement('img');
               fimg.id = 'flbl-' + idx + '-' + fl.key;
               fimg.src = fc.toDataURL('image/png');
@@ -628,8 +628,8 @@
               // Floor button plane
               var flBtn = document.createElement('a-plane');
               flBtn.id = 'fl-btn-' + idx + '-' + fl.key;
-              flBtn.setAttribute('width', '2.2');
-              flBtn.setAttribute('height', '1.1');
+              flBtn.setAttribute('width', '1.5');
+              flBtn.setAttribute('height', '0.75');
               flBtn.setAttribute('position', '-2.5 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
