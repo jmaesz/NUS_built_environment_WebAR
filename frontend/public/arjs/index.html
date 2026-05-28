@@ -561,24 +561,6 @@
           // ── Daylight floor buttons (SDE4 only) ────────────────────────────
           var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
           if (daylightFloors) {
-            // Shared X button canvas (created once, reused per floor)
-            if (!document.getElementById('dxbtn-shared')) {
-              var xc2 = document.createElement('canvas');
-              xc2.width = 256; xc2.height = 256;
-              var xctx = xc2.getContext('2d');
-              xctx.fillStyle = 'rgba(20,20,20,0.82)';
-              xctx.beginPath(); xctx.arc(128, 128, 122, 0, Math.PI * 2); xctx.fill();
-              xctx.strokeStyle = '#ffffff'; xctx.lineWidth = 22;
-              xctx.beginPath();
-              xctx.moveTo(78, 78); xctx.lineTo(178, 178);
-              xctx.moveTo(178, 78); xctx.lineTo(78, 178);
-              xctx.stroke();
-              var xshared = document.createElement('img');
-              xshared.id = 'dxbtn-shared';
-              xshared.src = xc2.toDataURL('image/png');
-              assets.appendChild(xshared);
-            }
-
             daylightFloors.forEach(function (fl) {
               // Floor button canvas
               var fc = document.createElement('canvas');
@@ -681,12 +663,12 @@
               flDg.id = 'fl-dg-' + idx + '-' + fl.key;
               flDg.setAttribute('visible', 'false');
 
-              // Daylight image plane (4.4 × 3.3, to the left) — bg removed at runtime
+              // Daylight image plane (larger, to the left) — bg removed at runtime
               var flImg = document.createElement('a-plane');
               flImg.id = 'fl-img-' + idx + '-' + fl.key;
-              flImg.setAttribute('width', '4.4');
-              flImg.setAttribute('height', '3.3');
-              flImg.setAttribute('position', '-5.5 0 0');
+              flImg.setAttribute('width', '6.5');
+              flImg.setAttribute('height', '4.9');
+              flImg.setAttribute('position', '-7.5 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat');
               (function(el, src) {
                 var tmpImg = new Image();
@@ -716,24 +698,7 @@
                 tmpImg.src = src;
               })(flImg, fl.img);
 
-              // X button visual (top-right corner of image)
-              var flXvis = document.createElement('a-plane');
-              flXvis.setAttribute('width', '0.65');
-              flXvis.setAttribute('height', '0.65');
-              flXvis.setAttribute('position', '-3.7 1.3 0.02');
-              flXvis.setAttribute('material', 'src: #dxbtn-shared; transparent: true; alphaTest: 0.1; shader: flat; side: double');
-
-              // Invisible X hitbox (tappable area)
-              var flXhit = document.createElement('a-plane');
-              flXhit.id = 'fl-xhit-' + idx + '-' + fl.key;
-              flXhit.setAttribute('width', '0.9');
-              flXhit.setAttribute('height', '0.9');
-              flXhit.setAttribute('position', '-3.7 1.3 0.03');
-              flXhit.setAttribute('material', 'opacity: 0; transparent: true; shader: flat; side: double');
-
               flDg.appendChild(flImg);
-              flDg.appendChild(flXvis);
-              flDg.appendChild(flXhit);
               flBb.appendChild(flBtn);
               flBb.appendChild(flDotGroup);
               flBb.appendChild(flDg);
@@ -759,8 +724,7 @@
     let mapsHideTimer = null;
     let activeIdx         = null;
     let descOpenIdx       = null;
-    let daylightBldgIdx   = null;
-    let daylightFloorKey  = null;
+    const openDaylightFloors = new Set();
     let currentView       = 'pie';
     let _speaking     = false;
     let _speechIdx    = -1;
@@ -910,27 +874,37 @@
       }
     }
 
-    function showDaylightFloor(idx, floorKey) {
+    function toggleDaylightFloor(idx, floorKey) {
+      const key = idx + '-' + floorKey;
       const btn = document.getElementById('fl-btn-' + idx + '-' + floorKey);
       const dot = document.getElementById('fl-dot-' + idx + '-' + floorKey);
       const dg  = document.getElementById('fl-dg-'  + idx + '-' + floorKey);
-      if (btn && btn.object3D) btn.object3D.visible = false;
-      if (dot && dot.object3D) dot.object3D.visible = false;
-      if (dg  && dg.object3D)  dg.object3D.visible  = true;
-      daylightBldgIdx  = idx;
-      daylightFloorKey = floorKey;
+      if (openDaylightFloors.has(key)) {
+        if (btn && btn.object3D) btn.object3D.visible = true;
+        if (dot && dot.object3D) dot.object3D.visible = true;
+        if (dg  && dg.object3D)  dg.object3D.visible  = false;
+        openDaylightFloors.delete(key);
+      } else {
+        if (btn && btn.object3D) btn.object3D.visible = false;
+        if (dot && dot.object3D) dot.object3D.visible = false;
+        if (dg  && dg.object3D)  dg.object3D.visible  = true;
+        openDaylightFloors.add(key);
+      }
     }
 
     function hideDaylightFloor() {
-      if (daylightBldgIdx === null) return;
-      const btn = document.getElementById('fl-btn-' + daylightBldgIdx + '-' + daylightFloorKey);
-      const dot = document.getElementById('fl-dot-' + daylightBldgIdx + '-' + daylightFloorKey);
-      const dg  = document.getElementById('fl-dg-'  + daylightBldgIdx + '-' + daylightFloorKey);
-      if (btn && btn.object3D) btn.object3D.visible = true;
-      if (dot && dot.object3D) dot.object3D.visible = true;
-      if (dg  && dg.object3D)  dg.object3D.visible  = false;
-      daylightBldgIdx  = null;
-      daylightFloorKey = null;
+      openDaylightFloors.forEach(function(key) {
+        const sep = key.indexOf('-');
+        const bi  = parseInt(key.slice(0, sep));
+        const fk  = key.slice(sep + 1);
+        const btn = document.getElementById('fl-btn-' + bi + '-' + fk);
+        const dot = document.getElementById('fl-dot-' + bi + '-' + fk);
+        const dg  = document.getElementById('fl-dg-'  + bi + '-' + fk);
+        if (btn && btn.object3D) btn.object3D.visible = true;
+        if (dot && dot.object3D) dot.object3D.visible = true;
+        if (dg  && dg.object3D)  dg.object3D.visible  = false;
+      });
+      openDaylightFloors.clear();
     }
 
     function setLabelHint(idx, isOpen) {
@@ -1067,7 +1041,7 @@
       if (activeIdx !== null) {
         setLabelHint(activeIdx, false);
         if (descOpenIdx === activeIdx) hideDescIndependent();
-        if (daylightBldgIdx === activeIdx) hideDaylightFloor();
+        if (openDaylightFloors.size > 0) hideDaylightFloor();
         const ilbl = document.getElementById('ar-ilbl-' + activeIdx);
         if (ilbl && ilbl.object3D) ilbl.object3D.visible = false;
         const hideFloors = window.DAYLIGHT_FLOORS[BUILDINGS[activeIdx].name];
@@ -1127,23 +1101,6 @@
     function handleTap(cx, cy) {
       sceneEl.object3D.updateMatrixWorld(true);
       const r = sceneEl.canvas.getBoundingClientRect();
-
-      // Check daylight X button
-      if (daylightFloorKey !== null) {
-        const dxhit = document.getElementById('fl-xhit-' + daylightBldgIdx + '-' + daylightFloorKey);
-        const ddg   = document.getElementById('fl-dg-'   + daylightBldgIdx + '-' + daylightFloorKey);
-        if (dxhit && ddg && ddg.object3D.visible) {
-          dxhit.object3D.getWorldPosition(_arVec);
-          _arVec.project(sceneEl.camera);
-          if (_arVec.z <= 1) {
-            const sx = (_arVec.x + 1) / 2 * r.width + r.left;
-            const sy = (-_arVec.y + 1) / 2 * r.height + r.top;
-            if (Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2) < 80) {
-              hideDaylightFloor(); return;
-            }
-          }
-        }
-      }
 
       // Check X button (closes desc only)
       if (descOpenIdx !== null) {
@@ -1236,13 +1193,8 @@
       const minOther = Math.min(bestDist, bestInfoDist);
 
       if (bestFloorKey !== null && bestFloorDist < minOther) {
-        if (daylightBldgIdx === bestFloorIdx && daylightFloorKey === bestFloorKey) {
-          hideDaylightFloor();
-        } else {
-          if (daylightFloorKey !== null) hideDaylightFloor();
-          pulseEl(document.getElementById('fl-btn-' + bestFloorIdx + '-' + bestFloorKey));
-          showDaylightFloor(bestFloorIdx, bestFloorKey);
-        }
+        pulseEl(document.getElementById('fl-btn-' + bestFloorIdx + '-' + bestFloorKey));
+        toggleDaylightFloor(bestFloorIdx, bestFloorKey);
       } else if (bestInfoIdx !== -1 && bestInfoDist < bestDist) {
         pulseEl(document.getElementById('ar-ilbl-' + bestInfoIdx));
         if (descOpenIdx === bestInfoIdx) {
@@ -1259,10 +1211,10 @@
           if (activeIdx !== null) hideChart();
           showChart(bestIdx);
         }
-      } else if (activeIdx !== null || descOpenIdx !== null || daylightFloorKey !== null) {
+      } else if (activeIdx !== null || descOpenIdx !== null || openDaylightFloors.size > 0) {
         if (activeIdx !== null) hideChart();
         if (descOpenIdx !== null) hideDescIndependent();
-        if (daylightFloorKey !== null) hideDaylightFloor();
+        if (openDaylightFloors.size > 0) hideDaylightFloor();
       }
     }
 
