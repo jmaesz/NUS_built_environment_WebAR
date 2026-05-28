@@ -35,7 +35,7 @@ function Step1({ onNext, onBack, onSkip }) {
       </div>
 
       <div className="demo-tip">
-        <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
+        <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img demo-tip-img--portrait" />
         <p className="demo-tip-caption">
           Point your camera at the ArUco markers on the physical model — works in portrait mode
         </p>
