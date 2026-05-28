@@ -592,7 +592,7 @@
               flBtn.id = 'fl-btn-' + idx + '-' + fl.key;
               flBtn.setAttribute('width', '0.75');
               flBtn.setAttribute('height', '0.75');
-              flBtn.setAttribute('position', '-2.5 0 0');
+              flBtn.setAttribute('position', '-4.0 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
               // "Tap here" hand-cursor icon (LEFT of floor label)
@@ -639,14 +639,14 @@
               var tapIconEl = document.createElement('a-plane');
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
-              tapIconEl.setAttribute('position', '-3.18 0 0.01');
+              tapIconEl.setAttribute('position', '-4.68 0 0.01');
               tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               flDotGroup.appendChild(tapIconEl);
 
               // Horizontal dashes extending RIGHT from the label (leader lines)
-              var hDashX = [-1.90, -1.65, -1.40];
+              var hDashX = [-3.35, -3.03, -2.71, -2.39, -2.07, -1.75];
               for (var hdi = 0; hdi < hDashX.length; hdi++) {
                 var hdash = document.createElement('a-cylinder');
                 hdash.setAttribute('radius', '0.018');
@@ -876,18 +876,12 @@
 
     function toggleDaylightFloor(idx, floorKey) {
       const key = idx + '-' + floorKey;
-      const btn = document.getElementById('fl-btn-' + idx + '-' + floorKey);
-      const dot = document.getElementById('fl-dot-' + idx + '-' + floorKey);
-      const dg  = document.getElementById('fl-dg-'  + idx + '-' + floorKey);
+      const dg  = document.getElementById('fl-dg-' + idx + '-' + floorKey);
       if (openDaylightFloors.has(key)) {
-        if (btn && btn.object3D) btn.object3D.visible = true;
-        if (dot && dot.object3D) dot.object3D.visible = true;
-        if (dg  && dg.object3D)  dg.object3D.visible  = false;
+        if (dg && dg.object3D) dg.object3D.visible = false;
         openDaylightFloors.delete(key);
       } else {
-        if (btn && btn.object3D) btn.object3D.visible = false;
-        if (dot && dot.object3D) dot.object3D.visible = false;
-        if (dg  && dg.object3D)  dg.object3D.visible  = true;
+        if (dg && dg.object3D) dg.object3D.visible = true;
         openDaylightFloors.add(key);
       }
     }
@@ -897,12 +891,8 @@
         const sep = key.indexOf('-');
         const bi  = parseInt(key.slice(0, sep));
         const fk  = key.slice(sep + 1);
-        const btn = document.getElementById('fl-btn-' + bi + '-' + fk);
-        const dot = document.getElementById('fl-dot-' + bi + '-' + fk);
-        const dg  = document.getElementById('fl-dg-'  + bi + '-' + fk);
-        if (btn && btn.object3D) btn.object3D.visible = true;
-        if (dot && dot.object3D) dot.object3D.visible = true;
-        if (dg  && dg.object3D)  dg.object3D.visible  = false;
+        const dg  = document.getElementById('fl-dg-' + bi + '-' + fk);
+        if (dg && dg.object3D) dg.object3D.visible = false;
       });
       openDaylightFloors.clear();
     }
