@@ -963,15 +963,7 @@
               var fup = document.getElementById('fl-up-' + i + '-' + f.key);
               if (fup) fup.object3D.visible = false;
             });
-            if (i === daylightBldgIdx) hideDaylightFloor();
-          }
-        } else {
-          var dfloors2 = window.DAYLIGHT_FLOORS[BUILDINGS[i].name];
-          if (dfloors2) {
-            dfloors2.forEach(function(f) {
-              var fup = document.getElementById('fl-up-' + i + '-' + f.key);
-              if (fup) fup.object3D.visible = true;
-            });
+            if (openDaylightFloors.size > 0) hideDaylightFloor();
           }
         }
       });
