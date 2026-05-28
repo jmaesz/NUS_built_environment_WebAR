@@ -257,10 +257,10 @@
     window.DAYLIGHT_FLOORS = {
       'SDE4': [
         { key: '5F', yUp: -0.35, img: '/daylight/SDE4/SDE4-5F.png' },
-        { key: '4F', yUp: -0.72, img: '/daylight/SDE4/SDE4-4F.png' },
-        { key: '3F', yUp: -1.09, img: '/daylight/SDE4/SDE4-3F.png' },
-        { key: '2F', yUp: -1.46, img: '/daylight/SDE4/SDE4-2F.png' },
-        { key: '1F', yUp: -1.83, img: '/daylight/SDE4/SDE4-1F.png' },
+        { key: '4F', yUp: -0.85, img: '/daylight/SDE4/SDE4-4F.png' },
+        { key: '3F', yUp: -1.35, img: '/daylight/SDE4/SDE4-3F.png' },
+        { key: '2F', yUp: -1.85, img: '/daylight/SDE4/SDE4-2F.png' },
+        { key: '1F', yUp: -2.35, img: '/daylight/SDE4/SDE4-1F.png' },
       ]
     };
   </script>
@@ -592,7 +592,7 @@
               flBtn.id = 'fl-btn-' + idx + '-' + fl.key;
               flBtn.setAttribute('width', '0.47');
               flBtn.setAttribute('height', '0.30');
-              flBtn.setAttribute('position', '-5.0 0 0');
+              flBtn.setAttribute('position', '-4.2 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
               // "Tap here" hand-cursor icon (LEFT of floor label)
@@ -639,22 +639,25 @@
               var tapIconEl = document.createElement('a-plane');
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
-              tapIconEl.setAttribute('position', '-5.58 0 0.01');
+              tapIconEl.setAttribute('position', '-4.78 0 0.01');
               tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               flDotGroup.appendChild(tapIconEl);
 
-              // Horizontal dashes extending RIGHT from the label (leader lines)
-              var hDashX = [-4.65, -4.33, -4.01, -3.69, -3.37, -3.05];
-              for (var hdi = 0; hdi < hDashX.length; hdi++) {
+              // Diagonal dashes extending RIGHT from the label (slope down toward marker)
+              var diagDashes = [
+                [-3.85, 0.40], [-3.53, 0.32], [-3.21, 0.24],
+                [-2.89, 0.16], [-2.57, 0.08], [-2.25, 0.00]
+              ];
+              for (var hdi = 0; hdi < diagDashes.length; hdi++) {
                 var hdash = document.createElement('a-cylinder');
                 hdash.setAttribute('radius', '0.018');
                 hdash.setAttribute('height', '0.15');
                 hdash.setAttribute('color', '#ffffff');
                 hdash.setAttribute('opacity', '0.75');
-                hdash.setAttribute('rotation', '0 0 90');
-                hdash.setAttribute('position', hDashX[hdi] + ' 0 0');
+                hdash.setAttribute('rotation', '0 0 76');
+                hdash.setAttribute('position', diagDashes[hdi][0] + ' ' + diagDashes[hdi][1] + ' 0');
                 flDotGroup.appendChild(hdash);
               }
 
