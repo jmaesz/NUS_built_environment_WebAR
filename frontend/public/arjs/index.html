@@ -515,21 +515,20 @@
           descGroup.id = 'ar-desc-' + idx;
           descGroup.setAttribute('visible', 'false');
 
-          // Description panel — 3.5 × 2.2 units, positioned to the LEFT of the main label
+          // Description panel — positioned to the RIGHT of the main label
           var descPlane = document.createElement('a-plane');
           descPlane.id = 'ar-desc-plane-' + idx;
           descPlane.setAttribute('width', '7.0');
           descPlane.setAttribute('height', '4.4');
-          descPlane.setAttribute('position', '-5.0 0 0');
+          descPlane.setAttribute('position', '5.0 0 0');
           descPlane.setAttribute('material', 'src: #dlbl-' + idx + '; side: double; transparent: false; shader: flat');
 
-          // Invisible play-button hitbox — mapped to where the circle sits on the canvas
-          // Canvas play centre: (1490/1600, 890/1000) → offset from plane centre → world pos
+          // Invisible play-button hitbox
           var playHitbox = document.createElement('a-plane');
           playHitbox.id = 'ar-play-' + idx;
           playHitbox.setAttribute('width', '1.5');
           playHitbox.setAttribute('height', '1.5');
-          playHitbox.setAttribute('position', '-8.13 -1.83 0.02');
+          playHitbox.setAttribute('position', '1.87 -1.83 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat; side: double');
 
           // Info label plane (right of main label, same Y level)
@@ -541,12 +540,12 @@
           infoLbl.setAttribute('visible', 'false');
           infoLbl.setAttribute('material', 'src: #ilbl-' + idx + '; side: double; transparent: false; shader: flat');
 
-          // Invisible X-button hitbox — top-right of desc panel
+          // Invisible X-button hitbox — top-right of desc panel (now on right side)
           var xHitbox = document.createElement('a-plane');
           xHitbox.id = 'ar-xbtn-' + idx;
           xHitbox.setAttribute('width', '0.9');
           xHitbox.setAttribute('height', '0.9');
-          xHitbox.setAttribute('position', '-1.83 1.87 0.02');
+          xHitbox.setAttribute('position', '8.17 1.87 0.02');
           xHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat; side: double');
 
           descGroup.appendChild(descPlane);
@@ -1156,7 +1155,8 @@
         }
 
         const ilbl = document.getElementById('ar-ilbl-' + idx);
-        if (ilbl && ilbl.object3D.visible) {
+        const upEl = document.getElementById('ar-up-' + idx);
+        if (ilbl && ilbl.object3D.visible && upEl && upEl.object3D.visible) {
           ilbl.object3D.getWorldPosition(_arVec);
           _arVec.project(sceneEl.camera);
           if (_arVec.z <= 1) {
