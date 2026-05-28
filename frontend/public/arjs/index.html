@@ -639,6 +639,7 @@
               flDotGroup.setAttribute('position', '0 ' + ((yMid - fl.yUp) * 0.3).toFixed(2) + ' 0');
 
               var tapIconEl = document.createElement('a-plane');
+              tapIconEl.id = 'fl-tap-' + idx + '-' + fl.key;
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
               tapIconEl.setAttribute('position', '-4.78 0 0.01');
@@ -1169,7 +1170,7 @@
         const dfloors = window.DAYLIGHT_FLOORS[BUILDINGS[idx].name];
         if (dfloors) {
           for (let fi = 0; fi < dfloors.length; fi++) {
-            const fbtn = document.getElementById('fl-btn-' + idx + '-' + dfloors[fi].key);
+            const fbtn = document.getElementById('fl-tap-' + idx + '-' + dfloors[fi].key);
             if (fbtn && fbtn.object3D.visible) {
               fbtn.object3D.getWorldPosition(_arVec);
               _arVec.project(sceneEl.camera);
