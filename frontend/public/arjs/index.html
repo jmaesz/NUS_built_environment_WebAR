@@ -518,6 +518,7 @@
           infoLbl.setAttribute('width', '2.2');
           infoLbl.setAttribute('height', '1.1');
           infoLbl.setAttribute('position', '-2.5 0 0');
+          infoLbl.setAttribute('visible', 'false');
           infoLbl.setAttribute('material', 'src: #ilbl-' + idx + '; side: double; transparent: false; shader: flat');
 
           descGroup.appendChild(descPlane);
@@ -780,8 +781,6 @@
               setPlayBtn(i, false); _speaking = false; _speechIdx = -1;
             }
           }
-        } else {
-          if (ilbl && i !== descOpenIdx) ilbl.object3D.visible = true;
         }
       });
     }
@@ -791,6 +790,8 @@
       activeIdx = idx;
       setLabelHint(idx, true);
       setOtherLabelsVisible(idx, false);
+      const ilbl = document.getElementById('ar-ilbl-' + idx);
+      if (ilbl && ilbl.object3D) ilbl.object3D.visible = true;
 
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
       document.getElementById('chart-building-name').textContent = b.name;
@@ -832,6 +833,9 @@
     function hideChart() {
       if (activeIdx !== null) {
         setLabelHint(activeIdx, false);
+        if (descOpenIdx === activeIdx) hideDescIndependent();
+        const ilbl = document.getElementById('ar-ilbl-' + activeIdx);
+        if (ilbl && ilbl.object3D) ilbl.object3D.visible = false;
       }
       if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; setPlayBtn(_speechIdx, false); _speaking = false; _speechIdx = -1; }
       setOtherLabelsVisible(-1, true);
