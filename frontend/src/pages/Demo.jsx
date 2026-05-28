@@ -17,13 +17,10 @@ export default function Demo() {
           onClick={() => navigate('/')}
           style={{ cursor: 'pointer' }}
         />
-        <span className="demo-step">0{step} / 02</span>
+        <span className="demo-step">01 / 01</span>
       </header>
 
-      {step === 1
-        ? <Step1 onNext={() => setStep(2)} onBack={() => navigate('/')} onSkip={handleSkip} />
-        : <Step2 onBack={() => setStep(1)} onSkip={handleSkip} />
-      }
+      <Step1 onNext={handleSkip} onBack={() => navigate('/')} onSkip={handleSkip} />
 
       <footer className="demo-footer">
         <span>NUSCAPE-AR</span>
@@ -42,18 +39,19 @@ function Step1({ onNext, onBack, onSkip }) {
         <button className="demo-skip-box" onClick={onSkip}>SKIP →</button>
       </div>
 
-      <div className="demo-tip">
-        <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
-        <p className="demo-tip-caption">
-          Point your camera at the ArUco markers on the physical model — works in portrait mode
-        </p>
-      </div>
-
-      <div className="demo-tip">
-        <img src="/demo-landscape.png" alt="Landscape mode" className="demo-tip-img landscape" />
-        <p className="demo-tip-caption">
-          Rotate your phone for a wider view — landscape orientation is fully supported
-        </p>
+      <div className="demo-tips-row">
+        <div className="demo-tip">
+          <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
+          <p className="demo-tip-caption">
+            Point your camera at the ArUco markers on the physical model
+          </p>
+        </div>
+        <div className="demo-tip">
+          <img src="/demo-landscape.png" alt="Landscape mode" className="demo-tip-img landscape" />
+          <p className="demo-tip-caption">
+            Rotate your phone for a wider view — landscape is fully supported
+          </p>
+        </div>
       </div>
 
       <div className="demo-warning">
@@ -70,7 +68,7 @@ function Step1({ onNext, onBack, onSkip }) {
 
       <div className="demo-nav-row">
         <button className="demo-nav-btn demo-nav-btn--back" onClick={onBack}>← BACK</button>
-        <button className="demo-nav-btn demo-nav-btn--next" onClick={onNext}>NEXT →</button>
+        <button className="demo-nav-btn demo-nav-btn--next" onClick={onNext}>START AR →</button>
       </div>
     </main>
   )
