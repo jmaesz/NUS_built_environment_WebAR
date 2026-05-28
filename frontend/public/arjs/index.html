@@ -591,7 +591,7 @@
               flBtn.id = 'fl-btn-' + idx + '-' + fl.key;
               flBtn.setAttribute('width', '0.47');
               flBtn.setAttribute('height', '0.30');
-              flBtn.setAttribute('position', '-5.0 0 0');
+              flBtn.setAttribute('position', '-6.5 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
               // "Tap here" hand-cursor icon (LEFT of floor label)
@@ -641,7 +641,7 @@
               tapIconEl.id = 'fl-tap-' + idx + '-' + fl.key;
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
-              tapIconEl.setAttribute('position', '-5.58 0 0.01');
+              tapIconEl.setAttribute('position', '-7.08 0 0.01');
               tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
@@ -649,7 +649,7 @@
               var nFloors = daylightFloors.length;
               var fanAngle = 20 * (1 - 2 * flIdx / (nFloors - 1)); // +20° (5F) → 0° (3F) → -20° (1F)
               var alpha = fanAngle * Math.PI / 180;
-              var xS = -4.65, xE = -3.85, nFanDashes = 6;
+              var xS = -6.15, xE = -5.35, nFanDashes = 6;
               var yL = Math.tan(alpha) * (xE - xS);                // left-side y — unchanged
               var yR = -yL;                                         // right-side y mirrored → steeper slope
               var actualSlope = (yR - yL) / (xE - xS);
@@ -679,7 +679,7 @@
               flImg.setAttribute('width', '6.5');
               flImg.setAttribute('height', '4.9');
               var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
-              flImg.setAttribute('position', '-8.3 0 ' + flImgZ.toFixed(2));
+              flImg.setAttribute('position', '-9.8 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat');
               (function(el, src) {
                 var tmpImg = new Image();
