@@ -570,7 +570,7 @@
               fx.fillRect(0, 0, 512, 512);
               fx.textAlign = 'center'; fx.textBaseline = 'middle';
               fx.fillStyle = '#0a0a0a';
-              fx.font = 'bold 260px Arial, sans-serif';
+              fx.font = 'bold 160px Arial, sans-serif';
               fx.fillText(fl.key, 256, 256);
               var fimg = document.createElement('img');
               fimg.id = 'flbl-' + idx + '-' + fl.key;
@@ -590,9 +590,9 @@
               // Floor button plane
               var flBtn = document.createElement('a-plane');
               flBtn.id = 'fl-btn-' + idx + '-' + fl.key;
-              flBtn.setAttribute('width', '0.75');
-              flBtn.setAttribute('height', '0.75');
-              flBtn.setAttribute('position', '-4.0 0 0');
+              flBtn.setAttribute('width', '0.5');
+              flBtn.setAttribute('height', '0.5');
+              flBtn.setAttribute('position', '-5.0 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
               // "Tap here" hand-cursor icon (LEFT of floor label)
@@ -639,14 +639,14 @@
               var tapIconEl = document.createElement('a-plane');
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
-              tapIconEl.setAttribute('position', '-4.68 0 0.01');
+              tapIconEl.setAttribute('position', '-5.58 0 0.01');
               tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               flDotGroup.appendChild(tapIconEl);
 
               // Horizontal dashes extending RIGHT from the label (leader lines)
-              var hDashX = [-3.35, -3.03, -2.71, -2.39, -2.07, -1.75];
+              var hDashX = [-4.65, -4.33, -4.01, -3.69, -3.37, -3.05];
               for (var hdi = 0; hdi < hDashX.length; hdi++) {
                 var hdash = document.createElement('a-cylinder');
                 hdash.setAttribute('radius', '0.018');
@@ -668,7 +668,7 @@
               flImg.id = 'fl-img-' + idx + '-' + fl.key;
               flImg.setAttribute('width', '6.5');
               flImg.setAttribute('height', '4.9');
-              flImg.setAttribute('position', '-7.5 0 0');
+              flImg.setAttribute('position', '-9.0 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat');
               (function(el, src) {
                 var tmpImg = new Image();
