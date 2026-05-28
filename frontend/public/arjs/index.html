@@ -440,6 +440,16 @@
           dx.beginPath();
           dx.moveTo(bx - 45, by - 62); dx.lineTo(bx - 45, by + 62); dx.lineTo(bx + 66, by);
           dx.closePath(); dx.fill();
+          // Close (X) button — top-right corner
+          var xx = DW - 150, xy = 150, xr = 110;
+          dx.fillStyle = 'rgba(255,255,255,0.18)';
+          dx.beginPath(); dx.arc(xx, xy, xr, 0, Math.PI * 2); dx.fill();
+          dx.strokeStyle = '#ffffff'; dx.lineWidth = 16;
+          var xo = 58;
+          dx.beginPath();
+          dx.moveTo(xx - xo, xy - xo); dx.lineTo(xx + xo, xy + xo);
+          dx.moveTo(xx + xo, xy - xo); dx.lineTo(xx - xo, xy + xo);
+          dx.stroke();
           if (!window._descCanvases) window._descCanvases = [];
           window._descCanvases[idx] = dv;
           var dimg = document.createElement('img');
@@ -500,7 +510,7 @@
           descPlane.id = 'ar-desc-plane-' + idx;
           descPlane.setAttribute('width', '7.0');
           descPlane.setAttribute('height', '4.4');
-          descPlane.setAttribute('position', '-7.5 0 0');
+          descPlane.setAttribute('position', '-5.0 0 0');
           descPlane.setAttribute('material', 'src: #dlbl-' + idx + '; side: double; transparent: false; shader: flat');
 
           // Invisible play-button hitbox — mapped to where the circle sits on the canvas
@@ -509,7 +519,7 @@
           playHitbox.id = 'ar-play-' + idx;
           playHitbox.setAttribute('width', '1.5');
           playHitbox.setAttribute('height', '1.5');
-          playHitbox.setAttribute('position', '-10.63 -1.83 0.02');
+          playHitbox.setAttribute('position', '-8.13 -1.83 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat; side: double');
 
           // Info label plane (left of main label, same Y level)
@@ -521,8 +531,17 @@
           infoLbl.setAttribute('visible', 'false');
           infoLbl.setAttribute('material', 'src: #ilbl-' + idx + '; side: double; transparent: false; shader: flat');
 
+          // Invisible X-button hitbox — top-right of desc panel
+          var xHitbox = document.createElement('a-plane');
+          xHitbox.id = 'ar-xbtn-' + idx;
+          xHitbox.setAttribute('width', '0.9');
+          xHitbox.setAttribute('height', '0.9');
+          xHitbox.setAttribute('position', '-1.83 1.87 0.02');
+          xHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat; side: double');
+
           descGroup.appendChild(descPlane);
           descGroup.appendChild(playHitbox);
+          descGroup.appendChild(xHitbox);
           label.appendChild(bg);
           label.appendChild(infoLbl);
           label.appendChild(descGroup);
@@ -676,7 +695,8 @@
 
     function showDescIndependent(idx) {
       showDescPanel(idx);
-      setInfoHint(idx, true);
+      const ilbl = document.getElementById('ar-ilbl-' + idx);
+      if (ilbl && ilbl.object3D) ilbl.object3D.visible = false;
       descOpenIdx = idx;
     }
 
@@ -685,7 +705,8 @@
       const prev = descOpenIdx;
       descOpenIdx = null;
       hideDescPanel(prev);
-      setInfoHint(prev, false);
+      const ilbl = document.getElementById('ar-ilbl-' + prev);
+      if (ilbl && ilbl.object3D) ilbl.object3D.visible = true;
       if (_speaking && _speechIdx === prev && _audio) {
         _audio.pause(); _audio.currentTime = 0;
         setPlayBtn(prev, false); _speaking = false; _speechIdx = -1;
@@ -710,36 +731,6 @@
       cx.fillText(isOpen ? 'Tap to close' : 'Tap for details', 512, 370);
       const tex = new THREE.CanvasTexture(cv);
       bg.object3D.traverse(function (child) {
-        if (!child.isMesh || !child.material) return;
-        if (child.material.map) child.material.map.dispose();
-        child.material.map = tex;
-        child.material.needsUpdate = true;
-      });
-    }
-
-    function setInfoHint(idx, isOpen) {
-      const ilbl = document.getElementById('ar-ilbl-' + idx);
-      if (!ilbl || !ilbl.object3D) return;
-      const b = BUILDINGS[idx];
-      const ic = document.createElement('canvas');
-      ic.width = 1024; ic.height = 512;
-      const ix = ic.getContext('2d');
-      ix.fillStyle = '#ffffff';
-      ix.fillRect(0, 0, 1024, 512);
-      ix.textAlign = 'center'; ix.textBaseline = 'middle';
-      ix.fillStyle = '#000000';
-      ix.font = 'bold 130px Arial, sans-serif';
-      ix.fillText(b.name, 512, 165);
-      ix.strokeStyle = '#107b7f'; ix.lineWidth = 4;
-      ix.beginPath(); ix.moveTo(80, 250); ix.lineTo(944, 250); ix.stroke();
-      ix.font = '88px Arial, sans-serif';
-      ix.fillStyle = '#107b7f';
-      ix.fillText('Building Info', 512, 330);
-      ix.font = '80px Arial, sans-serif';
-      ix.fillStyle = isOpen ? '#e53935' : '#555555';
-      ix.fillText(isOpen ? 'Tap to close' : 'Tap for details', 512, 440);
-      const tex = new THREE.CanvasTexture(ic);
-      ilbl.object3D.traverse(function (child) {
         if (!child.isMesh || !child.material) return;
         if (child.material.map) child.material.map.dispose();
         child.material.map = tex;
@@ -888,6 +879,23 @@
     function handleTap(cx, cy) {
       sceneEl.object3D.updateMatrixWorld(true);
       const r = sceneEl.canvas.getBoundingClientRect();
+
+      // Check X button (closes desc only)
+      if (descOpenIdx !== null) {
+        const xbtn = document.getElementById('ar-xbtn-' + descOpenIdx);
+        const dg   = document.getElementById('ar-desc-'  + descOpenIdx);
+        if (xbtn && dg && dg.object3D.visible) {
+          xbtn.object3D.getWorldPosition(_arVec);
+          _arVec.project(sceneEl.camera);
+          if (_arVec.z <= 1) {
+            const sx = (_arVec.x + 1) / 2 * r.width + r.left;
+            const sy = (-_arVec.y + 1) / 2 * r.height + r.top;
+            if (Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2) < 80) {
+              hideDescIndependent(); return;
+            }
+          }
+        }
+      }
 
       // Check play button (desc panel must be visible)
       const playFor = descOpenIdx !== null ? descOpenIdx : activeIdx;
