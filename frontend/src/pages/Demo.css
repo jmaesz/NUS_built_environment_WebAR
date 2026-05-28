@@ -278,6 +278,7 @@
 .demo-nav-row {
   display: flex;
   flex-shrink: 0;
+  margin-bottom: 24px;
 }
 
 .demo-nav-btn {
