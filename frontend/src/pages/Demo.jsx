@@ -22,11 +22,6 @@ export default function Demo() {
 
       <Step1 onNext={handleSkip} onBack={() => navigate('/')} onSkip={handleSkip} />
 
-      <footer className="demo-footer">
-        <span>NUSCAPE-AR</span>
-        <span className="demo-footer-line" />
-        <span>NUS BUILT ENVIRONMENT</span>
-      </footer>
     </div>
   )
 }
@@ -36,7 +31,7 @@ function Step1({ onNext, onBack, onSkip }) {
     <main className="demo-main">
       <div className="demo-label-row">
         <p className="demo-section-label">BEFORE YOU START</p>
-        <button className="demo-skip-box" onClick={onSkip}>SKIP →</button>
+        <button className="demo-skip-demo-btn" onClick={onSkip}>SKIP DEMO →</button>
       </div>
 
       <div className="demo-tip">
