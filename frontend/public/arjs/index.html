@@ -532,12 +532,12 @@
           playHitbox.setAttribute('position', '-8.13 -1.83 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat; side: double');
 
-          // Info label plane (left of main label, same Y level)
+          // Info label plane (right of main label, same Y level)
           var infoLbl = document.createElement('a-plane');
           infoLbl.id = 'ar-ilbl-' + idx;
           infoLbl.setAttribute('width', '2.2');
           infoLbl.setAttribute('height', '1.1');
-          infoLbl.setAttribute('position', '-2.5 0 0');
+          infoLbl.setAttribute('position', '2.5 0 0');
           infoLbl.setAttribute('visible', 'false');
           infoLbl.setAttribute('material', 'src: #ilbl-' + idx + '; side: double; transparent: false; shader: flat');
 
@@ -1205,10 +1205,6 @@
           if (activeIdx !== null) hideChart();
           showChart(bestIdx);
         }
-      } else if (activeIdx !== null || descOpenIdx !== null || openDaylightFloors.size > 0) {
-        if (activeIdx !== null) hideChart();
-        if (descOpenIdx !== null) hideDescIndependent();
-        if (openDaylightFloors.size > 0) hideDaylightFloor();
       }
     }
 
