@@ -588,16 +588,13 @@
               fx.fillRect(0, 0, 1024, 512);
               fx.textAlign = 'center'; fx.textBaseline = 'middle';
               fx.fillStyle = '#000000';
-              fx.font = 'bold 145px Arial, sans-serif';
-              fx.fillText(fl.key, 512, 150);
+              fx.font = 'bold 165px Arial, sans-serif';
+              fx.fillText(fl.key, 512, 175);
               fx.strokeStyle = '#107b7f'; fx.lineWidth = 4;
-              fx.beginPath(); fx.moveTo(80, 235); fx.lineTo(944, 235); fx.stroke();
-              fx.font = '82px Arial, sans-serif';
+              fx.beginPath(); fx.moveTo(80, 285); fx.lineTo(944, 285); fx.stroke();
+              fx.font = '95px Arial, sans-serif';
               fx.fillStyle = '#107b7f';
-              fx.fillText('Daylight', 512, 318);
-              fx.font = '68px Arial, sans-serif';
-              fx.fillStyle = '#555555';
-              fx.fillText('Tap for details', 512, 428);
+              fx.fillText('Daylight', 512, 400);
               var fimg = document.createElement('img');
               fimg.id = 'flbl-' + idx + '-' + fl.key;
               fimg.src = fc.toDataURL('image/png');
@@ -633,6 +630,50 @@
               flBtn.setAttribute('position', '-2.5 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
+              // "Tap here" button icon beside floor label
+              if (!document.getElementById('tap-icon-shared')) {
+                var tic = document.createElement('canvas');
+                tic.width = 128; tic.height = 128;
+                var tt = tic.getContext('2d');
+                // Circle background
+                tt.fillStyle = '#107b7f';
+                tt.beginPath(); tt.arc(64, 64, 62, 0, Math.PI * 2); tt.fill();
+                // White hand icon
+                tt.fillStyle = '#ffffff';
+                // Index finger tip
+                tt.beginPath(); tt.arc(64, 28, 12, 0, Math.PI * 2); tt.fill();
+                // Index finger shaft
+                tt.fillRect(52, 28, 24, 38);
+                // Middle finger
+                tt.beginPath(); tt.arc(86, 36, 10, 0, Math.PI * 2); tt.fill();
+                tt.fillRect(76, 36, 20, 32);
+                // Ring finger
+                tt.beginPath(); tt.arc(106, 44, 9, 0, Math.PI * 2); tt.fill();
+                tt.fillRect(97, 44, 18, 28);
+                // Thumb
+                tt.beginPath(); tt.arc(38, 64, 10, 0, Math.PI * 2); tt.fill();
+                tt.fillRect(28, 56, 20, 30);
+                // Palm
+                tt.fillRect(38, 66, 77, 42);
+                tt.beginPath(); tt.arc(64, 108, 22, 0, Math.PI * 2); tt.fill();
+                var tishared = document.createElement('img');
+                tishared.id = 'tap-icon-shared';
+                tishared.src = tic.toDataURL('image/png');
+                assets.appendChild(tishared);
+              }
+
+              var flDotGroup = document.createElement('a-entity');
+              flDotGroup.id = 'fl-dot-' + idx + '-' + fl.key;
+
+              var tapIconEl = document.createElement('a-plane');
+              tapIconEl.setAttribute('width', '0.38');
+              tapIconEl.setAttribute('height', '0.38');
+              tapIconEl.setAttribute('position', '-1.35 0 0.01');
+              tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.1; shader: flat; side: double');
+              tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.25 1.25 1; dir: alternate; dur: 850; loop: true; easing: easeInOutSine');
+
+              flDotGroup.appendChild(tapIconEl);
+
               // Daylight group (hidden until tapped)
               var flDg = document.createElement('a-entity');
               flDg.id = 'fl-dg-' + idx + '-' + fl.key;
@@ -665,6 +706,7 @@
               flDg.appendChild(flXvis);
               flDg.appendChild(flXhit);
               flBb.appendChild(flBtn);
+              flBb.appendChild(flDotGroup);
               flBb.appendChild(flDg);
               flUpEl.appendChild(flBb);
               marker.appendChild(flUpEl);
@@ -841,8 +883,10 @@
 
     function showDaylightFloor(idx, floorKey) {
       const btn = document.getElementById('fl-btn-' + idx + '-' + floorKey);
+      const dot = document.getElementById('fl-dot-' + idx + '-' + floorKey);
       const dg  = document.getElementById('fl-dg-'  + idx + '-' + floorKey);
       if (btn && btn.object3D) btn.object3D.visible = false;
+      if (dot && dot.object3D) dot.object3D.visible = false;
       if (dg  && dg.object3D)  dg.object3D.visible  = true;
       daylightBldgIdx  = idx;
       daylightFloorKey = floorKey;
@@ -851,8 +895,10 @@
     function hideDaylightFloor() {
       if (daylightBldgIdx === null) return;
       const btn = document.getElementById('fl-btn-' + daylightBldgIdx + '-' + daylightFloorKey);
+      const dot = document.getElementById('fl-dot-' + daylightBldgIdx + '-' + daylightFloorKey);
       const dg  = document.getElementById('fl-dg-'  + daylightBldgIdx + '-' + daylightFloorKey);
       if (btn && btn.object3D) btn.object3D.visible = true;
+      if (dot && dot.object3D) dot.object3D.visible = true;
       if (dg  && dg.object3D)  dg.object3D.visible  = false;
       daylightBldgIdx  = null;
       daylightFloorKey = null;
