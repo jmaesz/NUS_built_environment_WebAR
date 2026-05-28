@@ -31,11 +31,10 @@ function Step1({ onNext, onBack, onSkip }) {
     <main className="demo-main">
       <div className="demo-label-row">
         <p className="demo-section-label">BEFORE YOU START</p>
-        <button className="demo-skip-demo-btn" onClick={onSkip}>SKIP DEMO →</button>
       </div>
 
       <div className="demo-tip">
-        <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
+        <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img demo-tip-img--portrait" />
         <p className="demo-tip-caption">
           Point your camera at the ArUco markers on the physical model — works in portrait mode
         </p>

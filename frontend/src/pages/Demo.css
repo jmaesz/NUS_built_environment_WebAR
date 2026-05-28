@@ -113,6 +113,10 @@
   mix-blend-mode: multiply;
 }
 
+.demo-tip-img--portrait {
+  max-height: 28vh;
+}
+
 .demo-tip-caption {
   font-size: 11px;
   line-height: 1.5;
