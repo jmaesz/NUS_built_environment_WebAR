@@ -384,29 +384,6 @@
           img.src = cv.toDataURL('image/png');
           assets.appendChild(img);
 
-          // ── Info label canvas ──────────────────────────────────────────────
-          var ic = document.createElement('canvas');
-          ic.width = 1024; ic.height = 512;
-          var ix = ic.getContext('2d');
-          ix.fillStyle = '#ffffff';
-          ix.fillRect(0, 0, 1024, 512);
-          ix.textAlign = 'center'; ix.textBaseline = 'middle';
-          ix.fillStyle = '#000000';
-          ix.font = 'bold 130px Arial, sans-serif';
-          ix.fillText(b.name, 512, 165);
-          ix.strokeStyle = '#107b7f'; ix.lineWidth = 4;
-          ix.beginPath(); ix.moveTo(80, 250); ix.lineTo(944, 250); ix.stroke();
-          ix.font = '88px Arial, sans-serif';
-          ix.fillStyle = '#107b7f';
-          ix.fillText('Building Info', 512, 330);
-          ix.font = '80px Arial, sans-serif';
-          ix.fillStyle = '#555555';
-          ix.fillText('Tap for details', 512, 440);
-          var iimg = document.createElement('img');
-          iimg.id = 'ilbl-' + idx;
-          iimg.src = ic.toDataURL('image/png');
-          assets.appendChild(iimg);
-
           // ── Description canvas ─────────────────────────────────────────────
           var DW = 3200, DH = 2000;
           var dv = document.createElement('canvas');
@@ -512,18 +489,9 @@
           playHitbox.setAttribute('position', '-8.13 -1.83 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat; side: double');
 
-          // Info label plane (left of main label, same Y level)
-          var infoLbl = document.createElement('a-plane');
-          infoLbl.id = 'ar-ilbl-' + idx;
-          infoLbl.setAttribute('width', '2.2');
-          infoLbl.setAttribute('height', '1.1');
-          infoLbl.setAttribute('position', '-2.5 0 0');
-          infoLbl.setAttribute('material', 'src: #ilbl-' + idx + '; side: double; transparent: false; shader: flat');
-
           descGroup.appendChild(descPlane);
           descGroup.appendChild(playHitbox);
           label.appendChild(bg);
-          label.appendChild(infoLbl);
           label.appendChild(descGroup);
           upContainer.appendChild(label);
           marker.appendChild(upContainer);
@@ -543,7 +511,6 @@
     let euiInstance   = null;
     let mapsHideTimer = null;
     let activeIdx     = null;
-    let descOpenIdx   = null;
     let currentView   = 'pie';
     let _speaking     = false;
     let _speechIdx    = -1;
@@ -673,20 +640,6 @@
       if (g && g.object3D) g.object3D.visible = false;
     }
 
-    function showDescIndependent(idx) {
-      showDescPanel(idx);
-      setInfoLabel(idx, false);
-      descOpenIdx = idx;
-    }
-
-    function hideDescIndependent() {
-      if (descOpenIdx === null) return;
-      hideDescPanel(descOpenIdx);
-      setInfoLabel(descOpenIdx, true);
-      if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; setPlayBtn(_speechIdx, false); _speaking = false; _speechIdx = -1; }
-      descOpenIdx = null;
-    }
-
     function setLabelHint(idx, isOpen) {
       const bg = document.getElementById('ar-bg-' + idx);
       if (!bg || !bg.object3D) return;
@@ -712,25 +665,17 @@
       });
     }
 
-    function setInfoLabel(idx, visible) {
-      const ilbl = document.getElementById('ar-ilbl-' + idx);
-      if (ilbl && ilbl.object3D) ilbl.object3D.visible = visible;
-    }
-
-    function pulseEl(el) {
-      if (!el || !el.object3D) return;
+    function pulseTap(idx) {
+      const bg = document.getElementById('ar-bg-' + idx);
+      if (!bg) return;
       const t0 = performance.now(), dur = 350;
       (function frame(now) {
         const t = Math.min((now - t0) / dur, 1);
         const s = 1 + 0.25 * Math.sin(t * Math.PI);
-        el.object3D.scale.set(s, s, s);
+        bg.object3D.scale.set(s, s, s);
         if (t < 1) requestAnimationFrame(frame);
-        else el.object3D.scale.set(1, 1, 1);
+        else bg.object3D.scale.set(1, 1, 1);
       })(t0);
-    }
-
-    function pulseTap(idx) {
-      pulseEl(document.getElementById('ar-bg-' + idx));
     }
 
     function setOtherLabelsVisible(skipIdx, visible) {
@@ -741,7 +686,6 @@
         if (up)   up.object3D.visible   = visible;
         if (dash) dash.object3D.visible = visible;
         if (!visible) hideDescPanel(i);
-        setInfoLabel(i, visible);
       });
     }
 
@@ -750,7 +694,6 @@
       activeIdx = idx;
       setLabelHint(idx, true);
       setOtherLabelsVisible(idx, false);
-      setInfoLabel(idx, false);
       showDescPanel(idx);
 
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
@@ -794,7 +737,6 @@
       if (activeIdx !== null) {
         setLabelHint(activeIdx, false);
         hideDescPanel(activeIdx);
-        setInfoLabel(activeIdx, true);
       }
       if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; setPlayBtn(_speechIdx, false); _speaking = false; _speechIdx = -1; }
       setOtherLabelsVisible(-1, true);
@@ -846,8 +788,6 @@
 
     function handleTap(cx, cy) {
       sceneEl.object3D.updateMatrixWorld(true);
-
-      // Chart open: check play button, then close
       if (activeIdx !== null) {
         const play = document.getElementById('ar-play-' + activeIdx);
         if (play && play.object3D && play.object3D.visible) {
@@ -866,66 +806,26 @@
         return;
       }
 
-      // Description open independently: check play button, then close
-      if (descOpenIdx !== null) {
-        const play = document.getElementById('ar-play-' + descOpenIdx);
-        if (play && play.object3D && play.object3D.visible) {
-          play.object3D.getWorldPosition(_arVec);
-          _arVec.project(sceneEl.camera);
-          if (_arVec.z <= 1) {
-            const rr = sceneEl.canvas.getBoundingClientRect();
-            const sx = (_arVec.x + 1) / 2 * rr.width + rr.left;
-            const sy = (-_arVec.y + 1) / 2 * rr.height + rr.top;
-            if (Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2) < 110) {
-              speakDescription(descOpenIdx); return;
-            }
-          }
-        }
-        hideDescIndependent();
-        return;
-      }
-
-      // Nothing open — hit test main labels and info labels
+      // No panel open — screen-distance hit test against visible labels
       const r = sceneEl.canvas.getBoundingClientRect();
       let bestIdx = -1, bestDist = 40;
-      let bestInfoIdx = -1, bestInfoDist = 40;
-
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         const marker = document.getElementById('marker-' + idx);
         if (!marker || !marker.object3D.visible) continue;
-
         const bg = document.getElementById('ar-bg-' + idx);
-        if (bg) {
-          bg.object3D.getWorldPosition(_arVec);
-          _arVec.project(sceneEl.camera);
-          if (_arVec.z <= 1) {
-            const sx = (_arVec.x + 1) / 2 * r.width + r.left;
-            const sy = (-_arVec.y + 1) / 2 * r.height + r.top;
-            const dist = Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2);
-            if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
-          }
-        }
-
-        const ilbl = document.getElementById('ar-ilbl-' + idx);
-        if (ilbl && ilbl.object3D.visible) {
-          ilbl.object3D.getWorldPosition(_arVec);
-          _arVec.project(sceneEl.camera);
-          if (_arVec.z <= 1) {
-            const sx = (_arVec.x + 1) / 2 * r.width + r.left;
-            const sy = (-_arVec.y + 1) / 2 * r.height + r.top;
-            const dist = Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2);
-            if (dist < bestInfoDist) { bestInfoDist = dist; bestInfoIdx = idx; }
-          }
-        }
+        if (!bg) continue;
+        bg.object3D.getWorldPosition(_arVec);
+        _arVec.project(sceneEl.camera);
+        if (_arVec.z > 1) continue;
+        const sx = (_arVec.x + 1) / 2 * r.width + r.left;
+        const sy = (-_arVec.y + 1) / 2 * r.height + r.top;
+        const dist = Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2);
+        if (dist < bestDist) { bestDist = dist; bestIdx = idx; }
       }
-
-      if (bestInfoIdx !== -1 && bestInfoDist < bestDist) {
-        pulseEl(document.getElementById('ar-ilbl-' + bestInfoIdx));
-        showDescIndependent(bestInfoIdx);
-      } else if (bestIdx !== -1) {
-        pulseTap(bestIdx);
-        showChart(bestIdx);
-      }
+      if (bestIdx === -1) return;
+      pulseTap(bestIdx);
+      activeIdx === bestIdx && chartPanel.classList.contains('visible')
+        ? hideChart() : showChart(bestIdx);
     }
 
     document.addEventListener('touchend', e => {
