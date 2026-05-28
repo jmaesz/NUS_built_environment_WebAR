@@ -39,19 +39,18 @@ function Step1({ onNext, onBack, onSkip }) {
         <button className="demo-skip-box" onClick={onSkip}>SKIP →</button>
       </div>
 
-      <div className="demo-tips-row">
-        <div className="demo-tip">
-          <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
-          <p className="demo-tip-caption">
-            Point your camera at the ArUco markers on the physical model
-          </p>
-        </div>
-        <div className="demo-tip">
-          <img src="/demo-landscape.png" alt="Landscape mode" className="demo-tip-img landscape" />
-          <p className="demo-tip-caption">
-            Rotate your phone for a wider view — landscape is fully supported
-          </p>
-        </div>
+      <div className="demo-tip">
+        <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img" />
+        <p className="demo-tip-caption">
+          Point your camera at the ArUco markers on the physical model — works in portrait mode
+        </p>
+      </div>
+
+      <div className="demo-tip">
+        <img src="/demo-landscape.png" alt="Landscape mode" className="demo-tip-img landscape" />
+        <p className="demo-tip-caption">
+          Rotate your phone for a wider view — landscape orientation is fully supported
+        </p>
       </div>
 
       <div className="demo-warning">
