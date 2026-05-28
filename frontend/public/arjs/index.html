@@ -1143,7 +1143,8 @@
         if (!marker || !marker.object3D.visible) continue;
 
         const bg = document.getElementById('ar-bg-' + idx);
-        if (bg) {
+        const upElBg = document.getElementById('ar-up-' + idx);
+        if (bg && upElBg && upElBg.object3D.visible) {
           bg.object3D.getWorldPosition(_arVec);
           _arVec.project(sceneEl.camera);
           if (_arVec.z <= 1) {
