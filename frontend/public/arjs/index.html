@@ -1069,7 +1069,6 @@
         visibleMarkers.add(idx);
         if (_hideTimers[idx]) { clearTimeout(_hideTimers[idx]); delete _hideTimers[idx]; }
         scanHint.style.opacity = '0';
-        if (activeIdx !== idx) { if (activeIdx !== null) hideChart(); showChart(idx); }
       });
       marker.addEventListener('markerLost', () => {
         visibleMarkers.delete(idx);
@@ -1197,6 +1196,14 @@
         } else {
           if (descOpenIdx !== null) hideDescIndependent();
           showDescIndependent(bestInfoIdx);
+        }
+      } else if (bestIdx !== -1) {
+        pulseTap(bestIdx);
+        if (activeIdx === bestIdx) {
+          hideChart();
+        } else {
+          if (activeIdx !== null) hideChart();
+          showChart(bestIdx);
         }
       }
     }
