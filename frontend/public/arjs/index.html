@@ -663,8 +663,8 @@
 
               flDotGroup.appendChild(tapIconEl);
 
-              // Horizontal dashes extending LEFT from the label (leader lines)
-              var hDashX = [-3.65, -3.92, -4.19];
+              // Horizontal dashes extending RIGHT from the label (leader lines)
+              var hDashX = [-1.90, -1.65, -1.40];
               for (var hdi = 0; hdi < hDashX.length; hdi++) {
                 var hdash = document.createElement('a-cylinder');
                 hdash.setAttribute('radius', '0.018');
@@ -681,13 +681,40 @@
               flDg.id = 'fl-dg-' + idx + '-' + fl.key;
               flDg.setAttribute('visible', 'false');
 
-              // Daylight image plane (4.4 × 3.3, to the left)
+              // Daylight image plane (4.4 × 3.3, to the left) — bg removed at runtime
               var flImg = document.createElement('a-plane');
               flImg.id = 'fl-img-' + idx + '-' + fl.key;
               flImg.setAttribute('width', '4.4');
               flImg.setAttribute('height', '3.3');
               flImg.setAttribute('position', '-5.5 0 0');
-              flImg.setAttribute('material', 'src: ' + fl.img + '; side: double; transparent: false; shader: flat');
+              flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat');
+              (function(el, src) {
+                var tmpImg = new Image();
+                tmpImg.onload = function() {
+                  var cv = document.createElement('canvas');
+                  cv.width = tmpImg.width; cv.height = tmpImg.height;
+                  var ctx = cv.getContext('2d');
+                  ctx.drawImage(tmpImg, 0, 0);
+                  var id = ctx.getImageData(0, 0, cv.width, cv.height);
+                  var d = id.data;
+                  for (var pi = 0; pi < d.length; pi += 4) {
+                    if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
+                  }
+                  ctx.putImageData(id, 0, 0);
+                  function tryApply() {
+                    var mesh = el.getObject3D('mesh');
+                    if (!mesh || !mesh.material) { setTimeout(tryApply, 100); return; }
+                    var tex = new THREE.CanvasTexture(cv);
+                    tex.needsUpdate = true;
+                    mesh.material.map = tex;
+                    mesh.material.transparent = true;
+                    mesh.material.alphaTest = 0.05;
+                    mesh.material.needsUpdate = true;
+                  }
+                  setTimeout(tryApply, 600);
+                };
+                tmpImg.src = src;
+              })(flImg, fl.img);
 
               // X button visual (top-right corner of image)
               var flXvis = document.createElement('a-plane');
