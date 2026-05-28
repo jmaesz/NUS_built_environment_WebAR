@@ -754,16 +754,24 @@
     let _lastTouch = 0;
     const _uiLayer = document.getElementById('ui-layer');
 
+    const _hideTimers = {};
+
     BUILDINGS.forEach(function (b, idx) {
       const marker = document.getElementById('marker-' + idx);
       if (!marker) return;
       marker.addEventListener('markerFound', () => {
         visibleMarkers.add(idx);
+        if (_hideTimers[idx]) { clearTimeout(_hideTimers[idx]); delete _hideTimers[idx]; }
         scanHint.style.opacity = '0';
       });
       marker.addEventListener('markerLost', () => {
         visibleMarkers.delete(idx);
-        if (activeIdx === idx) hideChart();
+        if (activeIdx === idx) {
+          _hideTimers[idx] = setTimeout(() => {
+            delete _hideTimers[idx];
+            hideChart();
+          }, 2000);
+        }
         if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
     });
