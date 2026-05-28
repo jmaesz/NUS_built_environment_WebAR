@@ -272,7 +272,7 @@
 }
 
 /* ── Spacer ── */
-.demo-spacer { flex: 0; height: 8px; }
+.demo-spacer { flex: 0; height: 4px; }
 
 /* ── Bottom nav row (BACK / NEXT or START AR) ── */
 .demo-nav-row {
