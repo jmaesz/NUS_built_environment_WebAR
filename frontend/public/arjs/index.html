@@ -645,15 +645,16 @@
 
               flDotGroup.appendChild(tapIconEl);
 
-              // Fan dashes — each floor angles toward the marker above (natural convergence)
-              var yConv = Math.abs(fl.yUp);          // marker is this far above this floor's billboard
-              var slope = yConv / 4.2;               // dy/dx from button (-4.2,0) toward marker (0, yConv)
-              var dashRotZ = Math.round(90 - Math.atan(slope) * 180 / Math.PI);
+              // Symmetric fan: middle floor (3F) horizontal, floors above fan up, floors below fan down
+              var nFloors = daylightFloors.length;
+              var fanAngle = 20 * (1 - 2 * flIdx / (nFloors - 1)); // +20° (5F) → 0° (3F) → -20° (1F)
+              var alpha = fanAngle * Math.PI / 180;
+              var dashRotZ = Math.round(90 + fanAngle);             // 110 → 90 → 70
               var xS = -3.85, xE = -2.25, nFanDashes = 6;
               for (var hdi = 0; hdi < nFanDashes; hdi++) {
                 var t = hdi / (nFanDashes - 1);
                 var xd = xS + t * (xE - xS);
-                var yd = slope * (xd + 4.2);
+                var yd = Math.tan(alpha) * (xd - xS);              // y=0 at button side, opens toward marker
                 var hdash = document.createElement('a-cylinder');
                 hdash.setAttribute('radius', '0.018');
                 hdash.setAttribute('height', '0.15');
