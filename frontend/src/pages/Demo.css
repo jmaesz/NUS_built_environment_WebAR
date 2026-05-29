@@ -1,6 +1,5 @@
 .demo {
-  height: 100dvh;
-  overflow: hidden;
+  min-height: 100dvh;
   background: #f5f4f0;
   color: #0a0a0a;
   display: flex;
@@ -278,7 +277,8 @@
 .demo-nav-row {
   display: flex;
   flex-shrink: 0;
-  margin-bottom: 24px;
+  position: sticky;
+  bottom: 0;
 }
 
 .demo-nav-btn {
