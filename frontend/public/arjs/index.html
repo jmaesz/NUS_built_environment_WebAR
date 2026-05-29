@@ -68,35 +68,70 @@
         }
       }
     });
-    // Pose hold: keep AR locked to last known pose, debounce visibility so 1-frame drops don't flicker
+    // Pose hold + gyro compensation: when marker is lost, track device rotation and
+    // apply inverse delta to keep AR locked to the real-world marker position.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       init: function () {
         this._pos        = new THREE.Vector3();
         this._quat       = new THREE.Quaternion();
         this._ready      = false;
-        this._lostTimer  = null;
+        this._wasLost    = false;
+        this._lostPos    = new THREE.Vector3();
+        this._lostQuat   = new THREE.Quaternion();
+        this._devQuat    = new THREE.Quaternion();
+        this._devRefInv  = new THREE.Quaternion();
+        this._deltaQ     = new THREE.Quaternion();
+        this._deltaQInv  = new THREE.Quaternion();
+        this._hasOrient  = false;
+        this._euler      = new THREE.Euler(0, 0, 0, 'YXZ');
+        this._tmpVec     = new THREE.Vector3();
+        this._tmpQuat    = new THREE.Quaternion();
         var self = this;
-        this.el.addEventListener('markerLost', function () {
-          // Don't hide immediately — wait 300ms before allowing AR.js to take over
-          if (self._lostTimer) clearTimeout(self._lostTimer);
-          self._lostTimer = setTimeout(function () {
-            self._lostTimer = null;
-          }, 300);
-        });
+        this._onOrient = function (e) {
+          if (e.alpha === null || e.beta === null) return;
+          self._hasOrient = true;
+          self._euler.set(
+            THREE.MathUtils.degToRad(e.beta  || 0),
+            THREE.MathUtils.degToRad(e.alpha || 0),
+           -THREE.MathUtils.degToRad(e.gamma || 0)
+          );
+          self._devQuat.setFromEuler(self._euler);
+        };
+        window.addEventListener('deviceorientation', this._onOrient);
+      },
+      remove: function () {
+        window.removeEventListener('deviceorientation', this._onOrient);
       },
       tick: function () {
         var obj = this.el.object3D;
         if (!obj.visible) {
-          if (this._ready) {
-            // Keep the marker locked at last known pose (blocks AR.js hiding it)
-            obj.visible = true;
+          if (!this._ready) return;
+          if (!this._wasLost) {
+            // First frame of loss — snapshot pose and device orientation
+            this._wasLost = true;
+            this._lostPos.copy(this._pos);
+            this._lostQuat.copy(this._quat);
+            this._devRefInv.copy(this._devQuat).invert();
+          }
+          obj.visible = true;
+          if (this._hasOrient) {
+            // How much has the device rotated since the marker was lost?
+            this._deltaQ.multiplyQuaternions(this._devQuat, this._devRefInv);
+            this._deltaQInv.copy(this._deltaQ).invert();
+            // Apply inverse rotation to keep marker at same perceived world position
+            this._tmpVec.copy(this._lostPos).applyQuaternion(this._deltaQInv);
+            obj.position.copy(this._tmpVec);
+            this._tmpQuat.multiplyQuaternions(this._deltaQInv, this._lostQuat);
+            obj.quaternion.copy(this._tmpQuat);
+          } else {
             obj.position.copy(this._pos);
             obj.quaternion.copy(this._quat);
           }
           return;
         }
-        // Marker visible — store smoothed pose
+        // Marker visible — reset and store current pose
+        this._wasLost = false;
         this._pos.copy(obj.position);
         this._quat.copy(obj.quaternion);
         this._ready = true;
