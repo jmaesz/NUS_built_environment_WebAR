@@ -70,25 +70,27 @@
         }
       }
     });
-    // Pose hold + gyro compensation: when marker is lost, track device rotation and
-    // apply inverse delta to keep AR locked to the real-world marker position.
+    // Pose hold + gyro compensation — event-driven to avoid tick-order race with AR.js.
+    // markerFound/markerLost are the source of truth for lost state; obj.visible is
+    // never polled as the gate because AR.js can set it false in the same frame after
+    // our tick runs, causing one-frame flickers that compound into visible stuttering.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       init: function () {
-        this._pos        = new THREE.Vector3();
-        this._quat       = new THREE.Quaternion();
-        this._ready      = false;
-        this._wasLost    = false;
-        this._lostPos    = new THREE.Vector3();
-        this._lostQuat   = new THREE.Quaternion();
-        this._devQuat    = new THREE.Quaternion();
-        this._devRefInv  = new THREE.Quaternion();
-        this._deltaQ     = new THREE.Quaternion();
-        this._deltaQInv  = new THREE.Quaternion();
-        this._hasOrient  = false;
-        this._euler      = new THREE.Euler(0, 0, 0, 'YXZ');
-        this._tmpVec     = new THREE.Vector3();
-        this._tmpQuat    = new THREE.Quaternion();
+        this._pos       = new THREE.Vector3();
+        this._quat      = new THREE.Quaternion();
+        this._ready     = false;
+        this._isLost    = false;
+        this._lostPos   = new THREE.Vector3();
+        this._lostQuat  = new THREE.Quaternion();
+        this._devQuat   = new THREE.Quaternion();
+        this._devRefInv = new THREE.Quaternion();
+        this._deltaQ    = new THREE.Quaternion();
+        this._deltaQInv = new THREE.Quaternion();
+        this._hasOrient = false;
+        this._euler     = new THREE.Euler(0, 0, 0, 'YXZ');
+        this._tmpVec    = new THREE.Vector3();
+        this._tmpQuat   = new THREE.Quaternion();
         var self = this;
         this._onOrient = function (e) {
           if (e.alpha === null || e.beta === null) return;
@@ -100,52 +102,56 @@
           );
           self._devQuat.setFromEuler(self._euler);
         };
+        this._onFound = function () {
+          self._isLost = false;
+        };
+        this._onLost = function () {
+          if (!self._ready) return;
+          self._isLost = true;
+          self._lostPos.copy(self._pos);
+          self._lostQuat.copy(self._quat);
+          self._devRefInv.copy(self._devQuat).invert();
+        };
         window.addEventListener('deviceorientation', this._onOrient);
+        this.el.addEventListener('markerFound', this._onFound);
+        this.el.addEventListener('markerLost',  this._onLost);
       },
       remove: function () {
         window.removeEventListener('deviceorientation', this._onOrient);
+        this.el.removeEventListener('markerFound', this._onFound);
+        this.el.removeEventListener('markerLost',  this._onLost);
       },
       tick: function () {
         var obj = this.el.object3D;
-        if (!obj.visible) {
+        if (this._isLost) {
           if (!this._ready) return;
-          if (!this._wasLost) {
-            // First frame of loss — snapshot pose and device orientation
-            this._wasLost = true;
-            this._lostPos.copy(this._pos);
-            this._lostQuat.copy(this._quat);
-            this._devRefInv.copy(this._devQuat).invert();
-          }
           obj.visible = true;
           if (this._hasOrient) {
-            // How much has the device rotated since the marker was lost?
             this._deltaQ.multiplyQuaternions(this._devQuat, this._devRefInv);
             this._deltaQInv.copy(this._deltaQ).invert();
-            // Apply inverse rotation to keep marker at same perceived world position
             this._tmpVec.copy(this._lostPos).applyQuaternion(this._deltaQInv);
             obj.position.copy(this._tmpVec);
             this._tmpQuat.multiplyQuaternions(this._deltaQInv, this._lostQuat);
             obj.quaternion.copy(this._tmpQuat);
           } else {
-            obj.position.copy(this._pos);
-            obj.quaternion.copy(this._quat);
+            obj.position.copy(this._lostPos);
+            obj.quaternion.copy(this._lostQuat);
           }
           return;
         }
-        // Marker visible — low-pass filter toward detected pose to kill jitter
-        if (this._ready && !this._wasLost) {
-          // Glide 35% of the way each frame instead of snapping
+        if (!obj.visible) return;
+        // Active detection — force visible, low-pass filter toward new pose
+        obj.visible = true;
+        if (this._ready) {
           this._pos.lerp(obj.position, 0.35);
           this._quat.slerp(obj.quaternion, 0.35);
         } else {
-          // First detection or recovery after loss — snap immediately
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
+          this._ready = true;
         }
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
-        this._wasLost = false;
-        this._ready = true;
       }
     });
   </script>
@@ -1131,10 +1137,12 @@
           if (!markerEl) return;
           var comps = markerEl.components || {};
           Object.keys(comps).forEach(function (key) {
-            var mc = comps[key].markerControls || comps[key]._markerControls;
-            if (mc && mc.smoothedControls && mc.smoothedControls.parameters) {
-              mc.smoothedControls.parameters.minUnvisibleDelay = 4.0;
-            }
+            var comp = comps[key];
+            // Try all known paths — AR.js builds differ on where smoothedControls lives
+            var sc = comp.smoothedControls ||
+                     (comp.markerControls  && comp.markerControls.smoothedControls) ||
+                     (comp._markerControls && comp._markerControls.smoothedControls);
+            if (sc && sc.parameters) sc.parameters.minUnvisibleDelay = 4.0;
           });
         });
       }, 200);
