@@ -311,6 +311,10 @@
     };
 
     window.DAYLIGHT_FLOORS = {
+      'CELC': [
+        { key: '3F', yUp:  0.5, img: '/daylight/CELC/CELC-3F.png' },
+        { key: '2F', yUp: -0.7, img: '/daylight/CELC/CELC-2F.png' },
+      ],
       'SDE4': [
         { key: '5F', yUp:  0.85, img: '/daylight/SDE4/SDE4-5F.png' },
         { key: '4F', yUp: -0.35, img: '/daylight/SDE4/SDE4-4F.png' },
@@ -697,9 +701,10 @@
               tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
-              // Symmetric fan: middle floor (3F) horizontal, floors above fan up, floors below fan down
+              // ≥3 floors: symmetric fan (+20° top → 0° mid → -20° bottom)
+              // ≤2 floors: parallel horizontal lines (angle = 0)
               var nFloors = daylightFloors.length;
-              var fanAngle = 20 * (1 - 2 * flIdx / (nFloors - 1)); // +20° (5F) → 0° (3F) → -20° (1F)
+              var fanAngle = (nFloors >= 3) ? 20 * (1 - 2 * flIdx / (nFloors - 1)) : 0;
               var alpha = fanAngle * Math.PI / 180;
               var xS = -3.15, xE = -2.35, nFanDashes = 6;
               var yL = Math.tan(alpha) * (xE - xS);                // left-side y — unchanged
