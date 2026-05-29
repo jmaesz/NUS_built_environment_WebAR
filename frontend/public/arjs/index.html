@@ -143,8 +143,8 @@
         // Active detection — force visible, low-pass filter toward new pose
         obj.visible = true;
         if (this._ready) {
-          this._pos.lerp(obj.position, 0.35);
-          this._quat.slerp(obj.quaternion, 0.35);
+          this._pos.lerp(obj.position, 0.2);
+          this._quat.slerp(obj.quaternion, 0.2);
         } else {
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
@@ -525,7 +525,7 @@
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
           marker.setAttribute('smoothCount', '15');
-          marker.setAttribute('smoothTolerance', '0.05');
+          marker.setAttribute('smoothTolerance', '0.15');
           marker.setAttribute('smoothThreshold', '1');
           marker.setAttribute('minConfidence', '0.05');
           marker.setAttribute('pose-filter', '');
@@ -1121,11 +1121,11 @@
         if (!ac) return;
         clearInterval(tryTune);
         try {
-          // AUTO_MEDIAN (1) — uses per-frame histogram, stable for single markers.
-          // AUTO_BRACKETING (4) calibrates via marker count and drifts with only 1 marker.
-          ac.setThresholdMode(1);
+          // AUTO_ADAPTIVE (3) — local adaptive thresholding, finds small markers at
+          // distance by binarising each region independently rather than using global
+          // image statistics. Far superior to AUTO_MEDIAN for small/distant markers.
+          ac.setThresholdMode(3);
           if (ac.setLabelingMode) ac.setLabelingMode(0);
-          if (ac.setCornerRefinementMethod) ac.setCornerRefinementMethod(2);
           if (ac.setImageProcMode) ac.setImageProcMode(0);
         } catch(e) {}
 
