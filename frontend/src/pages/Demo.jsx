@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './Demo.css'
 
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+
 export default function Demo() {
   const [step, setStep] = useState(1)
   const navigate = useNavigate()
@@ -28,7 +30,7 @@ export default function Demo() {
 
 function Step1({ onNext, onBack, onSkip }) {
   return (
-    <main className="demo-main">
+    <main className="demo-main" style={isIOS ? {} : { paddingBottom: '70px' }}>
       <div className="demo-label-row">
         <p className="demo-section-label">BEFORE YOU START</p>
       </div>
@@ -59,7 +61,7 @@ function Step1({ onNext, onBack, onSkip }) {
 
       <div className="demo-spacer" />
 
-      <div className="demo-nav-row">
+      <div className={`demo-nav-row${isIOS ? '' : ' demo-nav-row--fixed'}`}>
         <button className="demo-nav-btn demo-nav-btn--back" onClick={onBack}>← BACK</button>
         <button className="demo-nav-btn demo-nav-btn--next" onClick={onNext}>START AR →</button>
       </div>
