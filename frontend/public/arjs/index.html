@@ -68,31 +68,35 @@
         }
       }
     });
-    // Pose hold: let AR.js smoothing handle stability; only add sticky hold when marker lost
+    // Pose hold: keep AR locked to last known pose, debounce visibility so 1-frame drops don't flicker
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       init: function () {
-        this._pos       = new THREE.Vector3();
-        this._quat      = new THREE.Quaternion();
-        this._screenPos = new THREE.Vector3();
-        this._ready     = false;
+        this._pos        = new THREE.Vector3();
+        this._quat       = new THREE.Quaternion();
+        this._ready      = false;
+        this._lostTimer  = null;
+        var self = this;
+        this.el.addEventListener('markerLost', function () {
+          // Don't hide immediately — wait 300ms before allowing AR.js to take over
+          if (self._lostTimer) clearTimeout(self._lostTimer);
+          self._lostTimer = setTimeout(function () {
+            self._lostTimer = null;
+          }, 300);
+        });
       },
       tick: function () {
         var obj = this.el.object3D;
         if (!obj.visible) {
           if (this._ready) {
-            var cam = this.el.sceneEl.camera;
-            if (cam) {
-              this._screenPos.copy(this._pos).project(cam);
-              if (this._screenPos.z > 1) { return; }
-            }
+            // Keep the marker locked at last known pose (blocks AR.js hiding it)
             obj.visible = true;
             obj.position.copy(this._pos);
             obj.quaternion.copy(this._quat);
           }
           return;
         }
-        // Marker detected: store AR.js's already-smoothed pose, no extra filtering
+        // Marker visible — store smoothed pose
         this._pos.copy(obj.position);
         this._quat.copy(obj.quaternion);
         this._ready = true;
@@ -322,7 +326,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 15; sourceWidth: 1920; sourceHeight: 1440; canvasWidth: 1920; canvasHeight: 1440;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 10; sourceWidth: 1920; sourceHeight: 1440; canvasWidth: 1920; canvasHeight: 1440;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true;"
     device-orientation-permission-ui="enabled: false"
@@ -473,7 +477,7 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '20');
+          marker.setAttribute('smoothCount', '30');
           marker.setAttribute('smoothTolerance', '0.005');
           marker.setAttribute('smoothThreshold', '5');
           marker.setAttribute('pose-filter', '');
