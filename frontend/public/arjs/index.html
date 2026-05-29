@@ -171,13 +171,13 @@
       border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
     }
     #chart-panel {
-      position: fixed; top: 16px; right: 12px; z-index: 999; width: 255px;
+      position: fixed; top: 16px; right: 12px; z-index: 999; width: 215px;
       background: rgba(12, 12, 16, 0.88); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
       border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 0;
       box-shadow: 0 4px 32px rgba(0,0,0,0.45); overflow: hidden; display: flex; flex-direction: row;
       opacity: 0; transform: translateX(16px);
       transition: opacity 0.35s ease, transform 0.35s ease, width 0.25s ease; pointer-events: none;
-      height: 252px;
+      height: 215px;
     }
     #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
     #chart-panel.collapsed { width: 22px; }
@@ -187,35 +187,35 @@
       font-size: 15px; color: rgba(255,255,255,0.7); user-select: none; transition: background 0.15s;
     }
     .panel-tab:hover { background: rgba(255,255,255,0.14); }
-    #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0; }
+    #chart-content { flex: 1; padding: 10px; overflow: hidden; min-width: 0; }
     #chart-panel.collapsed #chart-content { visibility: hidden; }
     #chart-panel.collapsed #chart-tab { border-right: none; }
-    #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; margin-bottom: 6px; }
-    #view-toggle { display: flex; gap: 4px; margin-bottom: 8px; }
+    #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #fff; margin-bottom: 4px; }
+    #view-toggle { display: flex; gap: 4px; margin-bottom: 5px; }
     .vt-btn {
-      flex: 1; padding: 4px 0; font-size: 8px; font-weight: 700; letter-spacing: 0.07em;
+      flex: 1; padding: 3px 0; font-size: 8px; font-weight: 700; letter-spacing: 0.07em;
       background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
       color: rgba(255,255,255,0.45); border-radius: 3px; cursor: pointer;
       transition: background 0.15s, color 0.15s, border-color 0.15s;
     }
     .vt-btn.active { background: rgba(255,255,255,0.18); color: #fff; border-color: rgba(255,255,255,0.3); }
-    #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 10px; }
-    #chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-    #chart-container { position: relative; width: 95px; height: 95px; flex-shrink: 0; }
-    .legend { display: flex; flex-direction: column; gap: 7px; flex: 1; }
-    .legend-item { display: flex; align-items: center; gap: 6px; }
-    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin-bottom: 7px; }
+    #chart-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+    #chart-container { position: relative; width: 76px; height: 76px; flex-shrink: 0; }
+    .legend { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
     .legend-label { font-size: 9px; color: rgba(255,255,255,0.6); flex: 1; }
     .legend-value { font-size: 9px; font-weight: 600; color: #fff; }
-    .divider { height: 1px; background: rgba(255,255,255,0.1); margin: 8px 0; }
+    .divider { height: 1px; background: rgba(255,255,255,0.1); margin: 5px 0; }
     #total-row { display: flex; justify-content: space-between; align-items: center; }
     #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.45); }
     #total-value { font-size: 11px; font-weight: 700; color: #fff; }
-    #eui-container { width: 100%; display: none; margin-bottom: 8px; }
-    #eui-canvas-wrap { position: relative; width: 100%; height: 120px; }
-    .eui-legend { display: flex; gap: 10px; justify-content: center; margin-top: 7px; }
+    #eui-container { width: 100%; display: none; margin-bottom: 5px; }
+    #eui-canvas-wrap { position: relative; width: 100%; height: 95px; }
+    .eui-legend { display: flex; gap: 8px; justify-content: center; margin-top: 5px; }
     .eui-legend-item { display: flex; align-items: center; gap: 3px; }
-    .eui-legend-dot { width: 7px; height: 7px; border-radius: 1px; flex-shrink: 0; }
+    .eui-legend-dot { width: 6px; height: 6px; border-radius: 1px; flex-shrink: 0; }
     .eui-legend-lbl { font-size: 8px; color: rgba(255,255,255,0.55); }
     #maps-panel {
       position: fixed; bottom: 20px; right: 16px; z-index: 1000; width: 180px;
