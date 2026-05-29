@@ -1130,12 +1130,6 @@
       });
       marker.addEventListener('markerLost', () => {
         visibleMarkers.delete(idx);
-        if (activeIdx === idx) {
-          _hideTimers[idx] = setTimeout(() => {
-            delete _hideTimers[idx];
-            hideChart();
-          }, 5000);
-        }
         if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
     });
