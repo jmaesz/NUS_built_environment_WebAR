@@ -440,17 +440,12 @@
           ix.fillStyle = '#ffffff';
           ix.fillRect(0, 0, 1024, 512);
           ix.textAlign = 'center'; ix.textBaseline = 'middle';
-          ix.fillStyle = '#000000';
-          ix.font = 'bold 130px Arial, sans-serif';
-          ix.fillText(b.name, 512, 165);
-          ix.strokeStyle = '#107b7f'; ix.lineWidth = 4;
-          ix.beginPath(); ix.moveTo(80, 250); ix.lineTo(944, 250); ix.stroke();
-          ix.font = '88px Arial, sans-serif';
+          ix.font = 'bold 100px Arial, sans-serif';
           ix.fillStyle = '#107b7f';
-          ix.fillText('Building Info', 512, 330);
+          ix.fillText('Building Info', 512, 195);
           ix.font = '80px Arial, sans-serif';
           ix.fillStyle = '#555555';
-          ix.fillText('Tap for details', 512, 440);
+          ix.fillText('Tap for details', 512, 335);
           var iimg = document.createElement('img');
           iimg.id = 'ilbl-' + idx;
           iimg.src = ic.toDataURL('image/png');
@@ -481,8 +476,8 @@
           dx.fillStyle = 'rgba(255,255,255,0.85)';
           dx.font = '129px Arial, sans-serif';
           justifyText(dx, desc, 70, divY + 28, DW - 140, 165);
-          // Play button — draw on dv, store canvas ref for live play/pause toggle
-          var bx = 170, by = DH - 170, br = 140;
+          // Play button — centred horizontally, store canvas ref for live play/pause toggle
+          var bx = DW / 2, by = DH - 170, br = 140;
           dx.fillStyle = '#107b7f';
           dx.beginPath(); dx.arc(bx, by, br, 0, Math.PI * 2); dx.fill();
           dx.fillStyle = '#ffffff';
@@ -568,7 +563,7 @@
           playHitbox.id = 'ar-play-' + idx;
           playHitbox.setAttribute('width', '1.5');
           playHitbox.setAttribute('height', '1.5');
-          playHitbox.setAttribute('position', '1.87 -1.83 0.02');
+          playHitbox.setAttribute('position', '5.0 -1.83 0.02');
           playHitbox.setAttribute('material', 'opacity: 0; transparent: true; shader: flat; side: double');
 
           // Info label plane (right of main label, same Y level)
@@ -857,7 +852,7 @@
       var plane = document.getElementById('ar-desc-plane-' + idx);
       if (!canvas || !plane) return;
       var ctx = canvas.getContext('2d');
-      var bx = 170, by = canvas.height - 170, br = 140;
+      var bx = canvas.width / 2, by = canvas.height - 170, br = 140;
       ctx.fillStyle = '#0d1a1c';
       ctx.beginPath(); ctx.arc(bx, by, br + 12, 0, Math.PI * 2); ctx.fill();
       ctx.fillStyle = '#107b7f';
