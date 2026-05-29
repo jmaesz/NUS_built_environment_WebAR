@@ -512,7 +512,7 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '5');
+          marker.setAttribute('smoothCount', '10');
           marker.setAttribute('smoothTolerance', '0.01');
           marker.setAttribute('smoothThreshold', '2');
           marker.setAttribute('minConfidence', '0.1');
@@ -1094,7 +1094,7 @@
       mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
     }
 
-    // ── AR.js threshold tuning — AUTO_OTSU works better for isolated markers ──
+    // ── AR.js threshold + smoothing tuning ────────────────────────────────────
     const sceneEl  = document.querySelector('a-scene');
     sceneEl.addEventListener('loaded', function () {
       var tryTune = setInterval(function () {
@@ -1103,12 +1103,28 @@
         if (!ac) return;
         clearInterval(tryTune);
         try {
-          // AUTO_BRACKETING — tries multiple thresholds per frame, most thorough
-          ac.setThresholdMode(4);
+          // AUTO_MEDIAN (1) — uses per-frame histogram, stable for single markers.
+          // AUTO_BRACKETING (4) calibrates via marker count and drifts with only 1 marker.
+          ac.setThresholdMode(1);
           if (ac.setLabelingMode) ac.setLabelingMode(0);
           if (ac.setCornerRefinementMethod) ac.setCornerRefinementMethod(2);
           if (ac.setImageProcMode) ac.setImageProcMode(0);
         } catch(e) {}
+
+        // Patch minUnvisibleDelay on each marker's ArSmoothedControls.
+        // Default is 0.2 s — any brief detection gap immediately fires markerLost.
+        // Raising to 2 s keeps the marker registered through short occlusions/blur.
+        BUILDINGS.forEach(function (b, idx) {
+          var markerEl = document.getElementById('marker-' + idx);
+          if (!markerEl) return;
+          var comps = markerEl.components || {};
+          Object.keys(comps).forEach(function (key) {
+            var mc = comps[key].markerControls || comps[key]._markerControls;
+            if (mc && mc.smoothedControls && mc.smoothedControls.parameters) {
+              mc.smoothedControls.parameters.minUnvisibleDelay = 2.0;
+            }
+          });
+        });
       }, 200);
     });
 
