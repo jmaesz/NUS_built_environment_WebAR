@@ -1180,7 +1180,7 @@
           _hideTimers[idx] = setTimeout(() => {
             delete _hideTimers[idx];
             hideChart();
-          }, 9000);
+          }, 0);
         }
         if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
