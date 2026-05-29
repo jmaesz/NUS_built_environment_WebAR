@@ -326,7 +326,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 30; sourceWidth: 1920; sourceHeight: 1440; canvasWidth: 1280; canvasHeight: 960;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 30; sourceWidth: 1920; sourceHeight: 1440; canvasWidth: 1920; canvasHeight: 1440;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true;"
     device-orientation-permission-ui="enabled: false"
@@ -1067,10 +1067,13 @@
         if (!ac) return;
         clearInterval(tryTune);
         try {
-          // AUTO_OTSU (2) — global histogram threshold, better for lone markers
+          // AUTO_OTSU (2) — global histogram threshold, better for lone markers on plain bg
           ac.setThresholdMode(2);
-          // Also try multiple threshold passes for tougher lighting
-          if (ac.setPatternDetectionMode) ac.setPatternDetectionMode(2);
+          // BLACK_REGION (0) — only look for black markers on white/light backgrounds
+          // skips white-on-black scan, halves detection work per frame
+          if (ac.setLabelingMode) ac.setLabelingMode(0);
+          // Increase corner refinement for more accurate detection at distance
+          if (ac.setCornerRefinementMethod) ac.setCornerRefinementMethod(2);
         } catch(e) {}
       }, 200);
     });
