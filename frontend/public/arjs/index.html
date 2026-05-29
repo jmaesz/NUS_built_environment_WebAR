@@ -1108,6 +1108,10 @@
           var fup = document.getElementById('fl-up-' + activeIdx + '-' + f.key);
           if (fup && fup.object3D) fup.object3D.visible = false;
         });
+        // Release pose-filter hold so AR disappears with the panel
+        var mel = document.getElementById('marker-' + activeIdx);
+        var pf = mel && mel.components && mel.components['pose-filter'];
+        if (pf) { pf._ready = false; pf._isLost = false; }
       }
       if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; setPlayBtn(_speechIdx, false); _speaking = false; _speechIdx = -1; }
       setOtherLabelsVisible(-1, true);
