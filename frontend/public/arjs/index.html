@@ -512,10 +512,10 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '30');
-          marker.setAttribute('smoothTolerance', '0.005');
-          marker.setAttribute('smoothThreshold', '5');
-          marker.setAttribute('minConfidence', '0.2');
+          marker.setAttribute('smoothCount', '5');
+          marker.setAttribute('smoothTolerance', '0.01');
+          marker.setAttribute('smoothThreshold', '2');
+          marker.setAttribute('minConfidence', '0.1');
           marker.setAttribute('pose-filter', '');
           marker.id = 'marker-' + idx;
 
@@ -1103,15 +1103,11 @@
         if (!ac) return;
         clearInterval(tryTune);
         try {
-          // MANUAL threshold — low value ensures lone marker cells are always black
-          ac.setThresholdMode(0);
-          ac.setThreshold(75);
+          // AUTO_BRACKETING — tries multiple thresholds per frame, most thorough
+          ac.setThresholdMode(4);
           if (ac.setLabelingMode) ac.setLabelingMode(0);
           if (ac.setCornerRefinementMethod) ac.setCornerRefinementMethod(2);
-          // Full frame processing — don't skip alternating lines
           if (ac.setImageProcMode) ac.setImageProcMode(0);
-          // Widen the detection area to the full image
-          if (ac.setPatternRatio) ac.setPatternRatio(0.5);
         } catch(e) {}
       }, 200);
     });
