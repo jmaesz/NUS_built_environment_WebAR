@@ -1325,7 +1325,12 @@
       var timer = setInterval(function () {
         var v = document.querySelector('video');
         var ok = v && v.videoWidth > 0 && !v.paused && v.readyState >= 3;
-        if (ok) { clearInterval(timer); return; }
+        if (ok) {
+          clearInterval(timer);
+          // Force A-Frame to re-sync renderer size with the now-settled viewport
+          setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 300);
+          return;
+        }
         if (++checks >= 3) {
           clearInterval(timer);
           var el = document.getElementById('camera-retry');
