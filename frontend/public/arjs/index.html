@@ -515,6 +515,7 @@
           marker.setAttribute('smoothCount', '30');
           marker.setAttribute('smoothTolerance', '0.005');
           marker.setAttribute('smoothThreshold', '5');
+          marker.setAttribute('minConfidence', '0.2');
           marker.setAttribute('pose-filter', '');
           marker.id = 'marker-' + idx;
 
@@ -1102,13 +1103,15 @@
         if (!ac) return;
         clearInterval(tryTune);
         try {
-          // AUTO_BRACKETING (4) — tries multiple threshold values per frame
-          // most thorough mode, best for difficult/oblique/distant markers
-          ac.setThresholdMode(4);
+          // AUTO_ADAPTIVE (3) — local neighbourhood threshold, handles small/distant markers
+          // better than Otsu/Bracketing when marker is tiny relative to background
+          ac.setThresholdMode(3);
           // BLACK_REGION (0) — skip white-on-black scan, focus on black markers
           if (ac.setLabelingMode) ac.setLabelingMode(0);
           // Sub-pixel corner refinement — helps with oblique angle detection
           if (ac.setCornerRefinementMethod) ac.setCornerRefinementMethod(2);
+          // Lower threshold directly for more permissive detection
+          if (ac.setThreshold) ac.setThreshold(80);
         } catch(e) {}
       }, 200);
     });
