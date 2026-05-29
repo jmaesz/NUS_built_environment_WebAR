@@ -1122,7 +1122,7 @@
           Object.keys(comps).forEach(function (key) {
             var mc = comps[key].markerControls || comps[key]._markerControls;
             if (mc && mc.smoothedControls && mc.smoothedControls.parameters) {
-              mc.smoothedControls.parameters.minUnvisibleDelay = 2.0;
+              mc.smoothedControls.parameters.minUnvisibleDelay = 4.0;
             }
           });
         });
@@ -1150,7 +1150,7 @@
           _hideTimers[idx] = setTimeout(() => {
             delete _hideTimers[idx];
             hideChart();
-          }, 5000);
+          }, 9000);
         }
         if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
@@ -1322,6 +1322,17 @@
         var ok = v && v.videoWidth > 0 && !v.paused && v.readyState >= 3;
         if (ok) {
           clearInterval(timer);
+          // Try to lock focus in continuous mode — prevents camera hunting during AR
+          // Works on Android Chrome; silently ignored on iOS where focus is not programmable
+          try {
+            var tracks = v.srcObject && v.srcObject.getVideoTracks();
+            if (tracks && tracks.length) {
+              var caps = tracks[0].getCapabilities ? tracks[0].getCapabilities() : {};
+              if ((caps.focusMode || []).includes('continuous')) {
+                tracks[0].applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+              }
+            }
+          } catch(e) {}
           // Force A-Frame to re-sync renderer size with the now-settled viewport
           setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 300);
           return;
