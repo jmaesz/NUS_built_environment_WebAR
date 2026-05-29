@@ -1067,12 +1067,12 @@
         if (!ac) return;
         clearInterval(tryTune);
         try {
-          // AUTO_OTSU (2) — global histogram threshold, better for lone markers on plain bg
-          ac.setThresholdMode(2);
-          // BLACK_REGION (0) — only look for black markers on white/light backgrounds
-          // skips white-on-black scan, halves detection work per frame
+          // AUTO_BRACKETING (4) — tries multiple threshold values per frame
+          // most thorough mode, best for difficult/oblique/distant markers
+          ac.setThresholdMode(4);
+          // BLACK_REGION (0) — skip white-on-black scan, focus on black markers
           if (ac.setLabelingMode) ac.setLabelingMode(0);
-          // Increase corner refinement for more accurate detection at distance
+          // Sub-pixel corner refinement — helps with oblique angle detection
           if (ac.setCornerRefinementMethod) ac.setCornerRefinementMethod(2);
         } catch(e) {}
       }, 200);
