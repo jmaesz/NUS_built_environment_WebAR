@@ -1103,14 +1103,15 @@
         if (!ac) return;
         clearInterval(tryTune);
         try {
-          // MANUAL threshold — fixed value independent of scene content.
-          // Adaptive/auto modes fail when only one marker is visible because
-          // the image histogram is dominated by the plain background.
+          // MANUAL threshold — low value ensures lone marker cells are always black
           ac.setThresholdMode(0);
-          ac.setThreshold(100);
-          // BLACK_REGION — only scan for black markers on white background
+          ac.setThreshold(75);
           if (ac.setLabelingMode) ac.setLabelingMode(0);
           if (ac.setCornerRefinementMethod) ac.setCornerRefinementMethod(2);
+          // Full frame processing — don't skip alternating lines
+          if (ac.setImageProcMode) ac.setImageProcMode(0);
+          // Widen the detection area to the full image
+          if (ac.setPatternRatio) ac.setPatternRatio(0.5);
         } catch(e) {}
       }, 200);
     });
