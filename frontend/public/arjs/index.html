@@ -265,7 +265,13 @@
     #maps-panel-cta { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em; }
     #maps-view-toggle { display: flex; gap: 4px; padding: 8px 8px 4px; background: rgba(12,12,16,0.92); }
     #maps-panel-desc-wrap { padding: 8px; background: rgba(12,12,16,0.92); display: none; }
-    #maps-panel-desc-text { font-size: 8px; color: rgba(255,255,255,0.8); line-height: 1.5; }
+    #maps-panel-desc-text { font-size: 8px; color: rgba(255,255,255,0.8); line-height: 1.5; text-align: justify; }
+    #maps-play-btn {
+      display: flex; align-items: center; gap: 6px; margin-top: 8px;
+      background: #107b7f; border: none; border-radius: 5px; padding: 5px 10px;
+      color: #fff; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; width: 100%;
+    }
+    #maps-play-btn:active { background: #0d6568; }
   </style>
 
   <script>
@@ -401,6 +407,7 @@
         </div>
         <div id="maps-panel-desc-wrap">
           <div id="maps-panel-desc-text"></div>
+          <button id="maps-play-btn" onclick="event.stopPropagation(); event.preventDefault(); speakDescription(activeIdx)">▶ PLAY AUDIO</button>
         </div>
       </div>
     </a>
@@ -830,6 +837,12 @@
       document.getElementById('btn-buildinginfo').classList.toggle('active', !isMap);
       document.getElementById('maps-panel-img-wrap').style.display = isMap ? 'block' : 'none';
       document.getElementById('maps-panel-desc-wrap').style.display = isMap ? 'none' : 'block';
+      mapsPanel.style.width = isMap ? '180px' : '260px';
+    }
+
+    function updateMapsPlayBtn(playing) {
+      var btn = document.getElementById('maps-play-btn');
+      if (btn) btn.textContent = playing ? '⏸ PAUSE AUDIO' : '▶ PLAY AUDIO';
     }
 
     function renderEUIChart(idx) {
@@ -906,16 +919,16 @@
       if (_audio && !_audio.paused) {
         if (_speechIdx === idx) {
           _audio.pause(); _audio.currentTime = 0;
-          setPlayBtn(idx, false); _speaking = false; _speechIdx = -1; return;
+          setPlayBtn(idx, false); updateMapsPlayBtn(false); _speaking = false; _speechIdx = -1; return;
         }
         _audio.pause(); _audio.currentTime = 0;
-        setPlayBtn(_speechIdx, false);
+        setPlayBtn(_speechIdx, false); updateMapsPlayBtn(false);
       }
       var name = BUILDINGS[idx].name;
       _audio = new Audio('/audio/' + name + '.mp3');
-      _audio.onended = function () { setPlayBtn(idx, false); _speaking = false; _speechIdx = -1; };
-      _audio.onerror = function () { setPlayBtn(idx, false); _speaking = false; _speechIdx = -1; };
-      setPlayBtn(idx, true);
+      _audio.onended = function () { setPlayBtn(idx, false); updateMapsPlayBtn(false); _speaking = false; _speechIdx = -1; };
+      _audio.onerror = function () { setPlayBtn(idx, false); updateMapsPlayBtn(false); _speaking = false; _speechIdx = -1; };
+      setPlayBtn(idx, true); updateMapsPlayBtn(true);
       _speaking = true; _speechIdx = idx;
       _audio.play();
     }
@@ -1150,6 +1163,7 @@
       else        { mapsImg.style.display = 'none'; }
       var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
       document.getElementById('maps-panel-desc-text').textContent = desc;
+      updateMapsPlayBtn(false);
       setMapsView('map');
       mapsPanel.classList.remove('collapsed');
       document.getElementById('maps-chevron').textContent = '‹';
