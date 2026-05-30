@@ -237,7 +237,7 @@
     .eui-legend-dot { width: 6px; height: 6px; border-radius: 1px; flex-shrink: 0; }
     .eui-legend-lbl { font-size: 8px; color: rgba(255,255,255,0.55); }
     #maps-panel {
-      position: fixed; bottom: 20px; right: 16px; z-index: 1000; width: 180px;
+      position: fixed; bottom: 20px; right: 16px; z-index: 1000; width: 180px; height: 140px;
       border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.25);
       display: none; opacity: 0; transform: translateY(8px);
       transition: opacity 0.3s ease, transform 0.3s ease;
@@ -246,7 +246,7 @@
     #maps-panel.visible { opacity: 1; transform: translateY(0); display: flex; }
     #maps-panel.info-view { width: 260px; }
     #maps-panel.collapsed { width: 22px !important; }
-    #maps-content { flex: 1; overflow: hidden; min-width: 0; }
+    #maps-content { flex: 1; overflow: hidden; min-width: 0; height: 140px; }
     #maps-panel.collapsed #maps-content { visibility: hidden; }
     #maps-tab { background: rgba(12, 12, 16, 0.88); border-right: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
     #maps-tab:hover { background: rgba(30, 30, 38, 0.92); }
@@ -265,7 +265,7 @@
     #maps-panel-addr-lbl { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.4; margin-bottom: 5px; }
     #maps-panel-cta { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em; }
     #maps-view-toggle { display: flex; gap: 4px; padding: 8px 8px 4px; background: rgba(12,12,16,0.92); }
-    #maps-panel-desc-wrap { padding: 8px; background: rgba(12,12,16,0.92); display: none; }
+    #maps-panel-desc-wrap { padding: 8px; background: rgba(12,12,16,0.92); display: none; overflow: hidden; }
     #maps-panel-desc-text { font-size: 8px; color: rgba(255,255,255,0.8); line-height: 1.5; text-align: justify; }
     #maps-play-btn {
       display: flex; align-items: center; gap: 6px; margin-top: 8px;
