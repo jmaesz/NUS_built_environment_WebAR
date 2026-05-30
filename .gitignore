@@ -3,6 +3,7 @@ dist/
 .env
 .env.local
 .claude/
+package-lock.json
 scene-colored-e7.glb
 
 # Build intermediates & source assets (not needed in deployed repo)
@@ -32,6 +33,3 @@ CELCv2.png
 E3A new.png
 Screenshot*.png
 SDEv2.png
-
-# Local reference JSONs
-/*.json
