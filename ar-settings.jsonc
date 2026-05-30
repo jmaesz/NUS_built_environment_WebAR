@@ -6,10 +6,10 @@
     // ArUco 4x4 barcode format used by the printed markers
     "maxDetectionRate": 60,
     // Detection attempts per second. Higher = more responsive, more CPU. Capped at 60 by browser RAF
-    "sourceWidth": 1280,
-    "sourceHeight": 960,
-    "canvasWidth": 1280,
-    "canvasHeight": 960
+    "sourceWidth": 1440,
+    "sourceHeight": 1080,
+    "canvasWidth": 1440,
+    "canvasHeight": 1080
     // Camera feed + processing resolution. Higher = better distance detection but more ISP latency on iPhone
   },
   "marker": {
@@ -21,7 +21,7 @@
     // Max metres a new pose can differ from average before rejected as outlier. Higher = more lenient
     "smoothThreshold": 1,
     // Frames within tolerance needed to accept a pose. 1 = accept immediately
-    "minConfidence": 0.01
+    "minConfidence": 0.05
     // Minimum ARToolKit confidence to accept a detection. 0.05 = 5%. Lower = picks up weak/distant markers
   },
   "runtime_patches": {
