@@ -604,9 +604,11 @@
               flUpEl.setAttribute('up-track', 'y: ' + fl.yUp);
               flUpEl.setAttribute('visible', 'false');
 
-              // Billboard inside
+              // World-anchored container for labels + lines
               var flBb = document.createElement('a-entity');
-              // No billboard — world-anchored so lines/labels are fixed in space
+              // Separate billboard wrapper just for the tap icon so it always faces camera
+              var tapBb = document.createElement('a-entity');
+              tapBb.setAttribute('billboard', '');
 
               // Floor button plane
               var flBtn = document.createElement('a-plane');
@@ -699,8 +701,8 @@
               flImg.id = 'fl-img-' + idx + '-' + fl.key;
               flImg.setAttribute('width', '5.5');
               flImg.setAttribute('height', '4.1');
-              var flImgY = (0.01 + flIdx * 0.005).toFixed(3);
-              flImg.setAttribute('position', '0 ' + flImgY + ' 0');
+              var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
+              flImg.setAttribute('position', '-7.0 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat');
               (function(el, src) {
@@ -732,12 +734,13 @@
               })(flImg, fl.img);
 
               flDg.appendChild(flImg);
+              tapBb.appendChild(tapIconEl);
               flBb.appendChild(flBtn);
-              flBb.appendChild(tapIconEl);
               flBb.appendChild(flDotGroup);
               flUpEl.appendChild(flBb);
+              flUpEl.appendChild(tapBb);
+              flUpEl.appendChild(flDg);
               marker.appendChild(flUpEl);
-              marker.appendChild(flDg);
             });
           }
 
