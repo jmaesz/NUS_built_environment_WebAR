@@ -70,24 +70,20 @@
     </div>
     <div class="calib-grid">
       <div class="calib-row">
-        <label class="calib-lbl">X offset <span id="vx">0.00</span></label>
-        <input type="range" id="sx" min="-3" max="3" step="0.05" value="0">
+        <label class="calib-lbl">X offset (left/right) <span id="vx">0.00</span></label>
+        <input type="range" id="sx" min="-15" max="15" step="0.1" value="0">
       </div>
       <div class="calib-row">
-        <label class="calib-lbl">Y offset <span id="vy">0.01</span></label>
-        <input type="range" id="sy" min="-1" max="1" step="0.01" value="0.01">
+        <label class="calib-lbl">Z offset (fwd/back) <span id="vz">0.00</span></label>
+        <input type="range" id="sz" min="-15" max="15" step="0.1" value="0">
       </div>
       <div class="calib-row">
-        <label class="calib-lbl">Rotate X <span id="vrx">0°</span></label>
-        <input type="range" id="srx" min="-180" max="180" step="1" value="0">
-      </div>
-      <div class="calib-row">
-        <label class="calib-lbl">Rotate Y <span id="vry">0°</span></label>
+        <label class="calib-lbl">Rotate Y <span id="vry">0deg</span></label>
         <input type="range" id="sry" min="-180" max="180" step="1" value="0">
       </div>
       <div class="calib-row">
         <label class="calib-lbl">Scale <span id="vs">3.00</span></label>
-        <input type="range" id="ss" min="0.5" max="10" step="0.1" value="3">
+        <input type="range" id="ss" min="0.5" max="30" step="0.5" value="3">
       </div>
     </div>
     <div id="calib-values"></div>
@@ -105,7 +101,7 @@
       <img id="solar-sde4" src="/solar/SDE4.png" crossorigin="anonymous">
     </a-assets>
 
-    <!-- SDE4 = barcode marker value 18 -->
+    <!-- SDE4 = barcode marker value 18, mat centred on marker at y=0.01 -->
     <a-marker type="barcode" value="18" emitevents="true" id="sde4-marker">
       <a-plane
         id="solar-mat"
@@ -126,26 +122,23 @@
 
     function update() {
       var x  = parseFloat(document.getElementById('sx').value);
-      var y  = parseFloat(document.getElementById('sy').value);
-      var rx = parseFloat(document.getElementById('srx').value);
+      var z  = parseFloat(document.getElementById('sz').value);
       var ry = parseFloat(document.getElementById('sry').value);
       var s  = parseFloat(document.getElementById('ss').value);
 
       document.getElementById('vx').textContent  = x.toFixed(2);
-      document.getElementById('vy').textContent  = y.toFixed(2);
-      document.getElementById('vrx').textContent = rx + 'deg';
+      document.getElementById('vz').textContent  = z.toFixed(2);
       document.getElementById('vry').textContent = ry + 'deg';
       document.getElementById('vs').textContent  = s.toFixed(2);
 
-      var baseRx = -90 + rx;
-      mat.setAttribute('position', x + ' ' + y + ' 0');
-      mat.setAttribute('rotation', baseRx + ' ' + ry + ' 0');
+      mat.setAttribute('position', x + ' 0.01 ' + z);
+      mat.setAttribute('rotation', '-90 ' + ry + ' 0');
       mat.setAttribute('width',  s);
       mat.setAttribute('height', s);
 
       document.getElementById('calib-values').textContent =
-        'position="' + x.toFixed(2) + ' ' + y.toFixed(2) + ' 0"\n' +
-        'rotation="' + baseRx + ' ' + ry + ' 0"\n' +
+        'position="' + x.toFixed(2) + ' 0.01 ' + z.toFixed(2) + '"\n' +
+        'rotation="-90 ' + ry + ' 0"\n' +
         'width="' + s.toFixed(2) + '" height="' + s.toFixed(2) + '"';
     }
 
@@ -162,7 +155,7 @@
       setTimeout(function() { btn.textContent = 'Copy Values'; btn.classList.remove('copied'); }, 2000);
     }
 
-    ['sx','sy','srx','sry','ss'].forEach(function(id) {
+    ['sx','sz','sry','ss'].forEach(function(id) {
       document.getElementById(id).addEventListener('input', update);
     });
 
