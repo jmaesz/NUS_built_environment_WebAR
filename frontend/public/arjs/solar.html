@@ -11,7 +11,6 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; font-family: -apple-system, sans-serif; }
-
     #back-btn {
       position: fixed; top: 16px; left: 16px; z-index: 1000;
       background: rgba(0,0,0,0.55); color: #fff;
@@ -20,7 +19,6 @@
       cursor: pointer; border-radius: 4px; text-decoration: none;
       display: block; width: 100px; text-align: center;
     }
-
     #calib-panel {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
       background: rgba(10,10,14,0.92); backdrop-filter: blur(16px);
@@ -29,7 +27,6 @@
       transition: transform 0.3s ease;
     }
     #calib-panel.hidden { transform: translateY(100%); }
-
     #calib-toggle {
       position: fixed; bottom: 16px; right: 16px; z-index: 1001;
       background: #107b7f; color: #fff; border: none;
@@ -37,20 +34,17 @@
       letter-spacing: 0.08em; border-radius: 6px; cursor: pointer;
     }
     #calib-panel:not(.hidden) ~ #calib-toggle { display: none; }
-
     .calib-header {
       display: flex; justify-content: space-between; align-items: center;
       margin-bottom: 12px;
     }
     .calib-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #107b7f; }
     .calib-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 18px; cursor: pointer; padding: 0 4px; }
-
     .calib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 10px; }
     .calib-row { display: flex; flex-direction: column; gap: 3px; }
     .calib-lbl { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.5); display: flex; justify-content: space-between; }
     .calib-lbl span { color: #fff; font-weight: 600; }
     .calib-row input[type=range] { width: 100%; accent-color: #107b7f; height: 3px; }
-
     #calib-values {
       font-size: 9px; font-family: monospace; color: #107b7f;
       background: rgba(16,123,127,0.1); border: 1px solid rgba(16,123,127,0.3);
@@ -84,20 +78,12 @@
         <input type="range" id="sy" min="-1" max="1" step="0.01" value="0.01">
       </div>
       <div class="calib-row">
-        <label class="calib-lbl">Z offset <span id="vz">0.00</span></label>
-        <input type="range" id="sz" min="-3" max="3" step="0.05" value="0">
-      </div>
-      <div class="calib-row">
         <label class="calib-lbl">Rotate Y <span id="vry">0°</span></label>
         <input type="range" id="sry" min="-180" max="180" step="1" value="0">
       </div>
       <div class="calib-row">
-        <label class="calib-lbl">Scale W <span id="vsw">3.00</span></label>
-        <input type="range" id="ssw" min="0.5" max="10" step="0.1" value="3">
-      </div>
-      <div class="calib-row">
-        <label class="calib-lbl">Scale H <span id="vsh">3.00</span></label>
-        <input type="range" id="ssh" min="0.5" max="10" step="0.1" value="3">
+        <label class="calib-lbl">Scale <span id="vs">3.00</span></label>
+        <input type="range" id="ss" min="0.5" max="10" step="0.1" value="3">
       </div>
     </div>
     <div id="calib-values"></div>
@@ -135,35 +121,30 @@
     var mat = document.getElementById('solar-mat');
 
     function update() {
-      var x   = parseFloat(document.getElementById('sx').value);
-      var y   = parseFloat(document.getElementById('sy').value);
-      var z   = parseFloat(document.getElementById('sz').value);
-      var ry  = parseFloat(document.getElementById('sry').value);
-      var sw  = parseFloat(document.getElementById('ssw').value);
-      var sh  = parseFloat(document.getElementById('ssh').value);
+      var x  = parseFloat(document.getElementById('sx').value);
+      var y  = parseFloat(document.getElementById('sy').value);
+      var ry = parseFloat(document.getElementById('sry').value);
+      var s  = parseFloat(document.getElementById('ss').value);
 
       document.getElementById('vx').textContent  = x.toFixed(2);
       document.getElementById('vy').textContent  = y.toFixed(2);
-      document.getElementById('vz').textContent  = z.toFixed(2);
       document.getElementById('vry').textContent = ry + '°';
-      document.getElementById('vsw').textContent = sw.toFixed(2);
-      document.getElementById('vsh').textContent = sh.toFixed(2);
+      document.getElementById('vs').textContent  = s.toFixed(2);
 
-      mat.setAttribute('position', x + ' ' + y + ' ' + z);
+      mat.setAttribute('position', x + ' ' + y + ' 0');
       mat.setAttribute('rotation', '-90 ' + ry + ' 0');
-      mat.setAttribute('width',  sw);
-      mat.setAttribute('height', sh);
+      mat.setAttribute('width',  s);
+      mat.setAttribute('height', s);
 
       document.getElementById('calib-values').textContent =
-        'position="' + x.toFixed(2) + ' ' + y.toFixed(2) + ' ' + z.toFixed(2) + '"\n' +
+        'position="' + x.toFixed(2) + ' ' + y.toFixed(2) + ' 0"\n' +
         'rotation="-90 ' + ry + ' 0"\n' +
-        'width="'  + sw.toFixed(2) + '" height="' + sh.toFixed(2) + '"';
+        'width="' + s.toFixed(2) + '" height="' + s.toFixed(2) + '"';
     }
 
     function copyValues() {
       var txt = document.getElementById('calib-values').textContent;
       navigator.clipboard.writeText(txt).catch(function() {
-        // fallback for older iOS
         var el = document.createElement('textarea');
         el.value = txt; document.body.appendChild(el);
         el.select(); document.execCommand('copy');
@@ -174,13 +155,12 @@
       setTimeout(function() { btn.textContent = 'Copy Values'; btn.classList.remove('copied'); }, 2000);
     }
 
-    ['sx','sy','sz','sry','ssw','ssh'].forEach(function(id) {
+    ['sx','sy','sry','ss'].forEach(function(id) {
       document.getElementById(id).addEventListener('input', update);
     });
 
     update();
 
-    // Stop camera on unload
     window.addEventListener('pagehide', function() {
       document.querySelectorAll('video').forEach(function(v) {
         if (v.srcObject) v.srcObject.getTracks().forEach(function(t) { t.stop(); });
