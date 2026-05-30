@@ -78,6 +78,10 @@
         <input type="range" id="sy" min="-1" max="1" step="0.01" value="0.01">
       </div>
       <div class="calib-row">
+        <label class="calib-lbl">Rotate X <span id="vrx">0°</span></label>
+        <input type="range" id="srx" min="-180" max="180" step="1" value="0">
+      </div>
+      <div class="calib-row">
         <label class="calib-lbl">Rotate Y <span id="vry">0°</span></label>
         <input type="range" id="sry" min="-180" max="180" step="1" value="0">
       </div>
@@ -123,22 +127,25 @@
     function update() {
       var x  = parseFloat(document.getElementById('sx').value);
       var y  = parseFloat(document.getElementById('sy').value);
+      var rx = parseFloat(document.getElementById('srx').value);
       var ry = parseFloat(document.getElementById('sry').value);
       var s  = parseFloat(document.getElementById('ss').value);
 
       document.getElementById('vx').textContent  = x.toFixed(2);
       document.getElementById('vy').textContent  = y.toFixed(2);
-      document.getElementById('vry').textContent = ry + '°';
+      document.getElementById('vrx').textContent = rx + 'deg';
+      document.getElementById('vry').textContent = ry + 'deg';
       document.getElementById('vs').textContent  = s.toFixed(2);
 
+      var baseRx = -90 + rx;
       mat.setAttribute('position', x + ' ' + y + ' 0');
-      mat.setAttribute('rotation', '-90 ' + ry + ' 0');
+      mat.setAttribute('rotation', baseRx + ' ' + ry + ' 0');
       mat.setAttribute('width',  s);
       mat.setAttribute('height', s);
 
       document.getElementById('calib-values').textContent =
         'position="' + x.toFixed(2) + ' ' + y.toFixed(2) + ' 0"\n' +
-        'rotation="-90 ' + ry + ' 0"\n' +
+        'rotation="' + baseRx + ' ' + ry + ' 0"\n' +
         'width="' + s.toFixed(2) + '" height="' + s.toFixed(2) + '"';
     }
 
@@ -155,7 +162,7 @@
       setTimeout(function() { btn.textContent = 'Copy Values'; btn.classList.remove('copied'); }, 2000);
     }
 
-    ['sx','sy','sry','ss'].forEach(function(id) {
+    ['sx','sy','srx','sry','ss'].forEach(function(id) {
       document.getElementById(id).addEventListener('input', update);
     });
 
