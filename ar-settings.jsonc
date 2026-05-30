@@ -1,0 +1,43 @@
+{
+  "scene": {
+    "detectionMode": "color_and_matrix",
+    // Runs both colour + matrix detection — colour pass keeps pipeline warm when no marker in frame
+    "matrixCodeType": "4x4_BCH_13_5_5",
+    // ArUco 4x4 barcode format used by the printed markers
+    "maxDetectionRate": 60,
+    // Detection attempts per second. Higher = more responsive, more CPU. Capped at 60 by browser RAF
+    "sourceWidth": 1280,
+    "sourceHeight": 960,
+    "canvasWidth": 1280,
+    "canvasHeight": 960
+    // Camera feed + processing resolution. Higher = better distance detection but more ISP latency on iPhone
+  },
+  "marker": {
+    "smooth": true,
+    // Enables AR.js built-in pose averaging
+    "smoothCount": 30,
+    // Frames to average. Higher = smoother but slower to settle. At 60fps, 30 = 0.5s of averaging
+    "smoothTolerance": 0.15,
+    // Max metres a new pose can differ from average before rejected as outlier. Higher = more lenient
+    "smoothThreshold": 1,
+    // Frames within tolerance needed to accept a pose. 1 = accept immediately
+    "minConfidence": 0.01
+    // Minimum ARToolKit confidence to accept a detection. 0.05 = 5%. Lower = picks up weak/distant markers
+  },
+  "runtime_patches": {
+    "thresholdMode": 3,
+    // 1=AUTO_MEDIAN, 2=AUTO_OTSU, 3=AUTO_ADAPTIVE — adaptive is best for small/distant markers
+    "labelingMode": 0,
+    // 0 = white region labeling (dark marker on white paper)
+    "imageProcMode": 0,
+    // 0 = full resolution detection, 1 = half resolution (faster, less accurate at distance)
+    "minUnvisibleDelay_seconds": 4.0
+    // Seconds AR.js keeps marker visible after detection drops before firing markerLost
+  },
+  "pose_filter": {
+    "lerp_alpha": 0.2,
+    // Low-pass filter: each frame label moves this fraction toward new detected pose. Lower = smoother
+    "markerLost_hide_delay_ms": 0
+    // Delay (ms) after markerLost before panel hides. 0 = immediate
+  }
+}
