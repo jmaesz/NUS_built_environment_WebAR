@@ -38,20 +38,19 @@
     .calib-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #107b7f; }
     .calib-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 18px; cursor: pointer; padding: 0 4px; }
     .section-lbl { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.35); margin-bottom: 6px; }
-    .bld-row { display: flex; gap: 6px; margin-bottom: 10px; }
-    .bld-btn {
-      flex: 1; padding: 5px 0; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
-      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.45); border-radius: 3px; cursor: pointer;
-    }
-    .bld-btn.active { background: rgba(16,123,127,0.3); color: #fff; border-color: #107b7f; }
-    .toggle-row { display: flex; gap: 6px; margin-bottom: 12px; }
+    .btn-row { display: flex; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; }
     .toggle-btn {
-      flex: 1; padding: 5px 0; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      padding: 5px 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
       background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
       color: rgba(255,255,255,0.35); border-radius: 3px; cursor: pointer;
     }
     .toggle-btn.on { background: rgba(16,123,127,0.2); color: #4fc3c8; border-color: rgba(16,123,127,0.5); }
+    .bld-btn {
+      padding: 5px 8px; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.45); border-radius: 3px; cursor: pointer;
+    }
+    .bld-btn.active { background: rgba(16,123,127,0.3); color: #fff; border-color: #107b7f; }
     .calib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 10px; }
     .calib-row { display: flex; flex-direction: column; gap: 3px; }
     .calib-lbl { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.5); display: flex; justify-content: space-between; }
@@ -82,20 +81,10 @@
     </div>
 
     <div class="section-lbl">Show buildings</div>
-    <div class="toggle-row">
-      <button class="toggle-btn on"  id="tog-SDE4" onclick="toggleBld('SDE4')">SDE4</button>
-      <button class="toggle-btn"     id="tog-SDE3" onclick="toggleBld('SDE3')">SDE3</button>
-      <button class="toggle-btn"     id="tog-SDE2" onclick="toggleBld('SDE2')">SDE2</button>
-      <button class="toggle-btn"     id="tog-SDE1" onclick="toggleBld('SDE1')">SDE1</button>
-    </div>
+    <div class="btn-row" id="toggle-row"></div>
 
     <div class="section-lbl">Calibrate</div>
-    <div class="bld-row">
-      <button class="bld-btn active" onclick="selectBld('SDE4')">SDE4</button>
-      <button class="bld-btn"        onclick="selectBld('SDE3')">SDE3</button>
-      <button class="bld-btn"        onclick="selectBld('SDE2')">SDE2</button>
-      <button class="bld-btn"        onclick="selectBld('SDE1')">SDE1</button>
-    </div>
+    <div class="btn-row" id="calib-row"></div>
 
     <div class="calib-grid">
       <div class="calib-row">
@@ -126,73 +115,94 @@
     renderer="colorManagement: true;"
     device-orientation-permission-ui="enabled: false"
   >
-    <a-assets>
-      <img id="img-SDE4" src="/solar/SDE4.png" crossorigin="anonymous">
-      <img id="img-SDE3" src="/solar/SDE3.png" crossorigin="anonymous">
-      <img id="img-SDE2" src="/solar/SDE2.png" crossorigin="anonymous">
-      <img id="img-SDE1" src="/solar/SDE1.png" crossorigin="anonymous">
-    </a-assets>
-
-    <a-marker id="marker-SDE4" type="barcode" value="18" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05">
-      <a-plane id="mat-SDE4" src="#img-SDE4" rotation="-90 0 0" position="-0.50 0.01 1.50" width="17.50" height="12.50" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
-    </a-marker>
-
-    <a-marker id="marker-SDE3" type="barcode" value="17" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05">
-      <a-plane id="mat-SDE3" src="#img-SDE3" rotation="-90 0 0" position="1.30 0.01 1.30" width="17.51" height="12.50" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
-    </a-marker>
-
-    <a-marker id="marker-SDE2" type="barcode" value="16" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05">
-      <a-plane id="mat-SDE2" src="#img-SDE2" rotation="-90 0 0" position="-0.70 0.01 0.50" width="9.80" height="7.00" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
-    </a-marker>
-
-    <a-marker id="marker-SDE1" type="barcode" value="15" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05">
-      <a-plane id="mat-SDE1" src="#img-SDE1" rotation="-90 0 0" position="0.50 0.01 1.70" width="10.50" height="7.50" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
-    </a-marker>
-
+    <a-assets id="ar-assets"></a-assets>
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    var BLDS = ['SDE4','SDE3','SDE2','SDE1'];
-    var enabled = { SDE4: true, SDE3: false, SDE2: false, SDE1: false };
-    var aspects = { SDE4: 1, SDE3: 1, SDE2: 1, SDE1: 1 };
-    var calibData = {
-      SDE4: { x: -0.50, z: 1.50, ry: 0, s: 12.50 },
-      SDE3: { x: 1.30, z: 1.30, ry: 0, s: 12.50 },
-      SDE2: { x: -0.70, z: 0.50, ry: 0, s: 7.00 },
-      SDE1: { x: 0.50, z: 1.70, ry: 0, s: 7.50 },
-    };
-    var activeBld = 'SDE4';
+    // name, marker value, default calibration
+    var BLDS = [
+      { name: 'CELC', val: 0,  x: 0, z: 0, ry: 0, s: 3 },
+      { name: 'E1A',  val: 2,  x: 0, z: 0, ry: 0, s: 3 },
+      { name: 'E2A',  val: 4,  x: 0, z: 0, ry: 0, s: 3 },
+      { name: 'E4',   val: 7,  x: 0, z: 0, ry: 0, s: 3 },
+      { name: 'E5',   val: 9,  x: 0, z: 0, ry: 0, s: 3 },
+      { name: 'E8',   val: 11, x: 0, z: 0, ry: 0, s: 3 },
+    ];
 
-    // Load aspect ratios
-    BLDS.forEach(function(name) {
-      var img = document.getElementById('img-' + name);
-      function onLoad() {
-        if (img.naturalWidth && img.naturalHeight) aspects[name] = img.naturalWidth / img.naturalHeight;
-        applyMat(name);
-      }
-      if (img.complete && img.naturalWidth) onLoad();
-      else img.addEventListener('load', onLoad);
-    });
+    var aspects  = {};
+    var enabled  = {};
+    var activeBld = BLDS[0].name;
+    var scene    = document.querySelector('a-scene');
+    var assets   = document.getElementById('ar-assets');
 
-    // Show/hide mat based on marker detection + enabled toggle
-    BLDS.forEach(function(name) {
-      var marker = document.getElementById('marker-' + name);
-      var mat    = document.getElementById('mat-' + name);
+    // Build scene and UI
+    BLDS.forEach(function(b) {
+      aspects[b.name]  = 1;
+      enabled[b.name]  = false;
+
+      // Asset
+      var img = document.createElement('img');
+      img.id = 'img-' + b.name;
+      img.src = '/solar/' + b.name + '.png';
+      img.setAttribute('crossorigin', 'anonymous');
+      img.addEventListener('load', function() {
+        if (img.naturalWidth && img.naturalHeight) aspects[b.name] = img.naturalWidth / img.naturalHeight;
+        applyMat(b.name);
+      });
+      assets.appendChild(img);
+
+      // Marker
+      var marker = document.createElement('a-marker');
+      marker.id = 'marker-' + b.name;
+      marker.setAttribute('type', 'barcode');
+      marker.setAttribute('value', String(b.val));
+      marker.setAttribute('emitevents', 'true');
+      marker.setAttribute('smooth', 'true');
+      marker.setAttribute('smoothCount', '30');
+      marker.setAttribute('smoothTolerance', '0.15');
+      marker.setAttribute('smoothThreshold', '1');
+      marker.setAttribute('minConfidence', '0.05');
+
+      var mat = document.createElement('a-plane');
+      mat.id = 'mat-' + b.name;
+      mat.setAttribute('src', '#img-' + b.name);
+      mat.setAttribute('rotation', '-90 0 0');
+      mat.setAttribute('position', b.x + ' 0.01 ' + b.z);
+      mat.setAttribute('width',  b.s);
+      mat.setAttribute('height', b.s);
+      mat.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
+      mat.setAttribute('visible', 'false');
+      marker.appendChild(mat);
+      scene.appendChild(marker);
+
       marker.addEventListener('markerFound', function() {
-        if (enabled[name] && mat && mat.object3D) mat.object3D.visible = true;
+        if (enabled[b.name] && mat.object3D) mat.object3D.visible = true;
       });
       marker.addEventListener('markerLost', function() {
-        if (mat && mat.object3D) mat.object3D.visible = false;
+        if (mat.object3D) mat.object3D.visible = false;
       });
-      // Hide all mats on load — only show on markerFound
-      if (mat) mat.setAttribute('visible', 'false');
+
+      // Toggle button
+      var tog = document.createElement('button');
+      tog.id = 'tog-' + b.name;
+      tog.className = 'toggle-btn';
+      tog.textContent = b.name;
+      tog.onclick = (function(name) { return function() { toggleBld(name); }; })(b.name);
+      document.getElementById('toggle-row').appendChild(tog);
+
+      // Calibrate button
+      var cb = document.createElement('button');
+      cb.id = 'cb-' + b.name;
+      cb.className = 'bld-btn';
+      cb.textContent = b.name;
+      cb.onclick = (function(name) { return function() { selectBld(name); }; })(b.name);
+      document.getElementById('calib-row').appendChild(cb);
     });
 
     function toggleBld(name) {
       enabled[name] = !enabled[name];
       document.getElementById('tog-' + name).classList.toggle('on', enabled[name]);
-      // If disabling, hide mat immediately
       if (!enabled[name]) {
         var mat = document.getElementById('mat-' + name);
         if (mat && mat.object3D) mat.object3D.visible = false;
@@ -200,49 +210,48 @@
     }
 
     function applyMat(name) {
-      var d = calibData[name];
+      var b = BLDS.find(function(x) { return x.name === name; });
       var mat = document.getElementById('mat-' + name);
-      if (!mat) return;
-      mat.setAttribute('position', d.x + ' 0.01 ' + d.z);
-      mat.setAttribute('rotation', '-90 ' + d.ry + ' 0');
-      mat.setAttribute('width',  d.s * aspects[name]);
-      mat.setAttribute('height', d.s);
+      if (!mat || !b) return;
+      mat.setAttribute('position', b.x + ' 0.01 ' + b.z);
+      mat.setAttribute('rotation', '-90 ' + b.ry + ' 0');
+      mat.setAttribute('width',  b.s * aspects[name]);
+      mat.setAttribute('height', b.s);
     }
 
     function selectBld(name) {
       activeBld = name;
-      document.querySelectorAll('.bld-btn').forEach(function(b) {
-        b.classList.toggle('active', b.textContent === name);
+      document.querySelectorAll('.bld-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.textContent === name);
       });
-      var d = calibData[name];
-      document.getElementById('sx').value  = d.x;
-      document.getElementById('sz').value  = d.z;
-      document.getElementById('sry').value = d.ry;
-      document.getElementById('ss').value  = d.s;
+      var b = BLDS.find(function(x) { return x.name === name; });
+      document.getElementById('sx').value  = b.x;
+      document.getElementById('sz').value  = b.z;
+      document.getElementById('sry').value = b.ry;
+      document.getElementById('ss').value  = b.s;
       updateDisplay();
     }
 
     function updateDisplay() {
-      var d = calibData[activeBld];
-      var w = (d.s * aspects[activeBld]).toFixed(2);
-      var h = d.s.toFixed(2);
-      document.getElementById('vx').textContent  = d.x.toFixed(2);
-      document.getElementById('vz').textContent  = d.z.toFixed(2);
-      document.getElementById('vry').textContent = d.ry + 'deg';
-      document.getElementById('vs').textContent  = d.s.toFixed(2);
+      var b = BLDS.find(function(x) { return x.name === activeBld; });
+      var w = (b.s * aspects[activeBld]).toFixed(2);
+      document.getElementById('vx').textContent  = b.x.toFixed(2);
+      document.getElementById('vz').textContent  = b.z.toFixed(2);
+      document.getElementById('vry').textContent = b.ry + 'deg';
+      document.getElementById('vs').textContent  = b.s.toFixed(2);
       document.getElementById('calib-values').textContent =
         '[' + activeBld + ']\n' +
-        'position="' + d.x.toFixed(2) + ' 0.01 ' + d.z.toFixed(2) + '"\n' +
-        'rotation="-90 ' + d.ry + ' 0"\n' +
-        'width="' + w + '" height="' + h + '"';
+        'position="' + b.x.toFixed(2) + ' 0.01 ' + b.z.toFixed(2) + '"\n' +
+        'rotation="-90 ' + b.ry + ' 0"\n' +
+        'width="' + w + '" height="' + b.s.toFixed(2) + '"';
     }
 
     function onSlider() {
-      var d = calibData[activeBld];
-      d.x  = parseFloat(document.getElementById('sx').value);
-      d.z  = parseFloat(document.getElementById('sz').value);
-      d.ry = parseFloat(document.getElementById('sry').value);
-      d.s  = parseFloat(document.getElementById('ss').value);
+      var b = BLDS.find(function(x) { return x.name === activeBld; });
+      b.x  = parseFloat(document.getElementById('sx').value);
+      b.z  = parseFloat(document.getElementById('sz').value);
+      b.ry = parseFloat(document.getElementById('sry').value);
+      b.s  = parseFloat(document.getElementById('ss').value);
       applyMat(activeBld);
       updateDisplay();
     }
@@ -251,13 +260,12 @@
       document.getElementById(id).addEventListener('input', onSlider);
     });
 
-    selectBld('SDE4');
+    selectBld(BLDS[0].name);
 
     // AR.js runtime patches
-    var sceneEl = document.querySelector('a-scene');
-    sceneEl.addEventListener('loaded', function() {
+    scene.addEventListener('loaded', function() {
       var tryTune = setInterval(function() {
-        var ctx = sceneEl.systems && sceneEl.systems['arjs'];
+        var ctx = scene.systems && scene.systems['arjs'];
         var ac  = ctx && ctx.ArToolkitContext && ctx.ArToolkitContext.arController;
         if (!ac) return;
         clearInterval(tryTune);
