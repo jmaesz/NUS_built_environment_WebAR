@@ -435,6 +435,7 @@
           }
           return lines.length;
         }
+        window._justifyText = justifyText;
 
         window.BUILDINGS.forEach(function (b, idx) {
           // ── Main label canvas ──────────────────────────────────────────────
@@ -472,56 +473,6 @@
           iimg.id = 'ilbl-' + idx;
           iimg.src = ic.toDataURL('image/png');
           assets.appendChild(iimg);
-
-          // ── Description canvas ─────────────────────────────────────────────
-          var DW = 3200, DH = 2000;
-          var dv = document.createElement('canvas');
-          dv.width = DW; dv.height = DH;
-          var dx = dv.getContext('2d');
-          // Background
-          dx.fillStyle = '#0d1a1c';
-          dx.fillRect(0, 0, DW, DH);
-          // Teal border
-          dx.strokeStyle = '#107b7f'; dx.lineWidth = 8;
-          dx.strokeRect(4, 4, DW - 8, DH - 8);
-          // Full name
-          dx.fillStyle = '#ffffff';
-          dx.textAlign = 'left'; dx.textBaseline = 'top';
-          dx.font = 'bold 129px Arial, sans-serif';
-          var nl = justifyText(dx, b.full_name, 70, 58, DW - 140, 165);
-          var divY = 58 + nl * 165 + 14;
-          // Divider
-          dx.strokeStyle = '#107b7f'; dx.lineWidth = 3;
-          dx.beginPath(); dx.moveTo(70, divY); dx.lineTo(DW - 70, divY); dx.stroke();
-          // Description text
-          var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
-          dx.fillStyle = 'rgba(255,255,255,0.85)';
-          dx.font = '129px Arial, sans-serif';
-          justifyText(dx, desc, 70, divY + 28, DW - 140, 165);
-          // Play button — centred horizontally, store canvas ref for live play/pause toggle
-          var bx = DW / 2, by = DH - 170, br = 140;
-          dx.fillStyle = '#107b7f';
-          dx.beginPath(); dx.arc(bx, by, br, 0, Math.PI * 2); dx.fill();
-          dx.fillStyle = '#ffffff';
-          dx.beginPath();
-          dx.moveTo(bx - 45, by - 62); dx.lineTo(bx - 45, by + 62); dx.lineTo(bx + 66, by);
-          dx.closePath(); dx.fill();
-          // Close (X) button — top-right corner
-          var xx = DW - 150, xy = 150, xr = 110;
-          dx.fillStyle = 'rgba(255,255,255,0.18)';
-          dx.beginPath(); dx.arc(xx, xy, xr, 0, Math.PI * 2); dx.fill();
-          dx.strokeStyle = '#ffffff'; dx.lineWidth = 16;
-          var xo = 58;
-          dx.beginPath();
-          dx.moveTo(xx - xo, xy - xo); dx.lineTo(xx + xo, xy + xo);
-          dx.moveTo(xx + xo, xy - xo); dx.lineTo(xx - xo, xy + xo);
-          dx.stroke();
-          if (!window._descCanvases) window._descCanvases = [];
-          window._descCanvases[idx] = dv;
-          var dimg = document.createElement('img');
-          dimg.id = 'dlbl-' + idx;
-          dimg.src = dv.toDataURL('image/png');
-          assets.appendChild(dimg);
 
           // ── Marker setup ───────────────────────────────────────────────────
           var marker = document.createElement('a-marker');
@@ -578,7 +529,7 @@
           descPlane.setAttribute('width', '7.0');
           descPlane.setAttribute('height', '4.4');
           descPlane.setAttribute('position', '5.0 0 0');
-          descPlane.setAttribute('material', 'src: #dlbl-' + idx + '; side: double; transparent: false; shader: flat');
+          descPlane.setAttribute('material', 'color: #0d1a1c; side: double; shader: flat');
 
           // Invisible play-button hitbox
           var playHitbox = document.createElement('a-plane');
@@ -926,7 +877,59 @@
       if (g && g.object3D) g.object3D.visible = false;
     }
 
+    function generateDescCanvas(idx) {
+      if (window._descCanvases && window._descCanvases[idx]) return;
+      var b = window.BUILDINGS[idx];
+      var jt = window._justifyText;
+      var DW = 3200, DH = 2000;
+      var dv = document.createElement('canvas');
+      dv.width = DW; dv.height = DH;
+      var dx = dv.getContext('2d');
+      dx.fillStyle = '#0d1a1c'; dx.fillRect(0, 0, DW, DH);
+      dx.strokeStyle = '#107b7f'; dx.lineWidth = 8;
+      dx.strokeRect(4, 4, DW - 8, DH - 8);
+      dx.fillStyle = '#ffffff'; dx.textAlign = 'left'; dx.textBaseline = 'top';
+      dx.font = 'bold 129px Arial, sans-serif';
+      var nl = jt(dx, b.full_name, 70, 58, DW - 140, 165);
+      var divY = 58 + nl * 165 + 14;
+      dx.strokeStyle = '#107b7f'; dx.lineWidth = 3;
+      dx.beginPath(); dx.moveTo(70, divY); dx.lineTo(DW - 70, divY); dx.stroke();
+      var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
+      dx.fillStyle = 'rgba(255,255,255,0.85)'; dx.font = '129px Arial, sans-serif';
+      jt(dx, desc, 70, divY + 28, DW - 140, 165);
+      var bx = DW / 2, by = DH - 170, br = 140;
+      dx.fillStyle = '#107b7f';
+      dx.beginPath(); dx.arc(bx, by, br, 0, Math.PI * 2); dx.fill();
+      dx.fillStyle = '#ffffff';
+      dx.beginPath();
+      dx.moveTo(bx - 45, by - 62); dx.lineTo(bx - 45, by + 62); dx.lineTo(bx + 66, by);
+      dx.closePath(); dx.fill();
+      var xx = DW - 150, xy = 150, xr = 110;
+      dx.fillStyle = 'rgba(255,255,255,0.18)';
+      dx.beginPath(); dx.arc(xx, xy, xr, 0, Math.PI * 2); dx.fill();
+      dx.strokeStyle = '#ffffff'; dx.lineWidth = 16; var xo = 58;
+      dx.beginPath();
+      dx.moveTo(xx - xo, xy - xo); dx.lineTo(xx + xo, xy + xo);
+      dx.moveTo(xx + xo, xy - xo); dx.lineTo(xx - xo, xy + xo);
+      dx.stroke();
+      if (!window._descCanvases) window._descCanvases = [];
+      window._descCanvases[idx] = dv;
+      var plane = document.getElementById('ar-desc-plane-' + idx);
+      if (!plane) return;
+      function tryApply() {
+        var mesh = plane.getObject3D('mesh');
+        if (!mesh || !mesh.material) { setTimeout(tryApply, 50); return; }
+        var tex = new THREE.CanvasTexture(dv);
+        tex.needsUpdate = true;
+        mesh.material.map = tex;
+        mesh.material.color.set(0xffffff);
+        mesh.material.needsUpdate = true;
+      }
+      tryApply();
+    }
+
     function showDescIndependent(idx) {
+      generateDescCanvas(idx);
       showDescPanel(idx);
       const ilbl = document.getElementById('ar-ilbl-' + idx);
       if (ilbl && ilbl.object3D) ilbl.object3D.visible = false;
