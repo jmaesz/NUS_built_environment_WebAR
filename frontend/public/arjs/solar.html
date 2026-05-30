@@ -8,6 +8,69 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+  <script>
+    AFRAME.registerComponent('pose-filter', {
+      schema: {},
+      init: function () {
+        this._pos = new THREE.Vector3(); this._quat = new THREE.Quaternion();
+        this._ready = false; this._isLost = false;
+        this._lostPos = new THREE.Vector3(); this._lostQuat = new THREE.Quaternion();
+        this._devQuat = new THREE.Quaternion(); this._devRefInv = new THREE.Quaternion();
+        this._deltaQ = new THREE.Quaternion(); this._deltaQInv = new THREE.Quaternion();
+        this._hasOrient = false; this._euler = new THREE.Euler(0,0,0,'YXZ');
+        this._tmpVec = new THREE.Vector3(); this._tmpQuat = new THREE.Quaternion();
+        var self = this;
+        this._onOrient = function(e) {
+          if (e.alpha === null || e.beta === null) return;
+          self._hasOrient = true;
+          self._euler.set(THREE.MathUtils.degToRad(e.beta||0), THREE.MathUtils.degToRad(e.alpha||0), -THREE.MathUtils.degToRad(e.gamma||0));
+          self._devQuat.setFromEuler(self._euler);
+        };
+        this._onFound = function() { self._isLost = false; };
+        this._onLost  = function() {
+          if (!self._ready) return;
+          self._isLost = true;
+          self._lostPos.copy(self._pos); self._lostQuat.copy(self._quat);
+          self._devRefInv.copy(self._devQuat).invert();
+        };
+        window.addEventListener('deviceorientation', this._onOrient);
+        this.el.addEventListener('markerFound', this._onFound);
+        this.el.addEventListener('markerLost',  this._onLost);
+      },
+      remove: function() {
+        window.removeEventListener('deviceorientation', this._onOrient);
+        this.el.removeEventListener('markerFound', this._onFound);
+        this.el.removeEventListener('markerLost',  this._onLost);
+      },
+      tick: function() {
+        var obj = this.el.object3D;
+        if (this._isLost) {
+          if (!this._ready) return;
+          obj.visible = true;
+          if (this._hasOrient) {
+            this._deltaQ.multiplyQuaternions(this._devQuat, this._devRefInv);
+            this._deltaQInv.copy(this._deltaQ).invert();
+            this._tmpVec.copy(this._lostPos).applyQuaternion(this._deltaQInv);
+            obj.position.copy(this._tmpVec);
+            this._tmpQuat.multiplyQuaternions(this._deltaQInv, this._lostQuat);
+            obj.quaternion.copy(this._tmpQuat);
+          } else {
+            obj.position.copy(this._lostPos); obj.quaternion.copy(this._lostQuat);
+          }
+          return;
+        }
+        if (!obj.visible) return;
+        obj.visible = true;
+        if (this._ready) {
+          this._pos.lerp(obj.position, 0.2);
+          this._quat.slerp(obj.quaternion, 0.2);
+        } else {
+          this._pos.copy(obj.position); this._quat.copy(obj.quaternion); this._ready = true;
+        }
+        obj.position.copy(this._pos); obj.quaternion.copy(this._quat);
+      }
+    });
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { width: 100vw; height: 100dvh; font-family: -apple-system, sans-serif; }
@@ -34,12 +97,16 @@
       letter-spacing: 0.08em; border-radius: 6px; cursor: pointer;
     }
     #calib-panel:not(.hidden) ~ #calib-toggle { display: none; }
-    .calib-header {
-      display: flex; justify-content: space-between; align-items: center;
-      margin-bottom: 12px;
-    }
+    .calib-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .calib-title { font-size: 11px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #107b7f; }
     .calib-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 18px; cursor: pointer; padding: 0 4px; }
+    .bld-selector { display: flex; gap: 6px; margin-bottom: 10px; }
+    .bld-btn {
+      flex: 1; padding: 5px 0; font-size: 9px; font-weight: 700; letter-spacing: 0.06em;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.45); border-radius: 3px; cursor: pointer;
+    }
+    .bld-btn.active { background: rgba(16,123,127,0.3); color: #fff; border-color: #107b7f; }
     .calib-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 16px; margin-bottom: 10px; }
     .calib-row { display: flex; flex-direction: column; gap: 3px; }
     .calib-lbl { font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.5); display: flex; justify-content: space-between; }
@@ -65,8 +132,14 @@
 
   <div id="calib-panel">
     <div class="calib-header">
-      <span class="calib-title">Solar Mat Calibration — SDE4</span>
+      <span class="calib-title">Solar Mat Calibration</span>
       <button class="calib-close" onclick="document.getElementById('calib-panel').classList.add('hidden')">✕</button>
+    </div>
+    <div class="bld-selector">
+      <button class="bld-btn active" onclick="selectBld('SDE4')">SDE4</button>
+      <button class="bld-btn" onclick="selectBld('SDE3')">SDE3</button>
+      <button class="bld-btn" onclick="selectBld('SDE2')">SDE2</button>
+      <button class="bld-btn" onclick="selectBld('SDE1')">SDE1</button>
     </div>
     <div class="calib-grid">
       <div class="calib-row">
@@ -98,63 +171,133 @@
     device-orientation-permission-ui="enabled: false"
   >
     <a-assets>
-      <img id="solar-sde4" src="/solar/SDE4.png" crossorigin="anonymous">
+      <img id="img-SDE4" src="/solar/SDE4.png" crossorigin="anonymous">
+      <img id="img-SDE3" src="/solar/SDE3.png" crossorigin="anonymous">
+      <img id="img-SDE2" src="/solar/SDE2.png" crossorigin="anonymous">
+      <img id="img-SDE1" src="/solar/SDE1.png" crossorigin="anonymous">
     </a-assets>
 
-    <!-- SDE4 = barcode marker value 18, mat centred on marker at y=0.01 -->
-    <a-marker type="barcode" value="18" emitevents="true" id="sde4-marker">
-      <a-plane
-        id="solar-mat"
-        src="#solar-sde4"
-        rotation="-90 0 0"
-        position="0 0.01 0"
-        width="3"
-        height="3"
-        material="transparent: true; alphaTest: 0.05; shader: flat; side: double"
-      ></a-plane>
+    <!-- SDE4 = marker 18, calibrated -->
+    <a-marker type="barcode" value="18" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05" pose-filter>
+      <a-plane id="mat-SDE4" src="#img-SDE4" rotation="-90 0 0" position="-0.50 0.01 1.50" width="17.50" height="12.50" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
+    </a-marker>
+
+    <!-- SDE3 = marker 17 -->
+    <a-marker type="barcode" value="17" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05" pose-filter>
+      <a-plane id="mat-SDE3" src="#img-SDE3" rotation="-90 0 0" position="0 0.01 0" width="3" height="3" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
+    </a-marker>
+
+    <!-- SDE2 = marker 16 -->
+    <a-marker type="barcode" value="16" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05" pose-filter>
+      <a-plane id="mat-SDE2" src="#img-SDE2" rotation="-90 0 0" position="0 0.01 0" width="3" height="3" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
+    </a-marker>
+
+    <!-- SDE1 = marker 15 -->
+    <a-marker type="barcode" value="15" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05" pose-filter>
+      <a-plane id="mat-SDE1" src="#img-SDE1" rotation="-90 0 0" position="0 0.01 0" width="3" height="3" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
     </a-marker>
 
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    var mat = document.getElementById('solar-mat');
-    var imgAspect = 1; // width / height — updated once image loads
+    // AR.js runtime patches
+    var sceneEl = document.querySelector('a-scene');
+    sceneEl.addEventListener('loaded', function() {
+      var tryTune = setInterval(function() {
+        var ctx = sceneEl.systems && sceneEl.systems['arjs'];
+        var ac  = ctx && ctx.ArToolkitContext && ctx.ArToolkitContext.arController;
+        if (!ac) return;
+        clearInterval(tryTune);
+        try { ac.setThresholdMode(3); if (ac.setLabelingMode) ac.setLabelingMode(0); if (ac.setImageProcMode) ac.setImageProcMode(0); } catch(e) {}
+        // Patch minUnvisibleDelay
+        ['SDE4','SDE3','SDE2','SDE1'].forEach(function(name) {
+          var mel = document.getElementById('mat-' + name);
+          if (!mel) return;
+          var marker = mel.parentElement;
+          var comps = marker.components || {};
+          Object.keys(comps).forEach(function(k) {
+            var c = comps[k];
+            var sc = c.smoothedControls || (c.markerControls && c.markerControls.smoothedControls);
+            if (sc && sc.parameters) sc.parameters.minUnvisibleDelay = 4.0;
+          });
+        });
+      }, 200);
+    });
 
-    var imgEl = document.getElementById('solar-sde4');
-    function onImgReady() {
-      if (imgEl.naturalWidth && imgEl.naturalHeight) {
-        imgAspect = imgEl.naturalWidth / imgEl.naturalHeight;
-      }
-      update();
-    }
-    if (imgEl.complete && imgEl.naturalWidth) { onImgReady(); }
-    else { imgEl.addEventListener('load', onImgReady); }
+    // Per-building state
+    var aspects = { SDE4: 1, SDE3: 1, SDE2: 1, SDE1: 1 };
+    var calibData = {
+      SDE4: { x: -0.50, z:  1.50, ry: 0, s: 12.50 },
+      SDE3: { x:  0,    z:  0,    ry: 0, s: 3 },
+      SDE2: { x:  0,    z:  0,    ry: 0, s: 3 },
+      SDE1: { x:  0,    z:  0,    ry: 0, s: 3 },
+    };
+    var activeBld = 'SDE4';
 
-    function update() {
-      var x  = parseFloat(document.getElementById('sx').value);
-      var z  = parseFloat(document.getElementById('sz').value);
-      var ry = parseFloat(document.getElementById('sry').value);
-      var s  = parseFloat(document.getElementById('ss').value);
+    ['SDE4','SDE3','SDE2','SDE1'].forEach(function(name) {
+      var img = document.getElementById('img-' + name);
+      function onLoad() { if (img.naturalWidth && img.naturalHeight) aspects[name] = img.naturalWidth / img.naturalHeight; applyMat(name); }
+      if (img.complete && img.naturalWidth) onLoad();
+      else img.addEventListener('load', onLoad);
+    });
 
-      var w = s * imgAspect;
-      var h = s;
-
-      document.getElementById('vx').textContent  = x.toFixed(2);
-      document.getElementById('vz').textContent  = z.toFixed(2);
-      document.getElementById('vry').textContent = ry + 'deg';
-      document.getElementById('vs').textContent  = s.toFixed(2);
-
-      mat.setAttribute('position', x + ' 0.01 ' + z);
-      mat.setAttribute('rotation', '-90 ' + ry + ' 0');
+    function applyMat(name) {
+      var d = calibData[name];
+      var mat = document.getElementById('mat-' + name);
+      if (!mat) return;
+      var w = d.s * aspects[name];
+      var h = d.s;
+      mat.setAttribute('position', d.x + ' 0.01 ' + d.z);
+      mat.setAttribute('rotation', '-90 ' + d.ry + ' 0');
       mat.setAttribute('width',  w);
       mat.setAttribute('height', h);
-
-      document.getElementById('calib-values').textContent =
-        'position="' + x.toFixed(2) + ' 0.01 ' + z.toFixed(2) + '"\n' +
-        'rotation="-90 ' + ry + ' 0"\n' +
-        'width="' + w.toFixed(2) + '" height="' + h.toFixed(2) + '"';
     }
+
+    function selectBld(name) {
+      activeBld = name;
+      document.querySelectorAll('.bld-btn').forEach(function(b) {
+        b.classList.toggle('active', b.textContent === name);
+      });
+      var d = calibData[name];
+      document.getElementById('sx').value  = d.x;
+      document.getElementById('sz').value  = d.z;
+      document.getElementById('sry').value = d.ry;
+      document.getElementById('ss').value  = d.s;
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      var name = activeBld;
+      var d = calibData[name];
+      var w = (d.s * aspects[name]).toFixed(2);
+      var h = d.s.toFixed(2);
+      document.getElementById('vx').textContent  = d.x.toFixed(2);
+      document.getElementById('vz').textContent  = d.z.toFixed(2);
+      document.getElementById('vry').textContent = d.ry + 'deg';
+      document.getElementById('vs').textContent  = d.s.toFixed(2);
+      document.getElementById('calib-values').textContent =
+        '[' + name + ']\n' +
+        'position="' + d.x.toFixed(2) + ' 0.01 ' + d.z.toFixed(2) + '"\n' +
+        'rotation="-90 ' + d.ry + ' 0"\n' +
+        'width="' + w + '" height="' + h + '"';
+    }
+
+    function onSlider() {
+      var d = calibData[activeBld];
+      d.x  = parseFloat(document.getElementById('sx').value);
+      d.z  = parseFloat(document.getElementById('sz').value);
+      d.ry = parseFloat(document.getElementById('sry').value);
+      d.s  = parseFloat(document.getElementById('ss').value);
+      applyMat(activeBld);
+      updateDisplay();
+    }
+
+    ['sx','sz','sry','ss'].forEach(function(id) {
+      document.getElementById(id).addEventListener('input', onSlider);
+    });
+
+    selectBld('SDE4');
 
     function copyValues() {
       var txt = document.getElementById('calib-values').textContent;
@@ -168,12 +311,6 @@
       btn.textContent = 'Copied!'; btn.classList.add('copied');
       setTimeout(function() { btn.textContent = 'Copy Values'; btn.classList.remove('copied'); }, 2000);
     }
-
-    ['sx','sz','sry','ss'].forEach(function(id) {
-      document.getElementById(id).addEventListener('input', update);
-    });
-
-    update();
 
     window.addEventListener('pagehide', function() {
       document.querySelectorAll('video').forEach(function(v) {
