@@ -240,11 +240,12 @@
       position: fixed; bottom: 20px; right: 16px; z-index: 1000; width: 180px;
       border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.25);
       display: none; opacity: 0; transform: translateY(8px);
-      transition: opacity 0.3s ease, transform 0.3s ease, width 0.25s ease;
+      transition: opacity 0.3s ease, transform 0.3s ease;
       -webkit-tap-highlight-color: transparent; text-decoration: none; flex-direction: row;
     }
     #maps-panel.visible { opacity: 1; transform: translateY(0); display: flex; }
-    #maps-panel.collapsed { width: 22px; }
+    #maps-panel.info-view { width: 260px; }
+    #maps-panel.collapsed { width: 22px !important; }
     #maps-content { flex: 1; overflow: hidden; min-width: 0; }
     #maps-panel.collapsed #maps-content { visibility: hidden; }
     #maps-tab { background: rgba(12, 12, 16, 0.88); border-right: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
@@ -837,7 +838,7 @@
       document.getElementById('btn-buildinginfo').classList.toggle('active', !isMap);
       document.getElementById('maps-panel-img-wrap').style.display = isMap ? 'block' : 'none';
       document.getElementById('maps-panel-desc-wrap').style.display = isMap ? 'none' : 'block';
-      mapsPanel.style.width = isMap ? '180px' : '260px';
+      mapsPanel.classList.toggle('info-view', !isMap);
     }
 
     function updateMapsPlayBtn(playing) {
