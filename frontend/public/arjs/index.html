@@ -21,6 +21,8 @@
         mo.getWorldPosition(this._wp);
         this._wp.y += this.data.y;
         mo.worldToLocal(this._wp);
+        this._wp.x = 0;
+        this._wp.z = 0;
         this.el.object3D.position.copy(this._wp);
       }
     });
