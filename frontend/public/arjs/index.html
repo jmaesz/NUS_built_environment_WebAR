@@ -12,7 +12,7 @@
   <script>
     // Always keep label on the world-up side of the marker
     AFRAME.registerComponent('up-track', {
-      schema: { y: { default: 1.8 }, wx: { default: 0 } },
+      schema: { y: { default: 1.8 } },
       init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
         var mo = this.el.parentEl.object3D;
@@ -20,7 +20,6 @@
         mo.updateWorldMatrix(true, false);
         mo.getWorldPosition(this._wp);
         this._wp.y += this.data.y;
-        this._wp.x += this.data.wx;
         mo.worldToLocal(this._wp);
         this.el.object3D.position.copy(this._wp);
       }
@@ -602,7 +601,7 @@
               // Up-track container for this floor (hidden until chart opens)
               var flUpEl = document.createElement('a-entity');
               flUpEl.id = 'fl-up-' + idx + '-' + fl.key;
-              flUpEl.setAttribute('up-track', 'y: ' + fl.yUp + '; wx: -3.5');
+              flUpEl.setAttribute('up-track', 'y: ' + fl.yUp);
               flUpEl.setAttribute('visible', 'false');
 
               // World-anchored container for labels + lines
@@ -616,7 +615,7 @@
               flBtn.id = 'fl-btn-' + idx + '-' + fl.key;
               flBtn.setAttribute('width', '0.47');
               flBtn.setAttribute('height', '0.30');
-              flBtn.setAttribute('position', '0 0 0');
+              flBtn.setAttribute('position', '-3.5 0 0');
               flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
 
               // "Tap here" hand-cursor icon (LEFT of floor label)
@@ -665,7 +664,7 @@
               tapIconEl.id = 'fl-tap-' + idx + '-' + fl.key;
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
-              tapIconEl.setAttribute('position', '-0.58 0 0.01');
+              tapIconEl.setAttribute('position', '-4.08 0 0.01');
               tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
@@ -673,7 +672,7 @@
               var nFloors = daylightFloors.length;
               var fanAngle = 0;
               var alpha = fanAngle * Math.PI / 180;
-              var xS = 0.35, xE = 1.15, nFanDashes = 6;
+              var xS = -3.15, xE = -2.35, nFanDashes = 6;
               var yL = Math.tan(alpha) * (xE - xS);                // left-side y — unchanged
               var yR = -yL;                                         // right-side y mirrored → steeper slope
               var actualSlope = (yR - yL) / (xE - xS);
@@ -703,7 +702,7 @@
               flImg.setAttribute('width', '5.5');
               flImg.setAttribute('height', '4.1');
               var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
-              flImg.setAttribute('position', '0 0 ' + flImgZ.toFixed(2));
+              flImg.setAttribute('position', '-7.0 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat');
               (function(el, src) {
@@ -740,15 +739,8 @@
               flBb.appendChild(flDotGroup);
               flUpEl.appendChild(flBb);
               flUpEl.appendChild(tapBb);
+              flUpEl.appendChild(flDg);
               marker.appendChild(flUpEl);
-
-              // Separate world-X anchor for the floor image so it sits purely left in world space
-              var flImgUpEl = document.createElement('a-entity');
-              flImgUpEl.id = 'fl-img-up-' + idx + '-' + fl.key;
-              flImgUpEl.setAttribute('up-track', 'y: ' + fl.yUp + '; wx: -7.0');
-              flImgUpEl.setAttribute('visible', 'false');
-              flImgUpEl.appendChild(flDg);
-              marker.appendChild(flImgUpEl);
             });
           }
 
@@ -1078,8 +1070,6 @@
             dfloors.forEach(function(f) {
               var fup = document.getElementById('fl-up-' + i + '-' + f.key);
               if (fup) fup.object3D.visible = false;
-              var fiup = document.getElementById('fl-img-up-' + i + '-' + f.key);
-              if (fiup) fiup.object3D.visible = false;
             });
             if (openDaylightFloors.size > 0) hideDaylightFloor();
           }
@@ -1100,8 +1090,6 @@
       if (showFloors) showFloors.forEach(function(f) {
         var fup = document.getElementById('fl-up-' + idx + '-' + f.key);
         if (fup && fup.object3D) fup.object3D.visible = true;
-        var fiup = document.getElementById('fl-img-up-' + idx + '-' + f.key);
-        if (fiup && fiup.object3D) fiup.object3D.visible = true;
       });
       var solarMat = document.getElementById('solar-mat-' + idx);
       if (solarMat && solarMat.object3D) solarMat.object3D.visible = true;
@@ -1160,8 +1148,6 @@
         if (hideFloors) hideFloors.forEach(function(f) {
           var fup = document.getElementById('fl-up-' + activeIdx + '-' + f.key);
           if (fup && fup.object3D) fup.object3D.visible = false;
-          var fiup = document.getElementById('fl-img-up-' + activeIdx + '-' + f.key);
-          if (fiup && fiup.object3D) fiup.object3D.visible = false;
         });
         var sm = document.getElementById('solar-mat-' + activeIdx);
         if (sm && sm.object3D) sm.object3D.visible = false;
