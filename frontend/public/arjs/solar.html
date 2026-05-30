@@ -138,15 +138,15 @@
     </a-marker>
 
     <a-marker id="marker-SDE3" type="barcode" value="17" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05">
-      <a-plane id="mat-SDE3" src="#img-SDE3" rotation="-90 0 0" position="0 0.01 0" width="3" height="3" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
+      <a-plane id="mat-SDE3" src="#img-SDE3" rotation="-90 0 0" position="1.30 0.01 1.30" width="17.51" height="12.50" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
     </a-marker>
 
     <a-marker id="marker-SDE2" type="barcode" value="16" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05">
-      <a-plane id="mat-SDE2" src="#img-SDE2" rotation="-90 0 0" position="0 0.01 0" width="3" height="3" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
+      <a-plane id="mat-SDE2" src="#img-SDE2" rotation="-90 0 0" position="-0.70 0.01 0.50" width="9.80" height="7.00" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
     </a-marker>
 
     <a-marker id="marker-SDE1" type="barcode" value="15" emitevents="true" smooth="true" smoothCount="30" smoothTolerance="0.15" smoothThreshold="1" minConfidence="0.05">
-      <a-plane id="mat-SDE1" src="#img-SDE1" rotation="-90 0 0" position="0 0.01 0" width="3" height="3" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
+      <a-plane id="mat-SDE1" src="#img-SDE1" rotation="-90 0 0" position="0.50 0.01 1.70" width="10.50" height="7.50" material="transparent: true; alphaTest: 0.05; shader: flat; side: double"></a-plane>
     </a-marker>
 
     <a-entity camera></a-entity>
@@ -158,9 +158,9 @@
     var aspects = { SDE4: 1, SDE3: 1, SDE2: 1, SDE1: 1 };
     var calibData = {
       SDE4: { x: -0.50, z: 1.50, ry: 0, s: 12.50 },
-      SDE3: { x: 0, z: 0, ry: 0, s: 3 },
-      SDE2: { x: 0, z: 0, ry: 0, s: 3 },
-      SDE1: { x: 0, z: 0, ry: 0, s: 3 },
+      SDE3: { x: 1.30, z: 1.30, ry: 0, s: 12.50 },
+      SDE2: { x: -0.70, z: 0.50, ry: 0, s: 7.00 },
+      SDE1: { x: 0.50, z: 1.70, ry: 0, s: 7.50 },
     };
     var activeBld = 'SDE4';
 
