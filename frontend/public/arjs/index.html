@@ -263,6 +263,9 @@
     }
     #maps-panel-addr-lbl { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.4; margin-bottom: 5px; }
     #maps-panel-cta { display: flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em; }
+    #maps-view-toggle { display: flex; gap: 4px; padding: 8px 8px 4px; background: rgba(12,12,16,0.92); }
+    #maps-panel-desc-wrap { padding: 8px; background: rgba(12,12,16,0.92); display: none; }
+    #maps-panel-desc-text { font-size: 8px; color: rgba(255,255,255,0.8); line-height: 1.5; }
   </style>
 
   <script>
@@ -384,6 +387,10 @@
     <a id="maps-panel" href="#" target="_blank" rel="noopener">
       <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
       <div id="maps-content">
+        <div id="maps-view-toggle">
+          <button class="vt-btn active" id="btn-mapview" onclick="event.stopPropagation(); event.preventDefault(); setMapsView('map')">MAP VIEW</button>
+          <button class="vt-btn" id="btn-buildinginfo" onclick="event.stopPropagation(); event.preventDefault(); setMapsView('info')">BUILDING INFO</button>
+        </div>
         <div id="maps-panel-img-wrap">
           <img id="maps-panel-img" src="" alt="" style="display:none">
           <div id="maps-panel-top">—</div>
@@ -391,6 +398,9 @@
             <div id="maps-panel-addr-lbl"></div>
             <div id="maps-panel-cta">Open in Maps →</div>
           </div>
+        </div>
+        <div id="maps-panel-desc-wrap">
+          <div id="maps-panel-desc-text"></div>
         </div>
       </div>
     </a>
@@ -782,6 +792,7 @@
     let descOpenIdx       = null;
     const openDaylightFloors = new Set();
     let currentView       = 'pie';
+    let currentMapsView   = 'map';
     let _speaking     = false;
     let _speechIdx    = -1;
     const visibleMarkers = new Set();
@@ -810,6 +821,15 @@
       document.getElementById('total-row').style.display    = isPie ? 'flex' : 'none';
       document.getElementById('chart-subtitle').textContent = isPie ? 'Annual Energy Use (kWh)' : 'Monthly EUI (kWh/m²)';
       if (!isPie && activeIdx !== null) renderEUIChart(activeIdx);
+    }
+
+    function setMapsView(v) {
+      currentMapsView = v;
+      const isMap = v === 'map';
+      document.getElementById('btn-mapview').classList.toggle('active', isMap);
+      document.getElementById('btn-buildinginfo').classList.toggle('active', !isMap);
+      document.getElementById('maps-panel-img-wrap').style.display = isMap ? 'block' : 'none';
+      document.getElementById('maps-panel-desc-wrap').style.display = isMap ? 'none' : 'block';
     }
 
     function renderEUIChart(idx) {
@@ -1084,8 +1104,6 @@
       activeIdx = idx;
       setLabelHint(idx, true);
       setOtherLabelsVisible(idx, false);
-      const ilbl = document.getElementById('ar-ilbl-' + idx);
-      if (ilbl && ilbl.object3D) ilbl.object3D.visible = true;
       const showFloors = window.DAYLIGHT_FLOORS[b.name];
       if (showFloors) showFloors.forEach(function(f) {
         var fup = document.getElementById('fl-up-' + idx + '-' + f.key);
@@ -1130,6 +1148,9 @@
       document.getElementById('maps-panel-addr-lbl').textContent = b.full_name;
       if (b.img) { mapsImg.src = b.img; mapsImg.style.display = 'block'; }
       else        { mapsImg.style.display = 'none'; }
+      var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
+      document.getElementById('maps-panel-desc-text').textContent = desc;
+      setMapsView('map');
       mapsPanel.classList.remove('collapsed');
       document.getElementById('maps-chevron').textContent = '‹';
       if (mapsHideTimer) { clearTimeout(mapsHideTimer); mapsHideTimer = null; }
