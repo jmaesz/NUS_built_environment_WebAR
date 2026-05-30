@@ -12,16 +12,26 @@
   <script>
     // Always keep label on the world-up side of the marker
     AFRAME.registerComponent('up-track', {
-      schema: { y: { default: 1.8 }, wx: { default: 0 } },
-      init: function () { this._wp = new THREE.Vector3(); },
+      schema: { y: { default: 1.8 }, dist: { default: 0 } },
+      init: function () {
+        this._wp = new THREE.Vector3();
+        this._leftDir = new THREE.Vector3();
+        this._q = new THREE.Quaternion();
+      },
       tick: function () {
         var mo = this.el.parentEl.object3D;
         if (!mo.visible) return;
         mo.updateWorldMatrix(true, false);
         mo.getWorldPosition(this._wp);
         this._wp.y += this.data.y;
-        this._wp.x += this.data.wx;
         mo.worldToLocal(this._wp);
+        if (this.data.dist !== 0) {
+          // Offset in world-left direction (-X) using marker-local units
+          mo.getWorldQuaternion(this._q);
+          this._q.invert();
+          this._leftDir.set(-1, 0, 0).applyQuaternion(this._q).multiplyScalar(this.data.dist);
+          this._wp.add(this._leftDir);
+        }
         this.el.object3D.position.copy(this._wp);
       }
     });
@@ -602,7 +612,7 @@
               // Up-track container for this floor (hidden until chart opens)
               var flUpEl = document.createElement('a-entity');
               flUpEl.id = 'fl-up-' + idx + '-' + fl.key;
-              flUpEl.setAttribute('up-track', 'y: ' + fl.yUp + '; wx: -3.5');
+              flUpEl.setAttribute('up-track', 'y: ' + fl.yUp + '; dist: -3.5');
               flUpEl.setAttribute('visible', 'false');
 
               // World-anchored container for labels + lines
@@ -745,7 +755,7 @@
               // Separate world-X anchor for the floor image so it sits purely left in world space
               var flImgUpEl = document.createElement('a-entity');
               flImgUpEl.id = 'fl-img-up-' + idx + '-' + fl.key;
-              flImgUpEl.setAttribute('up-track', 'y: ' + fl.yUp + '; wx: -7.0');
+              flImgUpEl.setAttribute('up-track', 'y: ' + fl.yUp + '; dist: -7.0');
               flImgUpEl.setAttribute('visible', 'false');
               flImgUpEl.appendChild(flDg);
               marker.appendChild(flImgUpEl);
