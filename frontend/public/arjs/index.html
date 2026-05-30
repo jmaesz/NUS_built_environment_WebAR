@@ -606,7 +606,7 @@
 
               // Billboard inside
               var flBb = document.createElement('a-entity');
-              flBb.setAttribute('billboard', '');
+              // No billboard — world-anchored so lines/labels are fixed in space
 
               // Floor button plane
               var flBtn = document.createElement('a-plane');
@@ -694,13 +694,14 @@
               flDg.id = 'fl-dg-' + idx + '-' + fl.key;
               flDg.setAttribute('visible', 'false');
 
-              // Daylight image — billboard, beside the tap icon
+              // Daylight image — flat mat on marker surface
               var flImg = document.createElement('a-plane');
               flImg.id = 'fl-img-' + idx + '-' + fl.key;
               flImg.setAttribute('width', '5.5');
               flImg.setAttribute('height', '4.1');
-              var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
-              flImg.setAttribute('position', '-7.0 0 ' + flImgZ.toFixed(2));
+              var flImgY = (0.01 + flIdx * 0.005).toFixed(3);
+              flImg.setAttribute('position', '0 ' + flImgY + ' 0');
+              flImg.setAttribute('rotation', '-90 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat');
               (function(el, src) {
                 var tmpImg = new Image();
@@ -734,9 +735,9 @@
               flBb.appendChild(flBtn);
               flBb.appendChild(tapIconEl);
               flBb.appendChild(flDotGroup);
-              flBb.appendChild(flDg);
               flUpEl.appendChild(flBb);
               marker.appendChild(flUpEl);
+              marker.appendChild(flDg);
             });
           }
 
