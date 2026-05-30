@@ -119,12 +119,26 @@
 
   <script>
     var mat = document.getElementById('solar-mat');
+    var imgAspect = 1; // width / height — updated once image loads
+
+    var imgEl = document.getElementById('solar-sde4');
+    function onImgReady() {
+      if (imgEl.naturalWidth && imgEl.naturalHeight) {
+        imgAspect = imgEl.naturalWidth / imgEl.naturalHeight;
+      }
+      update();
+    }
+    if (imgEl.complete && imgEl.naturalWidth) { onImgReady(); }
+    else { imgEl.addEventListener('load', onImgReady); }
 
     function update() {
       var x  = parseFloat(document.getElementById('sx').value);
       var z  = parseFloat(document.getElementById('sz').value);
       var ry = parseFloat(document.getElementById('sry').value);
       var s  = parseFloat(document.getElementById('ss').value);
+
+      var w = s * imgAspect;
+      var h = s;
 
       document.getElementById('vx').textContent  = x.toFixed(2);
       document.getElementById('vz').textContent  = z.toFixed(2);
@@ -133,13 +147,13 @@
 
       mat.setAttribute('position', x + ' 0.01 ' + z);
       mat.setAttribute('rotation', '-90 ' + ry + ' 0');
-      mat.setAttribute('width',  s);
-      mat.setAttribute('height', s);
+      mat.setAttribute('width',  w);
+      mat.setAttribute('height', h);
 
       document.getElementById('calib-values').textContent =
         'position="' + x.toFixed(2) + ' 0.01 ' + z.toFixed(2) + '"\n' +
         'rotation="-90 ' + ry + ' 0"\n' +
-        'width="' + s.toFixed(2) + '" height="' + s.toFixed(2) + '"';
+        'width="' + w.toFixed(2) + '" height="' + h.toFixed(2) + '"';
     }
 
     function copyValues() {
