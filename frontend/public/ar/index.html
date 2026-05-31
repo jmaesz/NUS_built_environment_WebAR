@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>NUScape-AR</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.2/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { width: 100vw; height: 100dvh; overflow: hidden; font-family: -apple-system, sans-serif; }
+    a-scene, a-scene canvas, .a-canvas { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; object-fit: cover !important; }
+
+    #back-btn {
+      position: fixed; top: 16px; left: 16px; z-index: 1000;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
+      cursor: pointer; border-radius: 4px; text-decoration: none;
+      display: block; width: 100px; text-align: center;
+    }
+    #scan-hint {
+      position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
+      z-index: 1000; background: rgba(0,0,0,0.55); color: #fff;
+      padding: 11px 18px; font-size: 11px; letter-spacing: 0.1em;
+      border-radius: 4px; pointer-events: none; transition: opacity 0.4s; white-space: nowrap;
+    }
+
+    /* ── Chart panel ── */
+    #chart-panel {
+      position: fixed; top: 16px; right: 12px; z-index: 999;
+      width: 255px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255,255,255,0.35); border-radius: 10px; padding: 0;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.12); overflow: hidden;
+      display: flex; flex-direction: row;
+      opacity: 0; transform: translateX(16px);
+      transition: opacity 0.35s ease, transform 0.35s ease, width 0.25s ease; pointer-events: none;
+    }
+    #chart-panel.visible { opacity: 1; transform: translateX(0); pointer-events: auto; }
+    #chart-panel.collapsed { width: 22px; }
+    .panel-tab {
+      width: 22px; flex-shrink: 0; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.28); border-right: 1px solid rgba(255,255,255,0.3);
+      font-size: 15px; color: rgba(255,255,255,0.85); user-select: none;
+      transition: background 0.15s;
+    }
+    .panel-tab:hover { background: rgba(0,0,0,0.42); }
+    #chart-content { flex: 1; padding: 14px; overflow: hidden; min-width: 0; }
+    #chart-panel.collapsed #chart-content { visibility: hidden; }
+    #chart-panel.collapsed #chart-tab { border-right: none; }
+    #chart-building-name { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #111; margin-bottom: 2px; }
+    #chart-subtitle { font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: #555; margin-bottom: 10px; }
+    #chart-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    #chart-container { position: relative; width: 95px; height: 95px; flex-shrink: 0; }
+    .legend { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .legend-label { font-size: 9px; color: #333; flex: 1; }
+    .legend-value { font-size: 9px; font-weight: 600; color: #111; }
+    .divider { height: 1px; background: rgba(0,0,0,0.12); margin: 8px 0; }
+    #total-row { display: flex; justify-content: space-between; align-items: center; }
+    #total-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: #555; }
+    #total-value { font-size: 11px; font-weight: 700; color: #111; }
+
+    #maps-panel {
+      position: fixed; bottom: 20px; right: 16px; z-index: 1000;
+      width: 180px; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+      display: none; opacity: 0; transform: translateY(8px);
+      transition: opacity 0.3s ease, transform 0.3s ease, width 0.25s ease;
+      -webkit-tap-highlight-color: transparent; text-decoration: none;
+      flex-direction: row;
+    }
+    #maps-panel.visible { opacity: 1; transform: translateY(0); display: flex; }
+    #maps-panel.collapsed { width: 22px; }
+    #maps-content { flex: 1; overflow: hidden; min-width: 0; }
+    #maps-panel.collapsed #maps-content { visibility: hidden; }
+    #maps-panel.collapsed #maps-tab { border-right: none; }
+    #maps-panel-img-wrap { position: relative; height: 110px; background: #1a1a2e; }
+    #maps-panel-img-wrap img { display: block; width: 100%; height: 100%; object-fit: cover; }
+    #maps-panel-top {
+      position: absolute; top: 8px; left: 8px;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px);
+      border-radius: 6px; padding: 4px 8px;
+      font-size: 12px; font-weight: 800; color: #fff; letter-spacing: 0.06em;
+    }
+    #maps-panel-bottom {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: linear-gradient(transparent, rgba(0,0,0,0.72));
+      padding: 18px 10px 10px;
+    }
+    #maps-panel-addr-lbl { font-size: 9px; color: rgba(255,255,255,0.75); line-height: 1.4; margin-bottom: 5px; }
+    #maps-panel-cta {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 10px; font-weight: 700; color: #4fc3f7; letter-spacing: 0.04em;
+    }
+
+    #thermal-btn { display: none; }
+    #orient-btn {
+      position: fixed; top: 60px; left: 16px; z-index: 1000;
+      width: 100px; text-align: center;
+      background: rgba(0,0,0,0.55); color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
+      padding: 9px 14px; font-size: 11px; letter-spacing: 0.1em;
+      cursor: pointer; border-radius: 4px; font-family: -apple-system, sans-serif;
+      display: none;
+    }
+    #orient-btn.active { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.6); }
+    @media (max-width: 768px) { #orient-btn { display: block; } }
+
+    #ui-layer {
+      position: fixed; inset: 0; z-index: 999; pointer-events: none;
+      transition: transform 0.35s ease;
+    }
+    #ui-layer > * { pointer-events: auto; }
+    #back-btn, #thermal-btn, #orient-btn, #scan-hint, #chart-panel, #maps-panel {
+      position: absolute;
+    }
+    body.landscape #ui-layer {
+      transform: rotate(90deg);
+      width: 100vh; height: 100vw;
+      top: calc((100vh - 100vw) / 2);
+      left: calc((100vw - 100vh) / 2);
+      right: auto; bottom: auto;
+    }
+    body.landscape #chart-panel { right: 40px; }
+    body.landscape #maps-panel  { right: 40px; }
+  </style>
+</head>
+<body>
+  <div id="ui-layer">
+    <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
+    <button id="thermal-btn" onclick="toggleThermal()">HIGHLIGHT</button>
+    <button id="orient-btn" onclick="toggleOrient()">⇄ LANDSCAPE</button>
+
+    <a id="maps-panel" href="#" target="_blank" rel="noopener">
+      <div class="panel-tab" id="maps-tab" onclick="event.stopPropagation(); event.preventDefault(); toggleCollapse('maps')"><span id="maps-chevron">‹</span></div>
+      <div id="maps-content">
+        <div id="maps-panel-img-wrap">
+          <img id="maps-panel-img" src="" alt="Building" style="display:none">
+          <div id="maps-panel-top">—</div>
+          <div id="maps-panel-bottom">
+            <div id="maps-panel-addr-lbl">NUS Campus</div>
+            <div id="maps-panel-cta">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="#4fc3f7"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+              Open in Google Maps
+            </div>
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <div id="scan-hint">POINT CAMERA AT A BUILDING MARKER</div>
+
+    <div id="chart-panel">
+      <div class="panel-tab" id="chart-tab" onclick="toggleCollapse('chart')"><span id="chart-chevron">‹</span></div>
+      <div id="chart-content">
+        <div id="chart-building-name">—</div>
+        <div id="chart-subtitle">Annual Energy Use</div>
+        <div id="chart-row">
+          <div id="chart-container"><canvas id="energy-chart"></canvas></div>
+          <div class="legend" id="legend"></div>
+        </div>
+        <div class="divider"></div>
+        <div id="total-row">
+          <span id="total-label">Annual Total</span>
+          <span id="total-value"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <a-scene
+    mindar-image="imageTargetSrc: /ar/targets-all.mind?v=33; maxTrack: 10; autoStart: true; uiLoading: yes; uiError: yes; uiScanning: yes; missTolerance: 100; warmupTolerance: 1; filterMinCF: 0.00001; filterBeta: 0.0005;"
+    color-space="sRGB" renderer="colorManagement: true"
+    vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false"
+  >
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-light type="ambient" color="#ffffff" intensity="1.5"></a-light>
+    <a-light type="directional" color="#ffffff" intensity="1.0" position="1 2 1"></a-light>
+
+    <!-- 21 building targets — index matches BUILDINGS array order; target 20 = SDE4 alternate marker -->
+    <a-entity id="target-0"  mindar-image-target="targetIndex: 0"></a-entity>
+    <a-entity id="target-1"  mindar-image-target="targetIndex: 1"></a-entity>
+    <a-entity id="target-2"  mindar-image-target="targetIndex: 2"></a-entity>
+    <a-entity id="target-3"  mindar-image-target="targetIndex: 3"></a-entity>
+    <a-entity id="target-4"  mindar-image-target="targetIndex: 4"></a-entity>
+    <a-entity id="target-5"  mindar-image-target="targetIndex: 5"></a-entity>
+    <a-entity id="target-6"  mindar-image-target="targetIndex: 6"></a-entity>
+    <a-entity id="target-7"  mindar-image-target="targetIndex: 7"></a-entity>
+    <a-entity id="target-8"  mindar-image-target="targetIndex: 8"></a-entity>
+    <a-entity id="target-9"  mindar-image-target="targetIndex: 9"></a-entity>
+    <a-entity id="target-10" mindar-image-target="targetIndex: 10"></a-entity>
+    <a-entity id="target-11" mindar-image-target="targetIndex: 11"></a-entity>
+    <a-entity id="target-12" mindar-image-target="targetIndex: 12"></a-entity>
+    <a-entity id="target-13" mindar-image-target="targetIndex: 13"></a-entity>
+    <a-entity id="target-14" mindar-image-target="targetIndex: 14"></a-entity>
+    <a-entity id="target-15" mindar-image-target="targetIndex: 15"></a-entity>
+    <a-entity id="target-16" mindar-image-target="targetIndex: 16"></a-entity>
+    <a-entity id="target-17" mindar-image-target="targetIndex: 17"></a-entity>
+    <a-entity id="target-18" mindar-image-target="targetIndex: 18"></a-entity>
+    <a-entity id="target-19" mindar-image-target="targetIndex: 19"></a-entity>
+    <a-entity id="target-20" mindar-image-target="targetIndex: 20"></a-entity>
+    <a-entity id="target-21" mindar-image-target="targetIndex: 21"></a-entity>
+  </a-scene>
+
+  <script>
+    // ─── Building data (index matches targetIndex in targets-all.mind) ───────
+    const BUILDINGS = [
+      {
+        "id": "FOE21", "name": "CELC", "full_name": "Centre for English Language Communication", "img": "/ar/imgs/celc.jpg", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=CELC+Centre+for+English+Language+Communication+NUS+Singapore",
+        "description": "NUS's dedicated academic unit for English language and communication skills, serving students across all faculties. Located at 10 Architecture Drive within the SDE precinct, the building benefits from surrounding greenery and tree canopy that moderates the urban heat island effect around the site.",
+        "equipment_kWh": 871310, "lighting_kWh": 361929, "cooling_kWh": 758033,
+        "equipment_description": "At 44% of total energy use, equipment is the largest single end use. Computers, projectors, and AV systems across multiple teaching rooms running back-to-back sessions throughout the day drive this load.",
+        "lighting_description": "Lighting accounts for 18% of total energy. Classrooms with controlled artificial lighting and limited reliance on daylight penetration contribute to a moderate but consistent lighting load.",
+        "cooling_description": "Cooling makes up 38% of total energy. Fully air-conditioned teaching rooms and office spaces in Singapore's tropical climate sustain a significant year-round cooling demand."
+      },
+      {
+        "id": "FOE13", "name": "E1", "full_name": "Faculty of Engineering Block 1", "img": "/ar/imgs/E1mapview.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E1+Faculty+of+Engineering+Block+1+NUS+Singapore",
+        "description": "One of the core teaching and office blocks of NUS's College of Design and Engineering. The building is part of the 1970s Kent Ridge campus masterplan and is connected via sheltered corridors; mature trees along Engineering Drive provide partial shading to the building envelope.",
+        "equipment_kWh": 1714696, "lighting_kWh": 1123372, "cooling_kWh": 2385198,
+        "equipment_description": "Equipment represents 33% of total energy. Computers and AV systems in lecture theatres and faculty offices contribute to a substantial but not dominant equipment load relative to the building's size.",
+        "lighting_description": "Lighting is notably high at 22% of total energy, reflecting a large number of deep-plan lecture theatres and corridors that rely heavily on artificial lighting with limited daylight access.",
+        "cooling_description": "Cooling dominates at 46% of total energy — the highest proportion across all three end uses. Dense occupancy in large lecture theatres and limited natural ventilation options drive this elevated cooling demand."
+      },
+      {
+        "id": "FOE5", "name": "E1A", "full_name": "Faculty of Engineering Block 1A", "img": "/ar/imgs/e1a.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E1A+Faculty+of+Engineering+Block+1A+NUS+Singapore",
+        "description": "Houses the Department of Civil and Environmental Engineering and the Department of Industrial Systems Engineering and Management, along with EDIC's assembly and training workshops. The building's research focus on environmental engineering aligns with ongoing campus-wide sustainability initiatives to reduce embodied carbon in civil infrastructure.",
+        "equipment_kWh": 2394083, "lighting_kWh": 994465, "cooling_kWh": 1893880,
+        "equipment_description": "Equipment is the largest end use at 45% of total energy. Workshop machinery, laboratory instrumentation, and computers across multiple departments combine to produce one of the higher absolute equipment loads in the engineering precinct.",
+        "lighting_description": "Lighting accounts for 19% of total energy. Workshop bays and laboratory spaces with high task-lighting requirements contribute alongside standard office and classroom lighting.",
+        "cooling_description": "Cooling represents 36% of total energy. Heat generated by workshop equipment and lab operations supplements the base cooling load from occupied office and teaching spaces."
+      },
+      {
+        "id": "FOE6", "name": "E2", "full_name": "Faculty of Engineering Block 2", "img": "/ar/imgs/e2mapview.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E2+Faculty+of+Engineering+Block+2+NUS+Singapore",
+        "description": "A large central engineering block forming the spine of the engineering precinct, housing faculty offices and a canteen. Its central position on the hillside campus means it is shaded by surrounding blocks in the morning, but the west-facing facades receive significant afternoon solar gain.",
+        "equipment_kWh": 777382, "lighting_kWh": 509297, "cooling_kWh": 1522584,
+        "equipment_description": "Equipment is the smallest end use here at 28% of total energy, consistent with a predominantly office and circulation block with fewer energy-intensive lab or workshop spaces.",
+        "lighting_description": "Lighting accounts for 18% of total energy. Internal corridors and circulation areas that require constant lighting throughout operating hours contribute to a steady baseline load.",
+        "cooling_description": "Cooling dominates at 54% of total energy — the highest cooling proportion of any building in this dataset. West-facing solar exposure and the heat load from the ground-floor food court both drive this elevated cooling demand."
+      },
+      {
+        "id": "FOE15", "name": "E2A", "full_name": "Faculty of Engineering Block 2A", "img": "/ar/imgs/e2a.jpg", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E2A+Engineering+Design+Innovation+Centre+NUS+Singapore",
+        "description": "Home of the Engineering Design and Innovation Centre, featuring design studios, an electronics workshop, and an immersive reality lab. The colourful vertical banner facade also serves a passive function, providing partial shading to the building's glazed surfaces.",
+        "equipment_kWh": 628626, "lighting_kWh": 261122, "cooling_kWh": 663876,
+        "equipment_description": "Equipment accounts for 40% of total energy. VR rigs, 3D printers, electronics benches, and studio computers — many of which run extended hours under the 24/7 student access policy — are the main contributors.",
+        "lighting_description": "Lighting is the lowest end use at 17% of total energy. Open-plan studio spaces with high ceilings allow some natural light penetration, reducing artificial lighting reliance during daytime hours.",
+        "cooling_description": "Cooling makes up 43% of total energy. Heat generated by densely packed electronic equipment and VR hardware in enclosed studios raises the cooling load beyond what occupancy alone would suggest."
+      },
+      {
+        "id": "FOE9", "name": "E3", "full_name": "Faculty of Engineering Block 3", "img": "/ar/imgs/e3mapview.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E3+Faculty+of+Engineering+Block+3+NUS+Singapore",
+        "description": "Contains the Central Workshop, seminar rooms, active learning rooms, and student amenities serving the wider engineering precinct. The building is connected to E4 via sheltered walkways with yellow-painted ceilings — a campus landmark — that also reduce direct solar exposure for pedestrians.",
+        "equipment_kWh": 1122637, "lighting_kWh": 735489, "cooling_kWh": 1542890,
+        "equipment_description": "Equipment represents 33% of total energy. Workshop machinery in the Central Workshop and AV systems in active learning rooms are the primary drivers, with occupancy-sensitive loads varying significantly between term and vacation periods.",
+        "lighting_description": "Lighting accounts for 22% of total energy. Workshop bays, seminar rooms, and internal circulation spaces all require consistent artificial lighting, contributing to an above-average lighting share.",
+        "cooling_description": "Cooling is the dominant end use at 45% of total energy. Heat from workshop operations and densely occupied teaching spaces sustains a high cooling load throughout operating hours."
+      },
+      {
+        "id": "FOE3", "name": "E3A", "full_name": "Faculty of Engineering Block 3A", "img": "/ar/imgs/e3amapview.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E3A+Faculty+of+Engineering+Block+3A+NUS+Singapore",
+        "description": "Houses the Department of Materials Science and Engineering's lab offices and research laboratories. The department's research into sustainable materials, including low-carbon concrete and recyclable composites, directly supports Singapore's Green Plan 2030 goals.",
+        "equipment_kWh": 1722530, "lighting_kWh": 715513, "cooling_kWh": 1444818,
+        "equipment_description": "Equipment is the dominant end use at 44% of total energy. Electron microscopes, furnaces, and precision characterisation instruments running long experimental cycles are the primary drivers of this high absolute equipment load.",
+        "lighting_description": "Lighting accounts for 18% of total energy. Specialist laboratory spaces requiring consistent, controlled illumination levels contribute to a steady lighting load independent of daylight availability.",
+        "cooling_description": "Cooling represents 37% of total energy. Precise temperature control required for sensitive materials characterisation equipment adds to the standard occupancy-driven cooling load."
+      },
+      {
+        "id": "FOE16", "name": "E4", "full_name": "Faculty of Engineering Block 4", "img": "/ar/imgs/e4.jpg", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E4+Faculty+of+Engineering+Block+4+NUS+Singapore",
+        "description": "Houses the Department of Electrical and Computer Engineering and an Engineering Fabrication Lab. Retrofitted with a distinctive faceted aluminium screen facade by AR43 Architects, the building received the BCA Green Mark Platinum award in 2015 — one of the highest green building ratings in Singapore.",
+        "equipment_kWh": 2410173, "lighting_kWh": 1205789, "cooling_kWh": 1601209,
+        "equipment_description": "Equipment is the largest end use at 46% of total energy. Electronics labs, fabrication equipment, and ECE research instrumentation operating across multiple floors drive one of the highest absolute equipment loads in the precinct.",
+        "lighting_description": "Lighting accounts for 23% of total energy — the highest lighting share in the dataset. Deep floor plates in the teaching and office floors limit daylight penetration, requiring sustained artificial lighting throughout the day.",
+        "cooling_description": "Cooling represents 31% of total energy, notably lower than many engineering blocks. The Green Mark Platinum retrofit measures — including improved facade shading and more efficient chillers — have measurably reduced the cooling fraction."
+      },
+      {
+        "id": "FOE24", "name": "E4A", "full_name": "Faculty of Engineering Block 4A", "img": null, "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E4A+Faculty+of+Engineering+Block+4A+NUS+Singapore",
+        "description": "A supplementary engineering block adjacent to E4, providing additional office, laboratory, and teaching space for the College of Design and Engineering. Like E4, its location within the engineering precinct benefits from the extensive mature tree canopy along Engineering Drive 3.",
+        "equipment_kWh": 1478244, "lighting_kWh": 614040, "cooling_kWh": 992888,
+        "equipment_description": "Equipment is the largest end use at 48% of total energy, consistent with a laboratory-heavy block where research instruments and computers outweigh other end uses.",
+        "lighting_description": "Lighting accounts for 20% of total energy. Office and laboratory spaces with standard fluorescent or LED installations contribute a moderate and consistent lighting load.",
+        "cooling_description": "Cooling represents 32% of total energy. The block's relatively lower cooling fraction compared to neighbouring buildings suggests effective shading or a higher proportion of naturally ventilated spaces."
+      },
+      {
+        "id": "FOE23", "name": "E5", "full_name": "Faculty of Engineering Block 5", "img": "/ar/imgs/e5.jpg", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E5+Faculty+of+Engineering+Block+5+NUS+Singapore",
+        "description": "Primary home of the Department of Chemical and Biomolecular Engineering, housing teaching labs, research facilities, and faculty offices. Research in green chemistry and sustainable bioprocessing at E5 contributes to Singapore's circular economy and net-zero carbon ambitions.",
+        "equipment_kWh": 1090099, "lighting_kWh": 545367, "cooling_kWh": 1080857,
+        "equipment_description": "Equipment accounts for 40% of total energy. Bioreactors, chromatography systems, and analytical instruments running continuous experimental cycles drive a significant and sustained equipment load.",
+        "lighting_description": "Lighting represents 20% of total energy. Laboratory spaces requiring uniform, high-intensity illumination for safety and precision work contribute to a consistent lighting demand.",
+        "cooling_description": "Cooling is nearly equal to equipment at 40% of total energy. Fume hoods, autoclaves, and other heat-generating lab equipment add substantially to the cooling load beyond occupancy alone."
+      },
+      {
+        "id": "FOE26", "name": "E6", "full_name": "Faculty of Engineering Block 6", "img": "/ar/imgs/e6.jpg", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E6+Faculty+of+Engineering+Block+6+NUS+Singapore",
+        "description": "An engineering block associated with the Department of Civil and Environmental Engineering, providing large-format structural, hydraulic, and environmental testing laboratories. Research on flood-resilient infrastructure and sustainable drainage systems conducted here supports Singapore's climate adaptation planning.",
+        "equipment_kWh": 3696553, "lighting_kWh": 1535491, "cooling_kWh": 3291141,
+        "equipment_description": "Equipment is the dominant end use at 43% of total energy and the highest absolute equipment figure in the dataset. Heavy structural testing rigs, hydraulic actuators, and environmental simulation chambers running large-scale experiments are the primary drivers.",
+        "lighting_description": "Lighting accounts for 18% of total energy. Large open laboratory bays require extensive artificial lighting given limited glazing on the heavy structural walls needed for testing facilities.",
+        "cooling_description": "Cooling represents 39% of total energy. The massive heat output from large-scale testing equipment and the poor thermal mass performance of open industrial-style lab spaces drive a very high absolute cooling load."
+      },
+      {
+        "id": "FOE25", "name": "E8", "full_name": "Faculty of Engineering Block 8", "img": "/ar/imgs/e8.jpg", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=E8+Engineering+Workshop+NUS+Singapore",
+        "description": "Located at 1 Engineering Drive 3, E8 functions as Engineering Workshop 2, supporting fabrication, prototyping, and machining activities. Workshop buildings like E8 are being studied as part of NUS's campus sustainability programme to identify opportunities for waste heat recovery from machining operations.",
+        "equipment_kWh": 1533068, "lighting_kWh": 766981, "cooling_kWh": 1111118,
+        "equipment_description": "Equipment accounts for 45% of total energy. Lathes, milling machines, welding equipment, and CNC tools are the primary loads, with energy consumption heavily dependent on workshop utilisation rates during term time.",
+        "lighting_description": "Lighting represents 22% of total energy. Workshop safety standards require high-intensity, shadow-free lighting across all machining areas, contributing to an above-average lighting share.",
+        "cooling_description": "Cooling accounts for 33% of total energy. Ventilation and cooling systems must manage substantial heat and particulate loads from machining operations in addition to standard occupancy-driven cooling."
+      },
+      {
+        "id": "FOE1", "name": "EA", "full_name": "Engineering Auditorium", "img": "/ar/imgs/ea.jpg", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Engineering+Auditorium+NUS+Singapore",
+        "description": "The flagship administrative and events building of NUS's College of Design and Engineering, housing the Dean's Office, student programme offices, the Innovation and Design Hub, and the Engineering Auditorium lecture theatre. A rooftop garden and planted terraces on the upper levels contribute to biodiversity and passive cooling of the building envelope.",
+        "equipment_kWh": 3443582, "lighting_kWh": 1430411, "cooling_kWh": 2866052,
+        "equipment_description": "Equipment accounts for 44% of total energy. Professional AV systems in the large auditorium, IT infrastructure supporting the Dean's and programme offices, and event-related temporary equipment loads all contribute to a high absolute equipment figure.",
+        "lighting_description": "Lighting represents 18% of total energy. The auditorium requires sophisticated stage and audience lighting systems, while office and study floors maintain consistent artificial lighting given limited facade glazing on upper levels.",
+        "cooling_description": "Cooling makes up 37% of total energy. The large single-volume auditorium space is particularly costly to cool, as it must be brought to comfort conditions before each event regardless of the number of occupants."
+      },
+      {
+        "id": "FOE12", "name": "EW1", "full_name": "Engineering Workshop 1", "img": "/ar/imgs/ew1mpaview.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=EW1+Engineering+Workshop+1+NUS+Singapore",
+        "description": "A dedicated workshop block in the SDE precinct area, supporting practical fabrication and prototyping activities for College of Design and Engineering students. Its proximity to the SDE green precinct exposes it to the landscape buffer that moderates heat and noise from workshop operations.",
+        "equipment_kWh": 810779, "lighting_kWh": 405626, "cooling_kWh": 639151,
+        "equipment_description": "Equipment is the largest end use at 44% of total energy. Workshop tools and fabrication machinery are the primary loads, with energy consumption varying significantly between high-utilisation term periods and quieter vacation periods.",
+        "lighting_description": "Lighting accounts for 22% of total energy. Open workshop bays require bright, even illumination for safety, contributing to an above-average lighting share relative to the building's size.",
+        "cooling_description": "Cooling represents 34% of total energy. Ventilation systems managing heat and dust from workshop operations drive cooling demand beyond what the occupancy headcount alone would suggest."
+      },
+      {
+        "id": "FOE4", "name": "EW1A", "full_name": "Engineering Workshop 1A", "img": "/ar/imgs/EW1Amapview.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=EW1A+Engineering+Workshop+1A+NUS+Singapore",
+        "description": "An annex workshop block adjacent to EW1, providing supplementary fabrication and storage space for the College of Design and Engineering. As the smallest building by total energy in this dataset, it is a candidate for electrification and solar panel installation under NUS's campus decarbonisation roadmap.",
+        "equipment_kWh": 380956, "lighting_kWh": 158243, "cooling_kWh": 277351,
+        "equipment_description": "Equipment accounts for 47% of total energy. Light fabrication tools and intermittently used workshop machinery drive a modest but equipment-heavy energy profile consistent with a supplementary annex role.",
+        "lighting_description": "Lighting represents 19% of total energy. Storage and light workshop areas have lower illumination requirements than primary workshop bays, resulting in the lowest absolute lighting figure in the dataset.",
+        "cooling_description": "Cooling makes up 34% of total energy. Intermittent occupancy and lower equipment heat loads compared to primary workshop blocks result in the lowest absolute cooling consumption across all buildings."
+      },
+      {
+        "id": "FOE19", "name": "SDE1", "full_name": "School of Design and Environment Block 1", "img": "/ar/imgs/sde1.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=SDE1+School+of+Design+Environment+NUS+Singapore",
+        "description": "A net-zero energy retrofit of a 1970s building completed in 2023, housing the Department of Architecture. Features light shelves, solar radiation screens, a hybrid cooling system, and a lush courtyard jungle garden. Achieved an EUI of 41 kWh per square metre per year in 2022 and holds the BCA Green Mark Platinum award.",
+        "equipment_kWh": 885245, "lighting_kWh": 442881, "cooling_kWh": 577684,
+        "equipment_description": "Equipment accounts for 46% of total energy. Architecture studio computers, large-format plotters, and model-making tools are the main loads, with consumption concentrated during studio critique periods and end-of-semester design submissions.",
+        "lighting_description": "Lighting represents 23% of total energy. Despite the retrofit's emphasis on daylighting through light shelves and solar screens, artificial lighting remains necessary for evening studio sessions and windowless interior spaces.",
+        "cooling_description": "Cooling accounts for 30% of total energy — the lowest cooling fraction of any building in this dataset. The hybrid cooling system and passive ventilation strategies introduced in the retrofit have significantly reduced dependence on mechanical cooling."
+      },
+      {
+        "id": "FOE20", "name": "SDE2", "full_name": "School of Design and Environment Block 2", "img": "/ar/imgs/sde2.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=SDE2+School+of+Design+Environment+NUS+Singapore",
+        "description": "One of the original SDE campus buildings at 2 Architecture Drive, housing departments including Real Estate and other Built Environment disciplines. Surrounded by the mature landscaping of the Architecture Drive corridor, which provides significant shading to the building's east and west facades throughout the day.",
+        "equipment_kWh": 502301, "lighting_kWh": 251297, "cooling_kWh": 338453,
+        "equipment_description": "Equipment accounts for 46% of total energy. Predominantly office and seminar occupancy with standard computers and AV systems produces the lowest absolute equipment load of all buildings in the SDE precinct.",
+        "lighting_description": "Lighting represents 23% of total energy. Offices and seminar rooms with moderate glazing rely on a combination of daylight and artificial lighting, resulting in a proportionally higher lighting share despite low absolute consumption.",
+        "cooling_description": "Cooling makes up 31% of total energy and is the lowest absolute cooling figure in the entire dataset. Surrounding tree canopy and a lower internal heat gain from predominantly office use contribute to this low cooling demand."
+      },
+      {
+        "id": "FOE11", "name": "SDE3", "full_name": "School of Design and Environment Block 3", "img": "/ar/imgs/sde3mapoview.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=SDE3+School+of+Design+Environment+NUS+Singapore",
+        "description": "The primary architecture studio building, renovated in 2023 with an exposed structural frame retained to minimise embodied carbon, alongside new maker spaces, flexible studios, and a hybrid cooling system. Achieved an EUI of 43 kWh per square metre per year and won the 2024 Society of Facade Engineers Project of the Year International Sustainability Award.",
+        "equipment_kWh": 1508607, "lighting_kWh": 754743, "cooling_kWh": 1164336,
+        "equipment_description": "Equipment accounts for 44% of total energy. Digital fabrication tools, laser cutters, studio computers, and model-making equipment across the maker spaces and design studios drive a higher equipment load than SDE1 or SDE2.",
+        "lighting_description": "Lighting represents 22% of total energy. Open-plan studio floors with high ceilings and calibrated facade openings support daylight penetration, but evening studio sessions and supplementary task lighting sustain a consistent lighting demand.",
+        "cooling_description": "Cooling makes up 34% of total energy. The hybrid cooling system — combining natural ventilation with mechanical cooling only when required — reduces the cooling fraction compared to fully air-conditioned buildings of similar size and occupancy."
+      },
+      {
+        "id": "FOE18", "name": "SDE4", "full_name": "School of Design and Environment 4", "img": "/ar/imgs/sde4.jpg", "mapsUrl": "https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9",
+        "description": "Southeast Asia's first net-zero energy building, opened in 2019 and designed by Serie Architects and Multiply Architects. Features a large rooftop photovoltaic array generating around 500 kilowatt-hours per day, chilled ceilings, natural ventilation, a smart building management system, and exposed building services as a living learning tool. Holds the BCA Green Mark 2021 Platinum Positive Energy Award — meaning it produces more energy than it consumes annually.",
+        "equipment_kWh": 1436175, "lighting_kWh": 940901, "cooling_kWh": 1837480,
+        "equipment_description": "Equipment accounts for 34% of total energy. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices, though computers and design studio equipment still represent a significant base load.",
+        "lighting_description": "Lighting represents 22% of total energy. Full LED fittings with daylight-linked dimming sensors and deep overhangs that maximise natural light penetration substantially reduce artificial lighting hours compared to conventionally designed buildings.",
+        "cooling_description": "Cooling is the dominant end use at 44% of total energy. Despite over 50% of spaces being naturally ventilated and chilled ceilings reducing HVAC load by around 30%, Singapore's tropical climate means cooling remains the largest single energy demand."
+      },
+      {
+        "id": "FOE10", "name": "T-Lab", "full_name": "Temasek Laboratories at NUS", "img": "/ar/imgs/TLabmapview.png", "mapsUrl": "https://www.google.com/maps/search/?api=1&query=Temasek+Laboratories+NUS+Singapore",
+        "description": "A national defence research and development institute established in 2000 through a partnership between MINDEF and NUS, conducting research in aeronautical sciences, electromagnetics, and information security. As the highest energy consumer on campus by a wide margin, T-Lab is a priority target for NUS's campus decarbonisation strategy, with potential for on-site renewable generation and waste heat recovery from its server infrastructure.",
+        "equipment_kWh": 8268699, "lighting_kWh": 2362486, "cooling_kWh": 5668682,
+        "equipment_description": "Equipment dominates at 51% of total energy — the highest equipment share in the dataset and more than double the absolute equipment load of any other building. Secure server infrastructure, defence research instruments, and specialised laboratory systems operating 24/7 are the primary drivers.",
+        "lighting_description": "Lighting accounts for 14% of total energy — the lowest lighting share of any building in the dataset. Despite the high absolute value, lighting is a relatively minor contributor compared to the enormous equipment and cooling loads from continuous research operations.",
+        "cooling_description": "Cooling represents 35% of total energy, with an absolute cooling load nearly double that of the next highest building. Server rooms and defence research equipment generating continuous heat require industrial-scale cooling infrastructure running around the clock."
+      },
+      {
+        "id": "FOE18", "name": "SDE4", "full_name": "School of Design and Environment 4", "img": "/ar/imgs/sde4.jpg", "mapsUrl": "https://maps.app.goo.gl/aEiWi5PTZX1ZKXvK9",
+        "description": "Southeast Asia's first net-zero energy building, opened in 2019 and designed by Serie Architects and Multiply Architects. Features a large rooftop photovoltaic array generating around 500 kilowatt-hours per day, chilled ceilings, natural ventilation, a smart building management system, and exposed building services as a living learning tool. Holds the BCA Green Mark 2021 Platinum Positive Energy Award — meaning it produces more energy than it consumes annually.",
+        "equipment_kWh": 1436175, "lighting_kWh": 940901, "cooling_kWh": 1837480,
+        "equipment_description": "Equipment accounts for 34% of total energy. Smart power management and occupancy-based scheduling reduce standby consumption across studios and offices, though computers and design studio equipment still represent a significant base load.",
+        "lighting_description": "Lighting represents 22% of total energy. Full LED fittings with daylight-linked dimming sensors and deep overhangs that maximise natural light penetration substantially reduce artificial lighting hours compared to conventionally designed buildings.",
+        "cooling_description": "Cooling is the dominant end use at 44% of total energy. Despite over 50% of spaces being naturally ventilated and chilled ceilings reducing HVAC load by around 30%, Singapore's tropical climate means cooling remains the largest single energy demand."
+      }
+    ];
+
+    // Target 21 = SDE4 map marker (same content as target 18 / target 20)
+    BUILDINGS.push(BUILDINGS[18]);
+
+    function fmtMWh(kwh) {
+      return Math.round(kwh / 1000).toLocaleString('en-US') + ' MWh/yr';
+    }
+
+    // ─── UI state ─────────────────────────────────────────────────────────────
+    const chartPanel = document.getElementById('chart-panel');
+    const scanHint   = document.getElementById('scan-hint');
+    const mapsPanel  = document.getElementById('maps-panel');
+    let chartInstance = null;
+    let foundTargets  = new Set();
+    let activeTarget  = -1;
+    let mapsHideTimer = null;
+
+    function showChart(idx) {
+      const b = BUILDINGS[idx];
+      const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
+      document.getElementById('chart-building-name').textContent = b.name;
+      document.getElementById('total-value').textContent = fmtMWh(total);
+      const components = [
+        { label: 'Cooling',   value: b.cooling_kWh,   color: '#4A90D9' },
+        { label: 'Equipment', value: b.equipment_kWh, color: '#F5A623' },
+        { label: 'Lighting',  value: b.lighting_kWh,  color: '#7ED321' },
+      ];
+      const legend = document.getElementById('legend');
+      legend.innerHTML = '';
+      components.forEach(c => {
+        legend.innerHTML += `<div class="legend-item"><div class="legend-dot" style="background:${c.color}"></div><span class="legend-label">${c.label}</span><span class="legend-value">${Math.round(c.value / 1000).toLocaleString('en-US')} MWh</span></div>`;
+      });
+      if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+      const ctx = document.getElementById('energy-chart').getContext('2d');
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: { labels: components.map(c => c.label), datasets: [{ data: components.map(c => c.value), backgroundColor: components.map(c => c.color), borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)' }] },
+        options: { cutout: '60%', plugins: { legend: { display: false } }, animation: { duration: 600 } }
+      });
+      mapsPanel.href = b.mapsUrl;
+      document.getElementById('maps-panel-top').textContent = b.name;
+      document.getElementById('maps-panel-addr-lbl').textContent = b.full_name;
+      const imgEl = document.getElementById('maps-panel-img');
+      if (b.img) { imgEl.src = b.img; imgEl.style.display = 'block'; }
+      else { imgEl.src = ''; imgEl.style.display = 'none'; }
+      chartPanel.classList.remove('collapsed');
+      document.getElementById('chart-chevron').textContent = '‹';
+      chartPanel.classList.add('visible');
+      scanHint.style.opacity = '0';
+      if (mapsHideTimer) { clearTimeout(mapsHideTimer); mapsHideTimer = null; }
+      mapsPanel.style.display = 'flex';
+      mapsPanel.classList.remove('collapsed');
+      document.getElementById('maps-chevron').textContent = '‹';
+      requestAnimationFrame(() => mapsPanel.classList.add('visible'));
+    }
+
+    function hideUI() {
+      if (foundTargets.size > 0) return;
+      chartPanel.classList.remove('visible');
+      scanHint.style.opacity = '1';
+      mapsPanel.classList.remove('visible');
+      mapsHideTimer = setTimeout(() => { mapsPanel.style.display = 'none'; mapsHideTimer = null; }, 300);
+    }
+
+    // ─── AR tap dispatch ──────────────────────────────────────────────────────
+    const sceneEl = document.querySelector('a-scene');
+    const _arVec  = new THREE.Vector3();
+    const arTaps  = [];
+
+    function arScreenPos(entity) {
+      entity.object3D.getWorldPosition(_arVec);
+      _arVec.project(sceneEl.camera);
+      const r = sceneEl.canvas.getBoundingClientRect();
+      return { x: (_arVec.x + 1) / 2 * r.width + r.left,
+               y: (-_arVec.y + 1) / 2 * r.height + r.top };
+    }
+
+    function dispatchArTap(cx, cy) {
+      for (const t of arTaps) {
+        if (!foundTargets.has(t.targetIdx)) continue;
+        if (!t.entity || !t.entity.object3D) continue;
+        const sp = arScreenPos(t.entity);
+        const dx = cx - sp.x, dy = cy - sp.y;
+        if (Math.sqrt(dx * dx + dy * dy) < t.radius) { t.fn(); return; }
+      }
+    }
+
+    let _lastTouch = 0;
+    const _uiLayer = document.getElementById('ui-layer');
+    document.addEventListener('touchend', e => {
+      _lastTouch = Date.now();
+      if (_uiLayer && _uiLayer.contains(e.target)) return;
+      const t = e.changedTouches[0];
+      dispatchArTap(t.clientX, t.clientY);
+    });
+    document.addEventListener('click', e => {
+      if (Date.now() - _lastTouch < 500) return;
+      if (_uiLayer && _uiLayer.contains(e.target)) return;
+      dispatchArTap(e.clientX, e.clientY);
+    });
+
+    // ── Highlight ─────────────────────────────────────────────────────────────
+    function matchBuilding(h, s, v) {
+      const brightTeal = s >= 0.35 && v >= 0.35;
+      const shadowTeal = s >= 0.55 && v >= 0.15;
+      if (!brightTeal && !shadowTeal) return null;
+      const dh = Math.min(Math.abs(h - 180), 360 - Math.abs(h - 180));
+      return dh <= 24 ? true : null;
+    }
+
+    function rgbToHsv(r, g, b) {
+      const rr = r / 255, gg = g / 255, bb = b / 255;
+      const max = Math.max(rr, gg, bb), min = Math.min(rr, gg, bb), d = max - min;
+      const s = max === 0 ? 0 : d / max;
+      let h = 0;
+      if (d !== 0) {
+        if (max === rr)      h = ((gg - bb) / d % 6 + 6) % 6;
+        else if (max === gg) h = (bb - rr) / d + 2;
+        else                 h = (rr - gg) / d + 4;
+        h *= 60;
+      }
+      return [h, s, max];
+    }
+
+    function jetColor(t) {
+      const b = 0.45 + t * 0.55;
+      return [Math.round(0 * b), Math.round(224 * b), Math.round(160 * b)];
+    }
+
+    let THERMAL_W = 640, THERMAL_H = 480;
+    let T_X0, T_X1, T_Y0, T_Y1;
+    let thermalActive = false, thermalVideo = null, thermalAnimId = null;
+    let thermalCanvas = null, thermalCtx = null, arCanvas = null;
+
+    function thermalLoop() {
+      if (!thermalActive || !thermalVideo || !thermalCanvas) return;
+      if (thermalVideo.readyState >= 2) {
+        const vw = thermalVideo.videoWidth || THERMAL_W, vh = thermalVideo.videoHeight || THERMAL_H;
+        const cvScale = Math.max(THERMAL_W / vw, THERMAL_H / vh);
+        const csw = THERMAL_W / cvScale, csh = THERMAL_H / cvScale;
+        thermalCtx.drawImage(thermalVideo, (vw - csw) / 2, (vh - csh) / 2, csw, csh, 0, 0, THERMAL_W, THERMAL_H);
+        const img = thermalCtx.getImageData(0, 0, THERMAL_W, THERMAL_H);
+        const d = img.data;
+        let minY = THERMAL_H, maxY = 0;
+        for (let i = 0; i < d.length; i += 4) {
+          const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
+          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
+          const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+          if (matchBuilding(h, s, v)) { if (py < minY) minY = py; if (py > maxY) maxY = py; }
+        }
+        const buildingH = minY <= maxY ? maxY - minY : 0;
+        const useMinY = Math.max(0, minY - Math.round(buildingH * 0.18));
+        const useMaxY = minY <= maxY ? maxY : THERMAL_H;
+        const yRange  = Math.max(useMaxY - useMinY, 1);
+        for (let i = 0; i < d.length; i += 4) {
+          const px = (i >> 2) % THERMAL_W, py = Math.floor((i >> 2) / THERMAL_W);
+          d[i+3] = 0;
+          if (px < T_X0 || px >= T_X1 || py < T_Y0 || py >= T_Y1) continue;
+          const [h, s, v] = rgbToHsv(d[i], d[i+1], d[i+2]);
+          if (matchBuilding(h, s, v)) {
+            const lum = (d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114) / 255;
+            const [tr, tg, tb] = jetColor(Math.max(0, Math.min(1, lum)));
+            d[i] = tr; d[i+1] = tg; d[i+2] = tb; d[i+3] = 255;
+          }
+        }
+        thermalCtx.putImageData(img, 0, 0);
+      }
+      thermalAnimId = requestAnimationFrame(thermalLoop);
+    }
+
+    function setupThermalCanvas() {
+      if (thermalCanvas) return true;
+      thermalVideo = document.querySelector('video');
+      if (!thermalVideo || !arCanvas) return false;
+      THERMAL_W = window.innerWidth; THERMAL_H = window.innerHeight;
+      T_X0 = Math.round(THERMAL_W * 0.05); T_X1 = Math.round(THERMAL_W * 0.95);
+      T_Y0 = Math.round(THERMAL_H * 0.02); T_Y1 = Math.round(THERMAL_H * 0.78);
+      thermalCanvas = document.createElement('canvas');
+      thermalCanvas.width = THERMAL_W; thermalCanvas.height = THERMAL_H;
+      thermalCanvas.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;display:none;pointer-events:none;';
+      arCanvas.parentNode.insertBefore(thermalCanvas, arCanvas);
+      thermalCtx = thermalCanvas.getContext('2d', { willReadFrequently: true });
+      return true;
+    }
+
+    function enableThermal()  {
+      if (!setupThermalCanvas()) return;
+      thermalActive = true; thermalCanvas.style.display = 'block';
+      document.getElementById('thermal-btn').classList.add('active');
+      thermalAnimId = requestAnimationFrame(thermalLoop);
+    }
+    function disableThermal() {
+      thermalActive = false;
+      if (thermalCanvas) thermalCanvas.style.display = 'none';
+      document.getElementById('thermal-btn').classList.remove('active');
+      if (thermalAnimId) { cancelAnimationFrame(thermalAnimId); thermalAnimId = null; }
+    }
+    function toggleThermal() { if (thermalActive) disableThermal(); else enableThermal(); }
+
+    let isLandscape = false;
+    function toggleCollapse(which) {
+      const panel = document.getElementById(which === 'chart' ? 'chart-panel' : 'maps-panel');
+      const chevron = document.getElementById(which + '-chevron');
+      const collapsed = panel.classList.toggle('collapsed');
+      chevron.textContent = collapsed ? '›' : '‹';
+    }
+
+    function toggleOrient() {
+      isLandscape = !isLandscape;
+      document.body.classList.toggle('landscape', isLandscape);
+      const btn = document.getElementById('orient-btn');
+      btn.textContent = isLandscape ? '⇄ PORTRAIT' : '⇄ LANDSCAPE';
+      btn.classList.toggle('active', isLandscape);
+    }
+
+    // ─── Audio ────────────────────────────────────────────────────────────────
+    function pickFemaleVoice() {
+      const voices = window.speechSynthesis.getVoices();
+      return voices.find(v => /samantha|victoria|karen|moira|tessa|fiona|zira|google uk english female|google us english/i.test(v.name))
+          || voices.find(v => v.lang.startsWith('en') && /female/i.test(v.name))
+          || voices.find(v => v.lang.startsWith('en'))
+          || voices[0] || null;
+    }
+
+    const captionEls = [], captionTxts = [];
+    let typewriterTimer = null;
+
+    function hideCaption(idx) {
+      if (captionEls[idx]) captionEls[idx].setAttribute('visible', 'false');
+      if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
+    }
+
+    function makeCaption(targetEl, idx) {
+      const text = BUILDINGS[idx].description;
+      const WRAP = 36, LINE_H = 0.038, PAD = 0.04;
+      function countLines(t) {
+        let lines = 1, col = 0;
+        for (const w of t.split(' ')) {
+          if (col > 0 && col + 1 + w.length > WRAP) { lines++; col = w.length; }
+          else { col += (col ? 1 : 0) + w.length; }
+        }
+        return lines;
+      }
+      const boxH = +((countLines(text) * LINE_H + PAD * 2) * (4 / 6)).toFixed(3);
+      const el = document.createElement('a-entity');
+      el.setAttribute('position', '-0.88 0.325 0.02');
+      el.setAttribute('visible', 'false');
+      const bg = document.createElement('a-plane');
+      bg.setAttribute('width', '0.52'); bg.setAttribute('height', String(boxH));
+      bg.setAttribute('material', 'color: #000000; opacity: 0.9; shader: flat; side: double');
+      el.appendChild(bg);
+      const txt = document.createElement('a-text');
+      txt.setAttribute('value', ''); txt.setAttribute('width', '0.46');
+      txt.setAttribute('color', '#ffffff'); txt.setAttribute('align', 'center');
+      txt.setAttribute('baseline', 'top');
+      txt.setAttribute('position', `0 ${+(boxH / 2 - PAD).toFixed(3)} 0.002`);
+      txt.setAttribute('wrap-count', String(WRAP));
+      el.appendChild(txt);
+      targetEl.appendChild(el);
+      captionEls[idx] = el; captionTxts[idx] = txt;
+    }
+
+    function toggleAudio(idx) {
+      const text = BUILDINGS[idx].description;
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+        hideCaption(idx);
+        return;
+      }
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.rate = 0.95;
+      const trySpeak = () => {
+        const v = pickFemaleVoice(); if (v) utter.voice = v;
+        const words = text.split(' ');
+        let wordIdx = 0, usedBoundary = false;
+        const done = () => hideCaption(idx);
+        utter.onend = done; utter.onerror = done;
+        utter.onboundary = evt => {
+          if (evt.name !== 'word') return;
+          usedBoundary = true;
+          if (typewriterTimer) { clearInterval(typewriterTimer); typewriterTimer = null; }
+          if (captionTxts[idx]) captionTxts[idx].setAttribute('value', text.substring(0, evt.charIndex + (evt.charLength || 1)));
+        };
+        if (captionEls[idx]) captionEls[idx].setAttribute('visible', 'true');
+        if (captionTxts[idx]) captionTxts[idx].setAttribute('value', '');
+        typewriterTimer = setInterval(() => {
+          if (usedBoundary || wordIdx >= words.length) { clearInterval(typewriterTimer); typewriterTimer = null; return; }
+          if (captionTxts[idx]) captionTxts[idx].setAttribute('value', words.slice(0, ++wordIdx).join(' '));
+        }, 390);
+        window.speechSynthesis.speak(utter);
+      };
+      if (window.speechSynthesis.getVoices().length) trySpeak();
+      else window.speechSynthesis.onvoiceschanged = trySpeak;
+    }
+
+    function makeSpeakerFor(targetEl, idx) {
+      const speakerEl = document.createElement('a-entity');
+      speakerEl.setAttribute('position', '-0.52 0.325 0.02');
+      const model = document.createElement('a-gltf-model');
+      model.setAttribute('src', '/ar/volume.glb'); model.setAttribute('scale', '0.083 0.083 0.083');
+      speakerEl.appendChild(model);
+      const label = document.createElement('a-text');
+      label.setAttribute('value', "listen to building's detail"); label.setAttribute('align', 'center');
+      label.setAttribute('color', '#000000'); label.setAttribute('position', '0 -0.08 0.001');
+      label.setAttribute('width', '0.5');
+      speakerEl.appendChild(label);
+      targetEl.appendChild(speakerEl);
+      arTaps.push({ entity: speakerEl, radius: 70, targetIdx: idx, fn: () => toggleAudio(idx) });
+    }
+
+    // ─── AR label cards + detail panel ───────────────────────────────────────
+    const arDetailEls = [], arDetailTitleEls = [], arDetailValueEls = [];
+    const arDetailDescEls = [], arDetailBarEls = [], arDetailPctEls = [], arDetailAccentEls = [];
+
+    const CARD_DEFS = [
+      { key: 'equipment', pos: '-0.55 -0.25 0.03', color: '#F5A623' },
+      { key: 'cooling',   pos:  '0.00 -0.25 0.03', color: '#4A90D9' },
+      { key: 'lighting',  pos:  '0.55 -0.25 0.03', color: '#7ED321' },
+    ];
+
+    function makeArLabels(targetEl, idx) {
+      const b = BUILDINGS[idx];
+      const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
+      CARD_DEFS.forEach(({ key, pos, color }) => {
+        const kwh = b[key + '_kWh'];
+        const card = document.createElement('a-entity');
+        card.setAttribute('position', pos);
+        const bg = document.createElement('a-plane');
+        bg.setAttribute('width', '0.26'); bg.setAttribute('height', '0.12');
+        bg.setAttribute('material', 'color:#111111; opacity:0.88; shader:flat; side:double');
+        card.appendChild(bg);
+        const bar = document.createElement('a-box');
+        bar.setAttribute('width', '0.007'); bar.setAttribute('height', '0.106'); bar.setAttribute('depth', '0.002');
+        bar.setAttribute('position', '-0.119 0 0.001');
+        bar.setAttribute('material', `color:${color}; shader:flat`);
+        card.appendChild(bar);
+        const title = document.createElement('a-text');
+        title.setAttribute('value', key.toUpperCase()); title.setAttribute('color', '#ffffff');
+        title.setAttribute('width', '0.21'); title.setAttribute('align', 'center');
+        title.setAttribute('position', '0 0.033 0.002'); title.setAttribute('wrap-count', '22');
+        card.appendChild(title);
+        const val = document.createElement('a-text');
+        val.setAttribute('value', fmtMWh(kwh)); val.setAttribute('color', color);
+        val.setAttribute('width', '0.19'); val.setAttribute('align', 'center');
+        val.setAttribute('position', '0 0.003 0.002'); val.setAttribute('wrap-count', '22');
+        card.appendChild(val);
+        const sub = document.createElement('a-text');
+        sub.setAttribute('value', 'Tap for details'); sub.setAttribute('color', '#aaaaaa');
+        sub.setAttribute('width', '0.17'); sub.setAttribute('align', 'center');
+        sub.setAttribute('position', '0 -0.028 0.002'); sub.setAttribute('wrap-count', '22');
+        card.appendChild(sub);
+        targetEl.appendChild(card);
+        arTaps.push({ entity: card, radius: 120, targetIdx: idx, fn: () => showArDetail(key, idx) });
+      });
+    }
+
+    function makeArDetail(targetEl, idx) {
+      const detailEl = document.createElement('a-entity');
+      detailEl.setAttribute('position', '0 -0.55 0.06');
+      detailEl.setAttribute('visible', 'false');
+      const bg = document.createElement('a-plane');
+      bg.setAttribute('width', '0.65'); bg.setAttribute('height', '0.38');
+      bg.setAttribute('material', 'color:#0a0a12; opacity:0.95; shader:flat; side:double');
+      detailEl.appendChild(bg);
+      const accentEl = document.createElement('a-box');
+      accentEl.setAttribute('width', '0.007'); accentEl.setAttribute('height', '0.36'); accentEl.setAttribute('depth', '0.002');
+      accentEl.setAttribute('position', '-0.312 0 0.001');
+      accentEl.setAttribute('material', 'color:#ffffff; shader:flat');
+      detailEl.appendChild(accentEl);
+      const titleEl = document.createElement('a-text');
+      titleEl.setAttribute('color', '#ffffff'); titleEl.setAttribute('width', '0.54');
+      titleEl.setAttribute('align', 'center'); titleEl.setAttribute('position', '0 0.155 0.002');
+      titleEl.setAttribute('wrap-count', '28');
+      detailEl.appendChild(titleEl);
+      const valueEl = document.createElement('a-text');
+      valueEl.setAttribute('color', '#aaaaaa'); valueEl.setAttribute('width', '0.44');
+      valueEl.setAttribute('align', 'center'); valueEl.setAttribute('position', '0 0.112 0.002');
+      valueEl.setAttribute('wrap-count', '28');
+      detailEl.appendChild(valueEl);
+      const descEl = document.createElement('a-text');
+      descEl.setAttribute('color', '#cccccc'); descEl.setAttribute('width', '0.58');
+      descEl.setAttribute('align', 'center'); descEl.setAttribute('baseline', 'top');
+      descEl.setAttribute('position', '0 0.072 0.002'); descEl.setAttribute('wrap-count', '44');
+      detailEl.appendChild(descEl);
+      const barBg = document.createElement('a-box');
+      barBg.setAttribute('width', '0.58'); barBg.setAttribute('height', '0.012'); barBg.setAttribute('depth', '0.001');
+      barBg.setAttribute('position', '0.005 -0.135 0.002');
+      barBg.setAttribute('material', 'color:#333333; shader:flat');
+      detailEl.appendChild(barBg);
+      const barEl = document.createElement('a-box');
+      barEl.setAttribute('height', '0.012'); barEl.setAttribute('depth', '0.002');
+      barEl.setAttribute('material', 'color:#ffffff; shader:flat');
+      detailEl.appendChild(barEl);
+      const pctEl = document.createElement('a-text');
+      pctEl.setAttribute('color', '#888888'); pctEl.setAttribute('width', '0.5');
+      pctEl.setAttribute('align', 'center'); pctEl.setAttribute('position', '0 -0.155 0.002');
+      pctEl.setAttribute('wrap-count', '36');
+      detailEl.appendChild(pctEl);
+      const closeBtn = document.createElement('a-entity');
+      closeBtn.setAttribute('position', '0.292 0.162 0.003');
+      const closeBg = document.createElement('a-circle');
+      closeBg.setAttribute('radius', '0.024'); closeBg.setAttribute('material', 'color:#333333; shader:flat');
+      closeBtn.appendChild(closeBg);
+      const closeTxt = document.createElement('a-text');
+      closeTxt.setAttribute('value', 'X'); closeTxt.setAttribute('color', '#ffffff');
+      closeTxt.setAttribute('align', 'center'); closeTxt.setAttribute('baseline', 'center');
+      closeTxt.setAttribute('position', '0 0 0.001'); closeTxt.setAttribute('width', '0.12');
+      closeBtn.appendChild(closeTxt);
+      detailEl.appendChild(closeBtn);
+      targetEl.appendChild(detailEl);
+      arDetailEls[idx] = detailEl; arDetailTitleEls[idx] = titleEl; arDetailValueEls[idx] = valueEl;
+      arDetailDescEls[idx] = descEl; arDetailBarEls[idx] = barEl;
+      arDetailPctEls[idx] = pctEl; arDetailAccentEls[idx] = accentEl;
+      arTaps.push({ entity: closeBtn, radius: 55, targetIdx: idx, fn: () => closeArDetail(idx) });
+    }
+
+    function showArDetail(key, idx) {
+      if (!arDetailEls[idx]) return;
+      const b = BUILDINGS[idx];
+      const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
+      const kwh = b[key + '_kWh'];
+      const pct = Math.round(kwh / total * 100);
+      const colors = { equipment: '#F5A623', cooling: '#4A90D9', lighting: '#7ED321' };
+      const descs  = { equipment: b.equipment_description, cooling: b.cooling_description, lighting: b.lighting_description };
+      const color = colors[key], desc = descs[key];
+      arDetailTitleEls[idx].setAttribute('value', key.toUpperCase());
+      arDetailValueEls[idx].setAttribute('value', fmtMWh(kwh));
+      arDetailDescEls[idx].setAttribute('value', desc);
+      arDetailPctEls[idx].setAttribute('value', `${pct}% of total energy use`);
+      arDetailAccentEls[idx].setAttribute('material', `color:${color}; shader:flat`);
+      const barW = (pct / 100) * 0.58;
+      arDetailBarEls[idx].setAttribute('width', String(barW.toFixed(3)));
+      arDetailBarEls[idx].setAttribute('height', '0.012'); arDetailBarEls[idx].setAttribute('depth', '0.002');
+      arDetailBarEls[idx].setAttribute('position', `${(-0.295 + barW / 2).toFixed(3)} -0.135 0.002`);
+      arDetailBarEls[idx].setAttribute('material', `color:${color}; shader:flat`);
+      arDetailEls[idx].setAttribute('visible', 'true');
+    }
+
+    function closeArDetail(idx) {
+      if (arDetailEls[idx]) arDetailEls[idx].setAttribute('visible', 'false');
+    }
+
+    // ─── Scan-box gate ────────────────────────────────────────────────────────
+    // Only activate AR when all 4 marker corners are inside the scanning square.
+    const _pendingTargets = new Set();
+    const _gateCorner = new THREE.Vector3();
+
+    function scanBoxBounds() {
+      // Try to use MindAR's actual scanning overlay element for exact bounds
+      const el = document.querySelector('.mindar-ui-scanning') ||
+                 document.querySelector('[class*="scanning"]');
+      if (el) {
+        const r = el.getBoundingClientRect();
+        if (r.width > 10) return { x0: r.left, y0: r.top, x1: r.right, y1: r.bottom };
+      }
+      // Fallback: center square at ~70% of min viewport dimension
+      const w = window.innerWidth, h = window.innerHeight;
+      const side = Math.min(w, h) * 0.70;
+      return { x0: (w - side) / 2, y0: (h - side) / 2, x1: (w + side) / 2, y1: (h + side) / 2 };
+    }
+
+    function allCornersInScanBox(targetEl) {
+      if (!targetEl.object3D) return false;
+      const { x0, y0, x1, y1 } = scanBoxBounds();
+      const r = sceneEl.canvas.getBoundingClientRect();
+      const localCorners = [[-0.5,-0.5,0],[0.5,-0.5,0],[0.5,0.5,0],[-0.5,0.5,0]];
+      for (const [lx, ly, lz] of localCorners) {
+        _gateCorner.set(lx, ly, lz).applyMatrix4(targetEl.object3D.matrixWorld).project(sceneEl.camera);
+        const sx = (_gateCorner.x + 1) / 2 * r.width + r.left;
+        const sy = (-_gateCorner.y + 1) / 2 * r.height + r.top;
+        if (sx < x0 || sx > x1 || sy < y0 || sy > y1) return false;
+      }
+      return true;
+    }
+
+    // ─── MindAR wiring ────────────────────────────────────────────────────────
+    sceneEl.addEventListener('loaded', () => {
+      arCanvas = sceneEl.canvas;
+      const PIN_Z = 0.05; // pin sits on marker surface, z = toward camera
+
+      // Gate polling loop — activates pending targets once fully inside scan box
+      (function scanGateTick() {
+        requestAnimationFrame(scanGateTick);
+        if (_pendingTargets.size === 0) return;
+        for (const idx of _pendingTargets) {
+          const el = document.getElementById(`target-${idx}`);
+          if (!el) continue;
+          if (allCornersInScanBox(el)) {
+            _pendingTargets.delete(idx);
+            foundTargets.add(idx);
+            activeTarget = idx;
+            showChart(idx);
+          }
+        }
+      })();
+
+      BUILDINGS.forEach((building, idx) => {
+        const el = document.getElementById(`target-${idx}`);
+        if (!el) return;
+
+        // ── Target 21: simple clickable label only ───────────────────────────
+        if (idx === 21) {
+          const LABEL_Z = 0.22;
+          const FLOAT = 0.07;
+
+          // Stem — fixed cylinder connecting marker surface to label base
+          const stem = document.createElement('a-cylinder');
+          stem.setAttribute('radius', '0.005');
+          stem.setAttribute('height', String(LABEL_Z));
+          stem.setAttribute('color', '#ffffff');
+          stem.setAttribute('opacity', '0.85');
+          stem.setAttribute('position', `0 0 ${LABEL_Z / 2}`);
+          stem.setAttribute('rotation', '90 0 0');
+          el.appendChild(stem);
+
+          // Floating label — billboard that always faces the camera
+          const label = document.createElement('a-entity');
+          label.setAttribute('id', 'ar-label-21');
+          label.setAttribute('position', `0 0 ${LABEL_Z}`);
+          label.setAttribute('look-at', '[camera]');
+          label.setAttribute('animation', `property: position; from: 0 0 ${LABEL_Z}; to: 0 0 ${LABEL_Z + FLOAT}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
+
+          const bg = document.createElement('a-plane');
+          bg.setAttribute('width', '0.64'); bg.setAttribute('height', '0.30');
+          bg.setAttribute('color', '#ffffff');
+          bg.setAttribute('opacity', '0.92');
+          bg.setAttribute('position', '0 0 0');
+
+          const txt = document.createElement('a-text');
+          txt.setAttribute('value', 'SDE4');
+          txt.setAttribute('align', 'center');
+          txt.setAttribute('color', '#111111');
+          txt.setAttribute('width', '2.1');
+          txt.setAttribute('position', '0 0.05 0.001');
+          bg.appendChild(txt);
+
+          const sub = document.createElement('a-text');
+          sub.setAttribute('value', 'Tap for details');
+          sub.setAttribute('align', 'center');
+          sub.setAttribute('color', '#888888');
+          sub.setAttribute('width', '1.3');
+          sub.setAttribute('position', '0 -0.06 0.001');
+          bg.appendChild(sub);
+
+          label.appendChild(bg);
+          el.appendChild(label);
+          arTaps.push({ entity: bg, radius: 120, targetIdx: 21, fn: () => {
+            if (chartPanel.classList.contains('visible')) {
+              chartPanel.classList.remove('visible');
+              scanHint.style.opacity = '1';
+              mapsPanel.classList.remove('visible');
+              setTimeout(() => { mapsPanel.style.display = 'none'; }, 300);
+            } else {
+              showChart(21);
+            }
+          }});
+
+          el.addEventListener('targetFound', () => {
+            label.setAttribute('visible', 'true');
+            stem.setAttribute('visible', 'true');
+            foundTargets.add(21);
+            activeTarget = 21;
+          });
+          el.addEventListener('targetLost', () => {
+            label.setAttribute('visible', 'false');
+            stem.setAttribute('visible', 'false');
+            foundTargets.delete(21);
+            if (activeTarget === 21) activeTarget = null;
+            hideUI();
+          });
+          return;
+        }
+
+        // ── Targets 0–19: floating billboard label ───────────────────────────
+        if (idx <= 19) {
+          const LABEL_Z = 0.22;
+          const FLOAT = 0.07;
+          const bName = BUILDINGS[idx].name;
+
+          const stem = document.createElement('a-cylinder');
+          stem.setAttribute('radius', '0.005');
+          stem.setAttribute('height', String(LABEL_Z));
+          stem.setAttribute('color', '#ffffff');
+          stem.setAttribute('opacity', '0.85');
+          stem.setAttribute('position', `0 0 ${LABEL_Z / 2}`);
+          stem.setAttribute('rotation', '90 0 0');
+          el.appendChild(stem);
+
+          const label = document.createElement('a-entity');
+          label.setAttribute('id', `ar-label-${idx}`);
+          label.setAttribute('position', `0 0 ${LABEL_Z}`);
+          label.setAttribute('look-at', '[camera]');
+          label.setAttribute('animation', `property: position; from: 0 0 ${LABEL_Z}; to: 0 0 ${LABEL_Z + FLOAT}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
+
+          const bg = document.createElement('a-plane');
+          bg.setAttribute('width', '0.64'); bg.setAttribute('height', '0.30');
+          bg.setAttribute('color', '#ffffff');
+          bg.setAttribute('opacity', '0.92');
+          bg.setAttribute('position', '0 0 0');
+
+          const txt = document.createElement('a-text');
+          txt.setAttribute('value', bName);
+          txt.setAttribute('align', 'center');
+          txt.setAttribute('color', '#111111');
+          txt.setAttribute('width', '2.1');
+          txt.setAttribute('position', '0 0.05 0.001');
+          bg.appendChild(txt);
+
+          const sub = document.createElement('a-text');
+          sub.setAttribute('value', 'Tap for details');
+          sub.setAttribute('align', 'center');
+          sub.setAttribute('color', '#888888');
+          sub.setAttribute('width', '1.3');
+          sub.setAttribute('position', '0 -0.06 0.001');
+          bg.appendChild(sub);
+
+          label.appendChild(bg);
+          el.appendChild(label);
+          arTaps.push({ entity: bg, radius: 120, targetIdx: idx, fn: () => {
+            if (chartPanel.classList.contains('visible')) {
+              chartPanel.classList.remove('visible');
+              scanHint.style.opacity = '1';
+              mapsPanel.classList.remove('visible');
+              setTimeout(() => { mapsPanel.style.display = 'none'; }, 300);
+            } else {
+              showChart(idx);
+            }
+          }});
+
+          el.addEventListener('targetFound', () => {
+            label.setAttribute('visible', 'true');
+            stem.setAttribute('visible', 'true');
+            foundTargets.add(idx);
+            activeTarget = idx;
+          });
+          el.addEventListener('targetLost', () => {
+            label.setAttribute('visible', 'false');
+            stem.setAttribute('visible', 'false');
+            foundTargets.delete(idx);
+            if (activeTarget === idx) activeTarget = null;
+            hideUI();
+          });
+          return;
+        }
+
+        // ── Target 20 (ArUco) and any remaining: full AR setup ───────────────
+        const wrap = document.createElement('a-entity');
+        wrap.setAttribute('id', `ar-wrap-${idx}`);
+        el.appendChild(wrap);
+
+        const pin = document.createElement('a-gltf-model');
+        pin.setAttribute('src', '/ar/map_pin.glb');
+        pin.setAttribute('scale', '0.25 0.25 0.25');
+        pin.setAttribute('position', `0 0 ${PIN_Z}`);
+        pin.setAttribute('rotation', '90 0 0');
+        pin.setAttribute('animation', `property: position; from: 0 0 ${PIN_Z}; to: 0 0 ${PIN_Z + 0.06}; dir: alternate; dur: 1600; loop: true; easing: easeInOutSine`);
+        wrap.appendChild(pin);
+
+        makeSpeakerFor(wrap, idx);
+        makeCaption(wrap, idx);
+        makeArLabels(wrap, idx);
+        makeArDetail(wrap, idx);
+
+        el.addEventListener('targetFound', () => {
+          if (idx === 20) {
+            // skip scan box gate for ArUco SDE4 marker — activate immediately
+            foundTargets.add(idx);
+            activeTarget = idx;
+            showChart(idx);
+          } else {
+            _pendingTargets.add(idx); // wait for all corners inside scan box
+          }
+        });
+        el.addEventListener('targetLost', () => {
+          _pendingTargets.delete(idx);
+          foundTargets.delete(idx);
+          window.speechSynthesis.cancel();
+          hideCaption(idx);
+          closeArDetail(idx);
+          activeTarget = -1;
+          hideUI();
+          wrap.object3D.scale.setScalar(1);
+        });
+
+        const _cp = new THREE.Vector3(), _tp = new THREE.Vector3();
+        let _curScale = 1;
+        (function scaleTick() {
+          requestAnimationFrame(scaleTick);
+          if (activeTarget !== idx || !el.object3D || !wrap.object3D) return;
+          sceneEl.camera.getWorldPosition(_cp);
+          el.object3D.getWorldPosition(_tp);
+          const dist = _cp.distanceTo(_tp);
+          if (dist < 0.01) return;
+          const target = Math.max(1.0, Math.min(4, dist * 1.67));
+          _curScale += (target - _curScale) * 0.08;
+          wrap.setAttribute('scale', `${_curScale} ${_curScale} ${_curScale}`);
+        })();
+      });
+    });
+  </script>
+</body>
+</html>
