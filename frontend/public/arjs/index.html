@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://aframe.io">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.8/aframe/build/aframe-ar.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
   <script>
     // Always keep label on the world-up side of the marker
@@ -741,6 +741,7 @@
                     var mesh = el.getObject3D('mesh');
                     if (!mesh || !mesh.material) { setTimeout(tryApply, 100); return; }
                     var tex = new THREE.CanvasTexture(cv);
+                    tex.colorSpace = THREE.SRGBColorSpace;
                     tex.needsUpdate = true;
                     mesh.material.map = tex;
                     mesh.material.transparent = true;
@@ -923,6 +924,7 @@
       var mesh = plane.getObject3D('mesh');
       if (mesh && mesh.material && mesh.material.map) {
         mesh.material.map.image = canvas;
+        mesh.material.map.colorSpace = THREE.SRGBColorSpace;
         mesh.material.map.needsUpdate = true;
       }
     }
@@ -998,6 +1000,7 @@
         var mesh = plane.getObject3D('mesh');
         if (!mesh || !mesh.material) { setTimeout(tryApply, 50); return; }
         var tex = new THREE.CanvasTexture(dv);
+        tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
         mesh.material.map = tex;
         mesh.material.color.set(0xffffff);
@@ -1067,6 +1070,7 @@
       cx.fillStyle = isOpen ? '#e53935' : '#333333';
       cx.fillText(isOpen ? 'Tap to close' : 'Tap for details', 512, 370);
       const tex = new THREE.CanvasTexture(cv);
+      tex.colorSpace = THREE.SRGBColorSpace;
       bg.object3D.traverse(function (child) {
         if (!child.isMesh || !child.material) return;
         if (child.material.map) child.material.map.dispose();
