@@ -123,7 +123,7 @@ export default function Home() {
                         onClick={() => handleImageClick(b.name)}
                       >
                         <img
-                          src={`/bg${idx + 1}.jpg`}
+                          src={`/bg${idx + 1}.png`}
                           alt={b.name}
                           className={`marquee-img${isSelected ? ' marquee-img--dim' : ''}`}
                           draggable={false}
