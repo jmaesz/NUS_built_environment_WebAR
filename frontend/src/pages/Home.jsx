@@ -92,7 +92,7 @@ export default function Home() {
   return (
     <div className="home">
       <header className="home-header">
-        <img src="/logo.png" alt="NUS Built Environment" className="home-header-logo" />
+        <img src="/logo.webp" alt="NUS Built Environment" className="home-header-logo" />
         <span className="home-label">2026</span>
       </header>
 
@@ -123,7 +123,7 @@ export default function Home() {
                         onClick={() => handleImageClick(b.name)}
                       >
                         <img
-                          src={`/bg${idx + 1}.png`}
+                          src={`/bg${idx + 1}.webp`}
                           alt={b.name}
                           className={`marquee-img${isSelected ? ' marquee-img--dim' : ''}`}
                           draggable={false}

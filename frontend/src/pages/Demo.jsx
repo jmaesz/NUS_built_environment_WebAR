@@ -13,7 +13,7 @@ export default function Demo() {
     <div className="demo">
       <header className="demo-header">
         <img
-          src="/logo.png"
+          src="/logo.webp"
           alt="NUS Built Environment"
           className="demo-header-logo"
           onClick={() => navigate('/')}
@@ -36,21 +36,21 @@ function Step1({ onNext, onBack, onSkip }) {
       </div>
 
       <div className="demo-tip">
-        <img src="/demo-portrait.png" alt="Portrait mode" className="demo-tip-img demo-tip-img--portrait" />
+        <img src="/demo-portrait.webp" alt="Portrait mode" className="demo-tip-img demo-tip-img--portrait" />
         <p className="demo-tip-caption">
           Point your camera at the ArUco markers on the physical model — works in portrait mode
         </p>
       </div>
 
       <div className="demo-tip">
-        <img src="/demo-landscape.png" alt="Landscape mode" className="demo-tip-img landscape" />
+        <img src="/demo-landscape.webp" alt="Landscape mode" className="demo-tip-img landscape" />
         <p className="demo-tip-caption">
           Rotate your phone for a wider view — landscape orientation is fully supported
         </p>
       </div>
 
       <div className="demo-warning">
-        <img src="/demo-lowpower.png" alt="Low power mode warning" className="demo-warning-img" />
+        <img src="/demo-lowpower.webp" alt="Low power mode warning" className="demo-warning-img" />
         <div>
           <p className="demo-warning-title">DISABLE LOW POWER MODE</p>
           <p className="demo-warning-text">
@@ -117,7 +117,7 @@ function Step2({ onBack, onSkip }) {
         className="demo-annotated"
         onClick={() => setActive(null)}
       >
-        <img src="/demo-ar.png" alt="AR experience demo" className="demo-ar-img" />
+        <img src="/demo-ar.webp" alt="AR experience demo" className="demo-ar-img" />
 
         {ANNOTATIONS.map(a => (
           <button
