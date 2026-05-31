@@ -6,9 +6,9 @@
   <title>NUScape-AR · ArUco</title>
   <link rel="preconnect" href="https://aframe.io">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.5/aframe/build/aframe-ar.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
   <script>
     // Always keep label on the world-up side of the marker
     AFRAME.registerComponent('up-track', {
@@ -759,9 +759,9 @@
               if (flIdx === 0) {
                 var heatmapLbl = document.createElement('a-text');
                 heatmapLbl.setAttribute('value', 'DAYLIGHT\nHEATMAP');
-                heatmapLbl.setAttribute('position', '-6.08 1 0');
+                heatmapLbl.setAttribute('position', '-5.58 1 0');
                 heatmapLbl.setAttribute('align', 'center');
-                heatmapLbl.setAttribute('color', '#ffffff');
+                heatmapLbl.setAttribute('color', '#000000');
                 heatmapLbl.setAttribute('width', '5');
                 heatmapLbl.setAttribute('side', 'double');
                 flBb.appendChild(heatmapLbl);
