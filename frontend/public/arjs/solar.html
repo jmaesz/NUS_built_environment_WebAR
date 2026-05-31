@@ -144,7 +144,7 @@
       // Asset
       var img = document.createElement('img');
       img.id = 'img-' + b.name;
-      img.src = '/solar/' + b.name + '.png';
+      img.src = '/solar/' + b.name + '.webp';
       img.setAttribute('crossorigin', 'anonymous');
       img.addEventListener('load', function() {
         if (img.naturalWidth && img.naturalHeight) aspects[b.name] = img.naturalWidth / img.naturalHeight;
