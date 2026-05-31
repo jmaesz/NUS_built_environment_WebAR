@@ -12,7 +12,7 @@
   <script>
     // Always keep label on the world-up side of the marker
     AFRAME.registerComponent('up-track', {
-      schema: { y: { default: 1.8 } },
+      schema: { y: { default: 1.8 }, lockXZ: { default: false } },
       init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
         var mo = this.el.parentEl.object3D;
@@ -21,8 +21,7 @@
         mo.getWorldPosition(this._wp);
         this._wp.y += this.data.y;
         mo.worldToLocal(this._wp);
-        this._wp.x = 0;
-        this._wp.z = 0;
+        if (this.data.lockXZ) { this._wp.x = 0; this._wp.z = 0; }
         this.el.object3D.position.copy(this._wp);
       }
     });
@@ -658,7 +657,7 @@
               // Up-track container for this floor (hidden until chart opens)
               var flUpEl = document.createElement('a-entity');
               flUpEl.id = 'fl-up-' + idx + '-' + fl.key;
-              flUpEl.setAttribute('up-track', 'y: ' + fl.yUp);
+              flUpEl.setAttribute('up-track', 'y: ' + fl.yUp + '; lockXZ: true');
               flUpEl.setAttribute('visible', 'false');
 
               // World-anchored container for labels + lines
