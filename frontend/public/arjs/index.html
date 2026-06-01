@@ -131,9 +131,11 @@
         };
         this._lastFoundTime = 0;
         this._lostTime = 0;
+        this._snapFrames = 0;
         this._onFound = function () {
           self._isLost = false;
           self._lastFoundTime = performance.now();
+          self._snapFrames = 8; // snap-in burst for fast re-calibration
           // Return children from ghost back to the marker entity
           if (self._ghostActive) {
             var kids = self._ghost.children.slice();
@@ -224,8 +226,10 @@
         if (!this._ready) return;
         // Force visible — overrides A-Frame 1.7 visible component tick-order reset
         obj.visible = true;
-        this._pos.lerp(obj.position, 0.2);
-        this._quat.slerp(obj.quaternion, 0.2);
+        var alpha = this._snapFrames > 0 ? 0.6 : 0.2;
+        if (this._snapFrames > 0) this._snapFrames--;
+        this._pos.lerp(obj.position, alpha);
+        this._quat.slerp(obj.quaternion, alpha);
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
       }
@@ -623,10 +627,10 @@
           marker.setAttribute('value', String(idx));
           marker.setAttribute('emitevents', 'true');
           marker.setAttribute('smooth', 'true');
-          marker.setAttribute('smoothCount', '30');
+          marker.setAttribute('smoothCount', '15');
           marker.setAttribute('smoothTolerance', '0.15');
           marker.setAttribute('smoothThreshold', '1');
-          marker.setAttribute('minConfidence', '0.01');
+          marker.setAttribute('minConfidence', '0.20');
           marker.setAttribute('pose-filter', '');
           marker.id = 'marker-' + idx;
 
