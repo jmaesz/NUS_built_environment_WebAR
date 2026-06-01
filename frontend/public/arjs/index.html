@@ -17,13 +17,9 @@
         Object.defineProperty(proto, 'useLegacyLights', { get: function () { return false; }, set: function () {} });
       }
     })();
-    // Always keep label above the marker in WORLD Y — not marker-local Y.
-    // Marker-local Y changes with viewing angle (AR.js detects different quaternions
-    // at different angles), so using worldToLocal ensures the label always floats
-    // above in world space regardless of detected marker orientation.
+    // Always keep label on the world-up side of the marker
     AFRAME.registerComponent('up-track', {
       schema: { y: { default: 1.8 }, lockXZ: { default: false } },
-      after: ['pose-filter'],
       init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
         var mo = this.el.parentEl.object3D;
@@ -36,14 +32,11 @@
         this.el.object3D.position.copy(this._wp);
       }
     });
-    // Yaw-only billboard — rotates around world Y only, never pitches.
-    // Full lookAt causes the label to pitch toward the camera when viewed at an
-    // angle, making it appear to drop forward. Yaw-only keeps the label perfectly
-    // vertical at all viewing angles.
-    // Camera is always at (0,0,0) in AR.js mode so we use that directly.
+    // Yaw-only billboard — rotates around world Y only, zero roll, no random tilt
     AFRAME.registerComponent('billboard', {
-      after: ['pose-filter'],
       init: function () {
+        this._dir        = new THREE.Vector3();
+        this._camPos     = new THREE.Vector3();
         this._obj        = new THREE.Vector3();
         this._euler      = new THREE.Euler(0, 0, 0, 'YXZ');
         this._worldQuat  = new THREE.Quaternion();
@@ -51,12 +44,17 @@
       },
       tick: function () {
         if (!this.el.parentEl.parentEl.object3D.visible) return;
+        var cam = this.el.sceneEl.camera;
+        if (!cam) return;
+        // Rebuild this label's world matrix branch so pose-filter + up-track changes are visible
         this.el.object3D.updateWorldMatrix(true, false);
+        cam.getWorldPosition(this._camPos);
         this.el.object3D.getWorldPosition(this._obj);
-        // Yaw angle from label toward camera origin — ignore Y difference
-        this._euler.set(0, Math.atan2(-this._obj.x, -this._obj.z), 0);
+        this._dir.subVectors(this._camPos, this._obj);
+        // Only yaw — label stays perfectly upright, no roll possible
+        this._euler.set(0, Math.atan2(this._dir.x, this._dir.z), 0);
         this._worldQuat.setFromEuler(this._euler);
-        // Convert world yaw to label-local rotation by removing parent's world rotation
+        // Convert world rotation to local by removing parent's world rotation
         this.el.object3D.parent.getWorldQuaternion(this._parentQuat);
         this._parentQuat.invert();
         this.el.object3D.quaternion.multiplyQuaternions(this._parentQuat, this._worldQuat);
@@ -65,61 +63,109 @@
     // Keep dashes pointing toward the marker regardless of orientation
     AFRAME.registerComponent('dash-track', {
       schema: { dashH: { default: 0.1 }, pitch: { default: 0.2 } },
-      after: ['pose-filter'],
-      init: function () { this._kids = null; },
+      init: function () { this._wp = new THREE.Vector3(); this._kids = null; },
       tick: function () {
         var mo = this.el.parentEl.object3D;
         if (!mo.visible) return;
+        mo.updateWorldMatrix(true, false);
         if (!this._kids) this._kids = Array.from(this.el.children);
         var p = this.data.pitch, h = this.data.dashH;
         for (var i = 0; i < this._kids.length; i++) {
-          this._kids[i].object3D.position.set(0, i * p + h / 2, 0);
+          mo.getWorldPosition(this._wp);
+          this._wp.y += i * p + h / 2;
+          mo.worldToLocal(this._wp);
+          this._kids[i].object3D.position.copy(this._wp);
         }
       }
     });
-    // pose-filter: visibility management + distance-adaptive lerp.
-    // Runs after arjs-anchor (A-Frame 1.7.0 tick order fix). Applies additional
-    // smoothing on top of arjs-anchor's smoothCount=30 — heavier at distance where
-    // AR.js pose estimation is less accurate (small marker = large pixel→3D errors).
+    // Pose hold + gyro compensation — event-driven to avoid tick-order race with AR.js.
+    // A-Frame 1.7.0: must run after 'visible' and 'arjs-anchor' so arjs-anchor's
+    // visibility changes are committed before we read/write obj.visible.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._pos    = new THREE.Vector3();
-        this._quat   = new THREE.Quaternion();
-        this._ready  = false;
-        this._isLost = false;
+        this._pos       = new THREE.Vector3();
+        this._quat      = new THREE.Quaternion();
+        this._ready     = false;
+        this._isLost    = false;
+        this._lostPos   = new THREE.Vector3();
+        this._lostQuat  = new THREE.Quaternion();
+        this._devQuat   = new THREE.Quaternion();
+        this._devRefInv = new THREE.Quaternion();
+        this._deltaQ    = new THREE.Quaternion();
+        this._deltaQInv = new THREE.Quaternion();
+        this._hasOrient = false;
+        this._euler     = new THREE.Euler(0, 0, 0, 'YXZ');
+        this._tmpVec    = new THREE.Vector3();
+        this._tmpQuat   = new THREE.Quaternion();
         var self = this;
-        this._onFound = function () { self._isLost = false; };
-        this._onLost  = function () { self._isLost = true;  };
+        this._onOrient = function (e) {
+          if (e.alpha === null || e.beta === null) return;
+          self._hasOrient = true;
+          self._euler.set(
+            THREE.MathUtils.degToRad(e.beta  || 0),
+            THREE.MathUtils.degToRad(e.alpha || 0),
+           -THREE.MathUtils.degToRad(e.gamma || 0)
+          );
+          self._devQuat.setFromEuler(self._euler);
+        };
+        this._lastFoundTime = 0;
+        this._onFound = function () {
+          self._isLost = false;
+          self._lastFoundTime = performance.now();
+        };
+        this._onLost = function () {
+          if (!self._ready) return;
+          self._isLost = true;
+          self._lostPos.copy(self._pos);
+          self._lostQuat.copy(self._quat);
+          self._devRefInv.copy(self._devQuat).invert();
+        };
+        window.addEventListener('deviceorientation', this._onOrient);
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
       remove: function () {
+        window.removeEventListener('deviceorientation', this._onOrient);
         this.el.removeEventListener('markerFound', this._onFound);
         this.el.removeEventListener('markerLost',  this._onLost);
       },
       tick: function () {
         var obj = this.el.object3D;
         if (this._isLost) {
-          if (obj.visible) this._onFound();
-          else return;
+          if (!this._ready) return;
+          // Belt-and-suspenders: arjs-anchor set obj.visible=true (marker detected)
+          // but markerFound didn't fire due to A-Frame 1.7 tick-order wasVisible poisoning.
+          if (obj.visible) {
+            this._onFound();
+            // fall through to tracking below
+          } else {
+            obj.visible = true;
+            if (this._hasOrient) {
+              this._deltaQ.multiplyQuaternions(this._devQuat, this._devRefInv);
+              this._deltaQInv.copy(this._deltaQ).invert();
+              this._tmpVec.copy(this._lostPos).applyQuaternion(this._deltaQInv);
+              obj.position.copy(this._tmpVec);
+              this._tmpQuat.multiplyQuaternions(this._deltaQInv, this._lostQuat);
+              obj.quaternion.copy(this._tmpQuat);
+            } else {
+              obj.position.copy(this._lostPos);
+              obj.quaternion.copy(this._lostQuat);
+            }
+            return;
+          }
         }
-        if (!this._ready) {
-          if (!obj.visible) return;
+        // Active detection — force visible (overrides A-Frame 1.7 visible component reset)
+        obj.visible = true;
+        if (this._ready) {
+          this._pos.lerp(obj.position, 0.2);
+          this._quat.slerp(obj.quaternion, 0.2);
+        } else {
           this._pos.copy(obj.position);
           this._quat.copy(obj.quaternion);
           this._ready = true;
-          return;
         }
-        // Force visible — overrides A-Frame 1.7 visible component tick-order reset
-        obj.visible = true;
-        // Distance-adaptive lerp: further = heavier smoothing to absorb the larger
-        // pose errors that occur when the marker is small in the camera image
-        var dist  = obj.position.length();
-        var alpha = Math.max(0.03, Math.min(0.3, 0.15 / Math.max(dist, 0.5)));
-        this._pos.lerp(obj.position, alpha);
-        this._quat.slerp(obj.quaternion, alpha);
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
       }
@@ -802,7 +848,7 @@
         });
       })();
     </script>
-    <a-entity camera look-controls="enabled: false"></a-entity>
+    <a-entity camera></a-entity>
   </a-scene>
 
   <script>
