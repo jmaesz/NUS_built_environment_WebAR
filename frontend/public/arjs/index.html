@@ -36,33 +36,18 @@
         }
       }
     });
-    // Yaw-only billboard — rotates around world Y only, zero roll, no random tilt
+    // Billboard — label always faces camera.
+    // In AR.js barcode mode the camera is fixed at world origin (0,0,0) — markers
+    // move, camera doesn't. We hardcode the target to (0,0,0) instead of calling
+    // cam.getWorldPosition(), which in A-Frame 1.7.0 can return a wrong position
+    // if sceneEl.camera resolves to a child object with an offset, causing the
+    // label to intermittently face the wrong direction and appear to drop.
     AFRAME.registerComponent('billboard', {
       after: ['pose-filter'],
-      init: function () {
-        this._dir        = new THREE.Vector3();
-        this._camPos     = new THREE.Vector3();
-        this._obj        = new THREE.Vector3();
-        this._euler      = new THREE.Euler(0, 0, 0, 'YXZ');
-        this._worldQuat  = new THREE.Quaternion();
-        this._parentQuat = new THREE.Quaternion();
-      },
+      init: function () { this._origin = new THREE.Vector3(0, 0, 0); },
       tick: function () {
         if (!this.el.parentEl.parentEl.object3D.visible) return;
-        var cam = this.el.sceneEl.camera;
-        if (!cam) return;
-        // Rebuild this label's world matrix branch so pose-filter + up-track changes are visible
-        this.el.object3D.updateWorldMatrix(true, false);
-        cam.getWorldPosition(this._camPos);
-        this.el.object3D.getWorldPosition(this._obj);
-        this._dir.subVectors(this._camPos, this._obj);
-        // Only yaw — label stays perfectly upright, no roll possible
-        this._euler.set(0, Math.atan2(this._dir.x, this._dir.z), 0);
-        this._worldQuat.setFromEuler(this._euler);
-        // Convert world rotation to local by removing parent's world rotation
-        this.el.object3D.parent.getWorldQuaternion(this._parentQuat);
-        this._parentQuat.invert();
-        this.el.object3D.quaternion.multiplyQuaternions(this._parentQuat, this._worldQuat);
+        this.el.object3D.lookAt(this._origin);
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
