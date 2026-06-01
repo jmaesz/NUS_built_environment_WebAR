@@ -130,6 +130,7 @@
           self._devQuat.setFromEuler(self._euler);
         };
         this._lastFoundTime = 0;
+        this._lostTime = 0;
         this._onFound = function () {
           self._isLost = false;
           self._lastFoundTime = performance.now();
@@ -151,6 +152,7 @@
         this._onLost = function () {
           if (!self._ready) return;
           self._isLost = true;
+          self._lostTime = performance.now();
           self._lostPos.copy(self._pos);
           self._lostQuat.copy(self._quat);
           self._devRefInv.copy(self._devQuat).invert();
@@ -202,8 +204,13 @@
             this._onFound();
             // _isLost is now false — fall through to normal tracking below
           } else {
-            // Still lost — update ghost position with gyro compensation
-            if (this._hasOrient) {
+            // Hide ghost after 1.5 s to avoid lingering labels when marker is gone.
+            // Children stay in the ghost so re-detection via the obj.visible check
+            // (belt-and-suspenders above) can still move them back cleanly.
+            if (performance.now() - this._lostTime > 1500) {
+              this._ghost.visible = false;
+            } else if (this._hasOrient) {
+              // Still within hold window — update ghost with gyro compensation
               this._deltaQ.multiplyQuaternions(this._devQuat, this._devRefInv);
               this._deltaQInv.copy(this._deltaQ).invert();
               this._tmpVec.copy(this._lostWorldPos).applyQuaternion(this._deltaQInv);
