@@ -110,8 +110,7 @@
           obj.quaternion.copy(this._quat);
           return;
         }
-        var alpha = this._frame < 20 ? 0.3 : 0.05;
-        if (this._frame < 20) this._frame++;
+        var alpha = 1.0;
         this._pos.lerp(obj.position, alpha);
         this._quat.slerp(obj.quaternion, alpha);
         obj.position.copy(this._pos);
