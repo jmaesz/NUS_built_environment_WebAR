@@ -65,25 +65,21 @@
         }
       }
     });
-    // pose-filter: two-phase smoothing to kill AR.js depth noise at distance.
-    // Phase 1 (first 20 frames): alpha=0.3 — fast initial lock onto marker position.
-    // Phase 2 (steady state): alpha=0.05 — very slow, bad frames barely move the label.
-    // Quaternion outlier rejection (>40deg) catches pose flips in both phases.
+    // pose-filter: A-Frame 1.7.0 compatibility only — no smoothing.
+    // In 1.5.0, arjs-anchor ran last and overwrote obj.position/quaternion every frame,
+    // so pose-filter's lerp was invisible — arjs-anchor's smoothCount=30 did all the work.
+    // In 1.7.0 pose-filter runs after arjs-anchor, so any extra smoothing we apply on top
+    // fights arjs-anchor's smoother and causes oscillation. Solution: don't touch
+    // position/quaternion at all — just handle visibility and re-detection.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._pos    = new THREE.Vector3();
-        this._quat   = new THREE.Quaternion();
         this._ready  = false;
         this._isLost = false;
-        this._frame  = 0;
         var self = this;
-        this._onFound = function () {
-          self._isLost = false;
-          self._frame  = 0;
-        };
-        this._onLost = function () { self._isLost = true; };
+        this._onFound = function () { self._isLost = false; self._ready = true; };
+        this._onLost  = function () { self._isLost = true; };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
@@ -94,27 +90,15 @@
       tick: function () {
         var obj = this.el.object3D;
         if (this._isLost) {
+          // Belt-and-suspenders: if arjs-anchor detected the marker but markerFound
+          // didn't fire due to wasVisible poisoning, exit lost state now.
           if (obj.visible) this._onFound();
           else return;
         }
-        if (!this._ready) {
-          if (!obj.visible) return;
-          this._pos.copy(obj.position);
-          this._quat.copy(obj.quaternion);
-          this._ready = true;
-          return;
-        }
+        if (!this._ready) return;
+        // Force visible — overrides A-Frame 1.7 visible component tick-order reset.
+        // Do NOT touch position/quaternion — arjs-anchor's smoothCount=30 is sufficient.
         obj.visible = true;
-        if (this._quat.angleTo(obj.quaternion) > 0.7) {
-          obj.position.copy(this._pos);
-          obj.quaternion.copy(this._quat);
-          return;
-        }
-        var alpha = 1.0;
-        this._pos.lerp(obj.position, alpha);
-        this._quat.slerp(obj.quaternion, alpha);
-        obj.position.copy(this._pos);
-        obj.quaternion.copy(this._quat);
       }
     });
   </script>
