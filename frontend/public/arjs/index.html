@@ -90,17 +90,22 @@
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._pos    = new THREE.Vector3();
-        this._quat   = new THREE.Quaternion();
-        this._ready  = false;
-        this._isLost = false;
+        this._pos        = new THREE.Vector3();
+        this._quat       = new THREE.Quaternion();
+        this._ready      = false;
+        this._isLost     = false;
+        this._snapFrames = 0;
         var self = this;
         this._onFound = function () {
-          // Snap _pos/_quat to current detected pose so tracking starts from the
-          // right place immediately — no slow lerp from the previous lost position.
-          self._pos.copy(self.el.object3D.position);
-          self._quat.copy(self.el.object3D.quaternion);
-          self._ready  = true;
+          if (!self._ready) {
+            // First detection: seed buffers so we don't lerp from origin
+            self._pos.copy(self.el.object3D.position);
+            self._quat.copy(self.el.object3D.quaternion);
+            self._ready = true;
+          }
+          // Re-detection: DON'T reset — lerp fast from last stable pose to avoid
+          // pole-drop (1-frame snap to a raw bad-angle quaternion)
+          self._snapFrames = 6;
           self._isLost = false;
         };
         this._onLost = function () {
@@ -115,8 +120,8 @@
       },
       tick: function () {
         var obj = this.el.object3D;
-        // Belt-and-suspenders: if arjs-anchor detected the marker (set obj.visible=true)
-        // but markerFound didn't fire due to wasVisible poisoning, snap in manually.
+        // Belt-and-suspenders: arjs-anchor set obj.visible=true but markerFound
+        // didn't fire (wasVisible poisoning) — trigger found manually.
         if (this._isLost) {
           if (obj.visible) this._onFound();
           else return;
@@ -124,8 +129,11 @@
         if (!this._ready) return;
         // Force visible — overrides A-Frame 1.7 visible component tick-order reset
         obj.visible = true;
-        this._pos.lerp(obj.position, 0.3);
-        this._quat.slerp(obj.quaternion, 0.3);
+        // Snap alpha for first 6 frames after (re-)detection, then steady
+        var alpha = this._snapFrames > 0 ? 0.5 : 0.2;
+        if (this._snapFrames > 0) this._snapFrames--;
+        this._pos.lerp(obj.position, alpha);
+        this._quat.slerp(obj.quaternion, alpha);
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
       }
