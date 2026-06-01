@@ -17,10 +17,13 @@
         Object.defineProperty(proto, 'useLegacyLights', { get: function () { return false; }, set: function () {} });
       }
     })();
-
-    // Always keep label on the world-up side of the marker
+    // Always keep label above the marker in WORLD Y — not marker-local Y.
+    // Marker-local Y changes with viewing angle (AR.js detects different quaternions
+    // at different angles), so using worldToLocal ensures the label always floats
+    // above in world space regardless of detected marker orientation.
     AFRAME.registerComponent('up-track', {
       schema: { y: { default: 1.8 }, lockXZ: { default: false } },
+      after: ['pose-filter'],
       init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
         var mo = this.el.parentEl.object3D;
@@ -33,80 +36,50 @@
         this.el.object3D.position.copy(this._wp);
       }
     });
-    // Yaw-only billboard — rotates around world Y only, zero roll, no random tilt
+    // Billboard — label always faces camera.
+    // In AR.js barcode mode the camera is fixed at world origin (0,0,0) — markers
+    // move, camera doesn't. We hardcode the target to (0,0,0) instead of calling
+    // cam.getWorldPosition(), which in A-Frame 1.7.0 can return a wrong position
+    // if sceneEl.camera resolves to a child object with an offset, causing the
+    // label to intermittently face the wrong direction and appear to drop.
     AFRAME.registerComponent('billboard', {
-      init: function () {
-        this._dir        = new THREE.Vector3();
-        this._camPos     = new THREE.Vector3();
-        this._obj        = new THREE.Vector3();
-        this._euler      = new THREE.Euler(0, 0, 0, 'YXZ');
-        this._worldQuat  = new THREE.Quaternion();
-        this._parentQuat = new THREE.Quaternion();
-      },
+      after: ['pose-filter'],
+      init: function () { this._origin = new THREE.Vector3(0, 0, 0); },
       tick: function () {
         if (!this.el.parentEl.parentEl.object3D.visible) return;
-        var cam = this.el.sceneEl.camera;
-        if (!cam) return;
-        // Rebuild this label's world matrix branch so pose-filter + up-track changes are visible
-        this.el.object3D.updateWorldMatrix(true, false);
-        cam.getWorldPosition(this._camPos);
-        this.el.object3D.getWorldPosition(this._obj);
-        this._dir.subVectors(this._camPos, this._obj);
-        // Only yaw — label stays perfectly upright, no roll possible
-        this._euler.set(0, Math.atan2(this._dir.x, this._dir.z), 0);
-        this._worldQuat.setFromEuler(this._euler);
-        // Convert world rotation to local by removing parent's world rotation
-        this.el.object3D.parent.getWorldQuaternion(this._parentQuat);
-        this._parentQuat.invert();
-        this.el.object3D.quaternion.multiplyQuaternions(this._parentQuat, this._worldQuat);
+        this.el.object3D.lookAt(this._origin);
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
     AFRAME.registerComponent('dash-track', {
       schema: { dashH: { default: 0.1 }, pitch: { default: 0.2 } },
-      init: function () { this._wp = new THREE.Vector3(); this._kids = null; },
+      after: ['pose-filter'],
+      init: function () { this._kids = null; },
       tick: function () {
         var mo = this.el.parentEl.object3D;
         if (!mo.visible) return;
-        mo.updateWorldMatrix(true, false);
         if (!this._kids) this._kids = Array.from(this.el.children);
         var p = this.data.pitch, h = this.data.dashH;
         for (var i = 0; i < this._kids.length; i++) {
-          mo.getWorldPosition(this._wp);
-          this._wp.y += i * p + h / 2;
-          mo.worldToLocal(this._wp);
-          this._kids[i].object3D.position.copy(this._wp);
+          this._kids[i].object3D.position.set(0, i * p + h / 2, 0);
         }
       }
     });
-    // Pose-filter: smooth tracking only — no hold mode, no ghost.
-    // Lost = hidden immediately by arjs-anchor; re-detection snaps instantly.
-    //
-    // A-Frame 1.7.0 re-detection fix: never force obj.visible = true while lost.
-    // arjs-anchor reads obj.visible as wasVisible; pinning it true prevents the
-    // false→true transition that fires markerFound.  Belt-and-suspenders: if
-    // markerFound still doesn't fire, we detect re-detection via obj.visible in tick.
+    // pose-filter: A-Frame 1.7.0 compatibility only — no smoothing.
+    // In 1.5.0, arjs-anchor ran last and overwrote obj.position/quaternion every frame,
+    // so pose-filter's lerp was invisible — arjs-anchor's smoothCount=30 did all the work.
+    // In 1.7.0 pose-filter runs after arjs-anchor, so any extra smoothing we apply on top
+    // fights arjs-anchor's smoother and causes oscillation. Solution: don't touch
+    // position/quaternion at all — just handle visibility and re-detection.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._pos        = new THREE.Vector3();
-        this._quat       = new THREE.Quaternion();
-        this._ready      = false;
-        this._isLost     = false;
-        this._settleFrames = 0;
+        this._ready  = false;
+        this._isLost = false;
         var self = this;
-        this._onFound = function () {
-          if (!self._ready) {
-            // Seed buffers from first detected pose
-            self._pos.copy(self.el.object3D.position);
-            self._quat.copy(self.el.object3D.quaternion);
-            self._ready = true;
-          }
-          self._settleFrames = 10;
-          self._isLost = false;
-        };
-        this._onLost = function () { self._isLost = true; };
+        this._onFound = function () { self._isLost = false; self._ready = true; };
+        this._onLost  = function () { self._isLost = true; };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
@@ -116,38 +89,16 @@
       },
       tick: function () {
         var obj = this.el.object3D;
-        // Belt-and-suspenders: arjs-anchor set obj.visible=true but markerFound
-        // didn't fire (wasVisible poisoning) — trigger found manually.
         if (this._isLost) {
+          // Belt-and-suspenders: if arjs-anchor detected the marker but markerFound
+          // didn't fire due to wasVisible poisoning, exit lost state now.
           if (obj.visible) this._onFound();
           else return;
         }
         if (!this._ready) return;
-        // Force visible — overrides A-Frame 1.7 visible component tick-order reset
+        // Force visible — overrides A-Frame 1.7 visible component tick-order reset.
+        // Do NOT touch position/quaternion — arjs-anchor's smoothCount=30 is sufficient.
         obj.visible = true;
-
-        // Hard-reject any frame where the detected quaternion deviates > 40° from
-        // our current smoothed value.  The markers are physically fixed, so this
-        // magnitude of change is always a bad AR.js detection (180° flip ambiguity,
-        // steep-angle noise, etc.).  This guard is ALWAYS active — including during
-        // the settle window — so even the very first bad frame is discarded.
-        if (this._quat.angleTo(obj.quaternion) > 0.7) {
-          obj.position.copy(this._pos);
-          obj.quaternion.copy(this._quat);
-          return;
-        }
-
-        // Position: fast during settle window, steady after
-        var posAlpha = this._settleFrames > 0 ? 0.5 : 0.2;
-        // Rotation: slow always (0.05) so transient bad frames barely move _quat;
-        //           slightly faster (0.3) during settle so initial pose locks in quickly
-        var quatAlpha = this._settleFrames > 0 ? 0.3 : 0.05;
-        if (this._settleFrames > 0) this._settleFrames--;
-
-        this._pos.lerp(obj.position, posAlpha);
-        this._quat.slerp(obj.quaternion, quatAlpha);
-        obj.position.copy(this._pos);
-        obj.quaternion.copy(this._quat);
       }
     });
   </script>
@@ -546,7 +497,7 @@
           marker.setAttribute('smoothCount', '30');
           marker.setAttribute('smoothTolerance', '0.15');
           marker.setAttribute('smoothThreshold', '1');
-          marker.setAttribute('minConfidence', '0.05');
+          marker.setAttribute('minConfidence', '0.01');
           marker.setAttribute('pose-filter', '');
           marker.id = 'marker-' + idx;
 
@@ -828,7 +779,7 @@
         });
       })();
     </script>
-    <a-entity camera></a-entity>
+    <a-entity camera look-controls="enabled: false"></a-entity>
   </a-scene>
 
   <script>
