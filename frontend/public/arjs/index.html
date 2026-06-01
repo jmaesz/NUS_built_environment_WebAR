@@ -132,6 +132,14 @@
         // Snap alpha for first 6 frames after (re-)detection, then steady
         var alpha = this._snapFrames > 0 ? 0.5 : 0.2;
         if (this._snapFrames > 0) this._snapFrames--;
+        // Pole-drop protection: the marker is physically fixed, so a detected
+        // quaternion more than ~40° from our smoothed value is a bad frame — reject it.
+        // Skip this guard during the snap window so the initial pose can settle freely.
+        if (this._snapFrames === 0 && this._quat.angleTo(obj.quaternion) > 0.7) {
+          obj.position.copy(this._pos);
+          obj.quaternion.copy(this._quat);
+          return;
+        }
         this._pos.lerp(obj.position, alpha);
         this._quat.slerp(obj.quaternion, alpha);
         obj.position.copy(this._pos);
