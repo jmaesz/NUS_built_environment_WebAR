@@ -94,23 +94,19 @@
         this._quat       = new THREE.Quaternion();
         this._ready      = false;
         this._isLost     = false;
-        this._snapFrames = 0;
+        this._settleFrames = 0;
         var self = this;
         this._onFound = function () {
           if (!self._ready) {
-            // First detection: seed buffers so we don't lerp from origin
+            // Seed buffers from first detected pose
             self._pos.copy(self.el.object3D.position);
             self._quat.copy(self.el.object3D.quaternion);
             self._ready = true;
           }
-          // Re-detection: DON'T reset — lerp fast from last stable pose to avoid
-          // pole-drop (1-frame snap to a raw bad-angle quaternion)
-          self._snapFrames = 6;
+          self._settleFrames = 10;
           self._isLost = false;
         };
-        this._onLost = function () {
-          self._isLost = true;
-        };
+        this._onLost = function () { self._isLost = true; };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
@@ -129,19 +125,27 @@
         if (!this._ready) return;
         // Force visible — overrides A-Frame 1.7 visible component tick-order reset
         obj.visible = true;
-        // Snap alpha for first 6 frames after (re-)detection, then steady
-        var alpha = this._snapFrames > 0 ? 0.5 : 0.2;
-        if (this._snapFrames > 0) this._snapFrames--;
-        // Pole-drop protection: the marker is physically fixed, so a detected
-        // quaternion more than ~40° from our smoothed value is a bad frame — reject it.
-        // Skip this guard during the snap window so the initial pose can settle freely.
-        if (this._snapFrames === 0 && this._quat.angleTo(obj.quaternion) > 0.7) {
+
+        // Hard-reject any frame where the detected quaternion deviates > 40° from
+        // our current smoothed value.  The markers are physically fixed, so this
+        // magnitude of change is always a bad AR.js detection (180° flip ambiguity,
+        // steep-angle noise, etc.).  This guard is ALWAYS active — including during
+        // the settle window — so even the very first bad frame is discarded.
+        if (this._quat.angleTo(obj.quaternion) > 0.7) {
           obj.position.copy(this._pos);
           obj.quaternion.copy(this._quat);
           return;
         }
-        this._pos.lerp(obj.position, alpha);
-        this._quat.slerp(obj.quaternion, alpha);
+
+        // Position: fast during settle window, steady after
+        var posAlpha = this._settleFrames > 0 ? 0.5 : 0.2;
+        // Rotation: slow always (0.05) so transient bad frames barely move _quat;
+        //           slightly faster (0.3) during settle so initial pose locks in quickly
+        var quatAlpha = this._settleFrames > 0 ? 0.3 : 0.05;
+        if (this._settleFrames > 0) this._settleFrames--;
+
+        this._pos.lerp(obj.position, posAlpha);
+        this._quat.slerp(obj.quaternion, quatAlpha);
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
       }
