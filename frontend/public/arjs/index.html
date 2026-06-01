@@ -17,23 +17,23 @@
         Object.defineProperty(proto, 'useLegacyLights', { get: function () { return false; }, set: function () {} });
       }
     })();
-    // Always keep label on the world-up side of the marker
+    // Always keep label above the marker in WORLD Y — not marker-local Y.
+    // Marker-local Y changes with viewing angle (AR.js detects different quaternions
+    // at different angles), so using worldToLocal ensures the label always floats
+    // above in world space regardless of detected marker orientation.
     AFRAME.registerComponent('up-track', {
       schema: { y: { default: 1.8 }, lockXZ: { default: false } },
       after: ['pose-filter'],
-      init: function () { this._v = new THREE.Vector3(); this._sign = 1; },
+      init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
         var mo = this.el.parentEl.object3D;
         if (!mo.visible) return;
-        if (this.data.lockXZ) {
-          this.el.object3D.position.set(0, this.data.y, 0);
-        } else {
-          // Hysteresis: keep label on whichever side of the marker faces world-up
-          this._v.set(0, 1, 0).applyQuaternion(mo.quaternion);
-          if (this._v.y > 0.3)       this._sign =  1;
-          else if (this._v.y < -0.3) this._sign = -1;
-          this.el.object3D.position.set(0, this._sign * this.data.y, 0);
-        }
+        mo.updateWorldMatrix(true, false);
+        mo.getWorldPosition(this._wp);
+        this._wp.y += this.data.y;
+        mo.worldToLocal(this._wp);
+        if (this.data.lockXZ) { this._wp.x = 0; this._wp.z = 0; }
+        this.el.object3D.position.copy(this._wp);
       }
     });
     // Billboard — label always faces camera.
