@@ -1,0 +1,23 @@
+{
+  "name": "nuscape-ar",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "gen:audio": "node scripts/generate_all_audio.mjs",
+    "gen:audio:single": "node scripts/generate_audio.mjs",
+    "list:voices": "node scripts/list_voices.mjs"
+  },
+  "dependencies": {
+    "jimp": "^1.6.1",
+    "mind-ar": "^1.2.5",
+    "msedge-tts": "*",
+    "puppeteer": "^25.0.4",
+    "rhino3dm": "^8.17.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "^4.3.0",
+    "@gltf-transform/functions": "^4.3.0",
+    "@msgpack/msgpack": "^3.1.3"
+  }
+}

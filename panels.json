@@ -1,0 +1,63 @@
+{
+  "chart_panel": {
+    "id": "chart-panel",
+    "position": "fixed, top-right",
+    "width": "235px",
+    "height": "200px",
+    "default_state": "hidden (opacity 0)",
+    "toggle_button": { "id": "chart-tab", "collapses_to": "22px wide" },
+    "views": {
+      "energy_use": {
+        "trigger_button": { "id": "btn-pie", "label": "ENERGY USE", "default": true },
+        "subtitle": "Annual Energy Use (kWh)",
+        "elements": {
+          "building_name": { "id": "chart-building-name" },
+          "doughnut_chart": { "id": "myChart", "canvas": true },
+          "legend": {
+            "cooling":   { "id": "lv-cooling",   "color": "#107b7f" },
+            "equipment": { "id": "lv-equipment", "color": "#5b9bd5" },
+            "lighting":  { "id": "lv-lighting",  "color": "#e8b84b" }
+          },
+          "total": { "id": "total-value" }
+        }
+      },
+      "monthly_eui": {
+        "trigger_button": { "id": "btn-eui", "label": "MONTHLY EUI", "default": false },
+        "subtitle": "Monthly EUI (kWh/m²)",
+        "elements": {
+          "bar_chart": { "id": "euiChart", "canvas": true },
+          "legend": {
+            "equipment": { "color": "#5b9bd5" },
+            "lighting":  { "color": "#e8b84b" },
+            "cooling":   { "color": "#107b7f" }
+          }
+        }
+      }
+    }
+  },
+
+  "maps_panel": {
+    "id": "maps-panel",
+    "position": "fixed, bottom-right",
+    "width": "180px",
+    "default_state": "hidden",
+    "toggle_button": { "id": "maps-tab", "collapses_to": "22px wide" },
+    "views": {
+      "map_view": {
+        "trigger_button": { "id": "btn-mapview", "label": "MAP VIEW", "default": true },
+        "elements": {
+          "building_image": { "id": "maps-panel-img", "height": "110px" },
+          "building_name_overlay": { "id": "maps-panel-top" },
+          "full_name": { "id": "maps-panel-addr-lbl" },
+          "open_in_maps_link": { "id": "maps-panel-cta", "href": "b.mapsUrl" }
+        }
+      },
+      "building_info": {
+        "trigger_button": { "id": "btn-buildinginfo", "label": "BUILDING INFO", "default": false },
+        "elements": {
+          "description_text": { "id": "maps-panel-desc-text", "source": "window.BUILDING_DESCS[b.name]" }
+        }
+      }
+    }
+  }
+}

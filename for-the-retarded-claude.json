@@ -1,0 +1,153 @@
+{
+  "main_label_ar": {
+    "note": "upContainer uses up-track y:1.8 (world Y). label has billboard. All child positions relative to label (marker-local).",
+    "vertical_dashes": {
+      "id": "ar-dash-{idx}",
+      "element": "a-cylinder x6",
+      "component": "dash-track",
+      "radius": 0.025,
+      "height": 0.1,
+      "pitch": 0.2,
+      "note": "World-tracked vertical dashes rising from marker"
+    },
+    "main_label": {
+      "id": "ar-bg-{idx}",
+      "element": "a-plane",
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "width": 2.2,
+      "height": 1.1,
+      "note": "Building name + Tap to close / Tap for details"
+    }
+  },
+
+  "building_info_ar": {
+    "note": "descGroup hidden until Building Info tapped. descGroup offset from label.",
+    "info_label": {
+      "id": "ar-ilbl-{idx}",
+      "element": "a-plane",
+      "position": { "x": 2.5, "y": 0, "z": 0 },
+      "width": 2.2,
+      "height": 1.1,
+      "visible_by_default": false,
+      "note": "Building Info / Tap for details"
+    },
+    "descGroup_position": { "x": 0, "y": 1.5, "z": 0 },
+    "descPlane": {
+      "id": "ar-desc-plane-{idx}",
+      "element": "a-plane",
+      "position": { "x": 5.0, "y": 0, "z": 0 },
+      "width": 7.0,
+      "height": 4.4,
+      "note": "Building description text"
+    },
+    "playHitbox": {
+      "id": "ar-play-{idx}",
+      "element": "a-plane",
+      "position": { "x": 5.0, "y": -1.83, "z": 0.02 },
+      "width": 1.5,
+      "height": 1.5,
+      "note": "Invisible audio play button hitbox"
+    },
+    "xHitbox": {
+      "id": "ar-xbtn-{idx}",
+      "element": "a-plane",
+      "position": { "x": 8.17, "y": 1.87, "z": 0.02 },
+      "width": 0.9,
+      "height": 0.9,
+      "note": "Invisible close button hitbox, top-right of desc panel"
+    }
+  },
+
+  "floor_ar": {
+    "note": "Per-floor. flUpEl uses up-track y:fl.yUp (world Y), local X/Z locked to 0. Child positions in marker-local space.",
+    "anchor_flUpEl": {
+      "id": "fl-up-{idx}-{key}",
+      "component": "up-track y: fl.yUp",
+      "local_x": 0,
+      "local_z": 0,
+      "visible_by_default": false
+    },
+    "flBtn": {
+      "id": "fl-btn-{idx}-{key}",
+      "element": "a-plane",
+      "position": { "x": -5.5, "y": 0, "z": 0 },
+      "width": 0.47,
+      "height": 0.30,
+      "note": "Floor label e.g. 3F / 2F / 1F"
+    },
+    "tapIconEl": {
+      "id": "fl-tap-{idx}-{key}",
+      "element": "a-plane",
+      "position": { "x": -6.08, "y": 0, "z": 0 },
+      "width": 0.40,
+      "height": 0.40,
+      "note": "Green hand cursor icon, no billboard"
+    },
+    "dashes": {
+      "id": "fl-dot-{idx}-{key}",
+      "element": "6x a-cylinder",
+      "group_position": { "x": 0, "y": 0, "z": 0 },
+      "dash_x_range": { "xS": -6.15, "xE": -2.35 },
+      "dash_rotation_z": 90,
+      "dash_radius": 0.018,
+      "dash_height": 0.15,
+      "note": "6 horizontal dashes from tap icon to marker label area"
+    },
+    "heatmapLbl": {
+      "element": "a-text",
+      "value": "DAYLIGHT\nHEATMAP",
+      "position": { "x": -5.58, "y": 1, "z": 0 },
+      "align": "center",
+      "color": "#000000",
+      "width": 5,
+      "side": "double",
+      "note": "Fixed text label, only on flIdx===0 (topmost floor), no billboard"
+    },
+    "flImg": {
+      "id": "fl-img-{idx}-{key}",
+      "element": "a-plane",
+      "position": { "x": -8.5, "y": 0, "z": "flImgZ = (nFloors-1-flIdx)*0.04" },
+      "width": 5.5,
+      "height": 4.1,
+      "rotation": { "x": -90, "y": 0, "z": 0 },
+      "parent": "flDg (hidden until tapped)",
+      "note": "Daylight heatmap, flat on table"
+    },
+    "buildings": {
+      "CELC":  [ { "key": "3F", "yUp": -1.5 }, { "key": "2F", "yUp": -2.7 } ],
+      "E1A":   [ { "key": "6F", "yUp": -0.5 }, { "key": "4F", "yUp": -1.2 }, { "key": "1F", "yUp": -1.9 } ],
+      "E2A":   [ { "key": "1F", "yUp": -1.5 } ],
+      "E4":    [ { "key": "8F", "yUp": -0.5 }, { "key": "5F", "yUp": -1.2 }, { "key": "1F", "yUp": -1.9 } ],
+      "EA":    [ { "key": "1F", "yUp": -1.5 } ],
+      "SDE1":  [ { "key": "4F", "yUp": -0.5 }, { "key": "3F", "yUp": -1.2 }, { "key": "2F", "yUp": -1.9 }, { "key": "1F", "yUp": -2.6 } ],
+      "SDE2":  [ { "key": "4F", "yUp": -0.5 }, { "key": "3F", "yUp": -1.2 }, { "key": "1F", "yUp": -1.9 } ],
+      "SDE3":  [ { "key": "4F", "yUp": -0.5 }, { "key": "3F", "yUp": -1.2 } ],
+      "SDE4":  [ { "key": "5F", "yUp": -0.5 }, { "key": "4F", "yUp": -1.2 }, { "key": "3F", "yUp": -1.9 }, { "key": "2F", "yUp": -2.6 }, { "key": "1F", "yUp": -3.3 } ],
+      "E5":    [ { "key": "4F", "yUp": -0.5 }, { "key": "2F", "yUp": -1.2 }, { "key": "1F", "yUp": -1.9 } ]
+    }
+  },
+
+  "solar_ar": {
+    "note": "Single flat plane per building, child of marker (not up-tracked). Visible when chart opens.",
+    "solarMat": {
+      "id": "solar-mat-{idx}",
+      "element": "a-plane",
+      "rotation": { "x": -90, "y": "solarD.ry", "z": 0 },
+      "position": { "x": "solarD.x", "y": 0.01, "z": "solarD.z" },
+      "width": "solarD.w",
+      "height": "solarD.h",
+      "visible_by_default": false,
+      "note": "Solar panel overlay, flat on marker surface"
+    },
+    "building_data": {
+      "CELC": { "x": 0.70,  "z": 0.00,  "ry": 0,   "w": 9.81,  "h": 7.00 },
+      "E1A":  { "x": 0.00,  "z": 2.80,  "ry": 1,   "w": 11.21, "h": 8.00 },
+      "E2A":  { "x": -0.30, "z": 0.30,  "ry": 0,   "w": 7.00,  "h": 5.00 },
+      "E4":   { "x": 6.70,  "z": -1.40, "ry": 180, "w": 24.51, "h": 17.50 },
+      "E5":   { "x": 0,     "z": 0,     "ry": 0,   "w": 3,     "h": 3 },
+      "E8":   { "x": -0.40, "z": -0.70, "ry": -91, "w": 16.11, "h": 11.50 },
+      "SDE1": { "x": 0.50,  "z": 1.70,  "ry": 0,   "w": 10.50, "h": 7.50 },
+      "SDE2": { "x": -0.70, "z": 0.50,  "ry": 0,   "w": 9.80,  "h": 7.00 }
+    }
+  }
+}
