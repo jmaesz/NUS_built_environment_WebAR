@@ -6,10 +6,18 @@
   <title>NUScape-AR · ArUco</title>
   <link rel="preconnect" href="https://aframe.io">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.8/aframe/build/aframe-ar.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
   <script>
+    // Patch: silence removed useLegacyLights property in THREE r165+ / A-Frame 1.7+
+    (function () {
+      var proto = THREE && THREE.WebGLRenderer && THREE.WebGLRenderer.prototype;
+      if (proto && !('useLegacyLights' in proto)) {
+        Object.defineProperty(proto, 'useLegacyLights', { get: function () { return false; }, set: function () {} });
+      }
+    })();
+
     // Always keep label on the world-up side of the marker
     AFRAME.registerComponent('up-track', {
       schema: { y: { default: 1.8 }, lockXZ: { default: false } },
@@ -77,7 +85,7 @@
     // our tick runs, causing one-frame flickers that compound into visible stuttering.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
-      after: ['visible'],
+      after: ['visible', 'arjs-anchor'],
       init: function () {
         this._pos       = new THREE.Vector3();
         this._quat      = new THREE.Quaternion();
