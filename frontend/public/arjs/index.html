@@ -20,6 +20,7 @@
     // Always keep label on the world-up side of the marker
     AFRAME.registerComponent('up-track', {
       schema: { y: { default: 1.8 }, lockXZ: { default: false } },
+      after: ['pose-filter'],
       init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
         var mo = this.el.parentEl.object3D;
@@ -34,6 +35,7 @@
     });
     // Yaw-only billboard — rotates around world Y only, zero roll, no random tilt
     AFRAME.registerComponent('billboard', {
+      after: ['pose-filter'],
       init: function () {
         this._dir        = new THREE.Vector3();
         this._camPos     = new THREE.Vector3();
@@ -63,6 +65,7 @@
     // Keep dashes pointing toward the marker regardless of orientation
     AFRAME.registerComponent('dash-track', {
       schema: { dashH: { default: 0.1 }, pitch: { default: 0.2 } },
+      after: ['pose-filter'],
       init: function () { this._wp = new THREE.Vector3(); this._kids = null; },
       tick: function () {
         var mo = this.el.parentEl.object3D;
