@@ -65,31 +65,21 @@
         }
       }
     });
-    // pose-filter: lock position+quaternion on detection, only billboard moves.
-    // On markerFound: snapshot the marker's world position and quaternion, then
-    // write those locked values back every frame — arjs-anchor's noisy per-frame
-    // updates are ignored. The only things that move are: (1) billboard yaw-only
-    // rotation facing the camera, (2) re-lock on next markerFound after a loss.
+    // pose-filter: A-Frame 1.7.0 compatibility only — no smoothing.
+    // In 1.5.0, arjs-anchor ran last and overwrote obj.position/quaternion every frame,
+    // so pose-filter's lerp was invisible — arjs-anchor's smoothCount=30 did all the work.
+    // In 1.7.0 pose-filter runs after arjs-anchor, so any extra smoothing we apply on top
+    // fights arjs-anchor's smoother and causes oscillation. Solution: don't touch
+    // position/quaternion at all — just handle visibility and re-detection.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._lockedPos = new THREE.Vector3();
-        this._lockedQuat = new THREE.Quaternion();
-        this._locked  = false;
-        this._isLost  = false;
+        this._ready  = false;
+        this._isLost = false;
         var self = this;
-        this._onFound = function () {
-          // Snapshot current detected pose and lock it
-          self._lockedPos.copy(self.el.object3D.position);
-          self._lockedQuat.copy(self.el.object3D.quaternion);
-          self._locked  = true;
-          self._isLost  = false;
-        };
-        this._onLost = function () {
-          self._locked = false;
-          self._isLost = true;
-        };
+        this._onFound = function () { self._isLost = false; self._ready = true; };
+        this._onLost  = function () { self._isLost = true; };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
@@ -100,14 +90,15 @@
       tick: function () {
         var obj = this.el.object3D;
         if (this._isLost) {
+          // Belt-and-suspenders: if arjs-anchor detected the marker but markerFound
+          // didn't fire due to wasVisible poisoning, exit lost state now.
           if (obj.visible) this._onFound();
           else return;
         }
-        if (!this._locked) return;
+        if (!this._ready) return;
+        // Force visible — overrides A-Frame 1.7 visible component tick-order reset.
+        // Do NOT touch position/quaternion — arjs-anchor's smoothCount=30 is sufficient.
         obj.visible = true;
-        // Write locked pose back every frame — suppresses arjs-anchor's noisy updates
-        obj.position.copy(this._lockedPos);
-        obj.quaternion.copy(this._lockedQuat);
       }
     });
   </script>
