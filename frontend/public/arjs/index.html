@@ -79,157 +79,53 @@
         }
       }
     });
-    // Pose hold + gyro compensation — event-driven to avoid tick-order race with AR.js.
+    // Pose-filter: smooth tracking only — no hold mode, no ghost.
+    // Lost = hidden immediately by arjs-anchor; re-detection snaps instantly.
     //
-    // A-Frame 1.7.0 fix: in hold mode we must NOT force obj.visible = true on the marker
-    // entity, because arjs-anchor reads obj.visible as wasVisible at the start of each
-    // tick.  If we pin it to true every frame the false→true transition arjs-anchor needs
-    // to fire markerFound never happens, so the marker can never re-detect.
-    //
-    // Fix: on markerLost we move the marker's Three.js children into a scene-level ghost
-    // Group at the held world pose.  arjs-anchor can then freely toggle obj.visible (false
-    // while lost, true on re-detection) and the content stays visible through the ghost.
-    // On markerFound we move the children back.
+    // A-Frame 1.7.0 re-detection fix: never force obj.visible = true while lost.
+    // arjs-anchor reads obj.visible as wasVisible; pinning it true prevents the
+    // false→true transition that fires markerFound.  Belt-and-suspenders: if
+    // markerFound still doesn't fire, we detect re-detection via obj.visible in tick.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._pos            = new THREE.Vector3();
-        this._quat           = new THREE.Quaternion();
-        this._ready          = false;
-        this._isLost         = false;
-        this._lostPos        = new THREE.Vector3();
-        this._lostQuat       = new THREE.Quaternion();
-        this._lostWorldPos   = new THREE.Vector3();
-        this._lostWorldQuat  = new THREE.Quaternion();
-        this._lostWorldScale = new THREE.Vector3();
-        this._devQuat        = new THREE.Quaternion();
-        this._devRefInv      = new THREE.Quaternion();
-        this._deltaQ         = new THREE.Quaternion();
-        this._deltaQInv      = new THREE.Quaternion();
-        this._hasOrient      = false;
-        this._euler          = new THREE.Euler(0, 0, 0, 'YXZ');
-        this._tmpVec         = new THREE.Vector3();
-        this._tmpQuat        = new THREE.Quaternion();
-        this._ghostActive    = false;
-
-        // Scene-level Three.js group — bypasses arjs-anchor's visibility tracking
-        this._ghost = new THREE.Group();
-        this._ghost.visible = false;
-        this.el.sceneEl.object3D.add(this._ghost);
-
+        this._pos    = new THREE.Vector3();
+        this._quat   = new THREE.Quaternion();
+        this._ready  = false;
+        this._isLost = false;
         var self = this;
-        this._onOrient = function (e) {
-          if (e.alpha === null || e.beta === null) return;
-          self._hasOrient = true;
-          self._euler.set(
-            THREE.MathUtils.degToRad(e.beta  || 0),
-            THREE.MathUtils.degToRad(e.alpha || 0),
-           -THREE.MathUtils.degToRad(e.gamma || 0)
-          );
-          self._devQuat.setFromEuler(self._euler);
-        };
-        this._lastFoundTime = 0;
-        this._lostTime = 0;
-        this._snapFrames = 0;
         this._onFound = function () {
+          // Snap _pos/_quat to current detected pose so tracking starts from the
+          // right place immediately — no slow lerp from the previous lost position.
+          self._pos.copy(self.el.object3D.position);
+          self._quat.copy(self.el.object3D.quaternion);
+          self._ready  = true;
           self._isLost = false;
-          self._lastFoundTime = performance.now();
-          self._snapFrames = 8; // snap-in burst for fast re-calibration
-          // Return children from ghost back to the marker entity
-          if (self._ghostActive) {
-            var kids = self._ghost.children.slice();
-            for (var i = 0; i < kids.length; i++) {
-              self.el.object3D.add(kids[i]);
-            }
-            self._ghost.visible = false;
-            self._ghostActive = false;
-          }
-          if (!self._ready) {
-            self._pos.copy(self.el.object3D.position);
-            self._quat.copy(self.el.object3D.quaternion);
-            self._ready = true;
-          }
         };
         this._onLost = function () {
-          if (!self._ready) return;
           self._isLost = true;
-          self._lostTime = performance.now();
-          self._lostPos.copy(self._pos);
-          self._lostQuat.copy(self._quat);
-          self._devRefInv.copy(self._devQuat).invert();
-          // Capture marker world transform for ghost positioning
-          var obj = self.el.object3D;
-          obj.updateWorldMatrix(true, false);
-          obj.matrixWorld.decompose(
-            self._lostWorldPos, self._lostWorldQuat, self._lostWorldScale
-          );
-          // Position ghost at held world pose
-          self._ghost.position.copy(self._lostWorldPos);
-          self._ghost.quaternion.copy(self._lostWorldQuat);
-          self._ghost.scale.copy(self._lostWorldScale);
-          self._ghost.visible = true;
-          // Move Three.js children to ghost so they render without touching obj.visible
-          var kids = obj.children.slice();
-          for (var i = 0; i < kids.length; i++) {
-            self._ghost.add(kids[i]);
-          }
-          self._ghostActive = true;
         };
-        window.addEventListener('deviceorientation', this._onOrient);
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
       remove: function () {
-        window.removeEventListener('deviceorientation', this._onOrient);
         this.el.removeEventListener('markerFound', this._onFound);
         this.el.removeEventListener('markerLost',  this._onLost);
-        // Restore children before teardown
-        if (this._ghostActive) {
-          var kids = this._ghost.children.slice();
-          for (var i = 0; i < kids.length; i++) {
-            this.el.object3D.add(kids[i]);
-          }
-          this._ghostActive = false;
-        }
-        if (this._ghost.parent) this._ghost.parent.remove(this._ghost);
       },
       tick: function () {
         var obj = this.el.object3D;
+        // Belt-and-suspenders: if arjs-anchor detected the marker (set obj.visible=true)
+        // but markerFound didn't fire due to wasVisible poisoning, snap in manually.
         if (this._isLost) {
-          if (!this._ready) return;
-          // Belt-and-suspenders: if arjs-anchor detected the marker (obj.visible = true)
-          // but markerFound didn't fire because wasVisible was poisoned, exit hold mode now.
-          // This check is safe because we never set obj.visible ourselves in hold mode —
-          // the ghost shows content, so the only way obj.visible = true here is arjs-anchor.
-          if (obj.visible) {
-            this._onFound();
-            // _isLost is now false — fall through to normal tracking below
-          } else {
-            // Hide ghost after 1.5 s to avoid lingering labels when marker is gone.
-            // Children stay in the ghost so re-detection via the obj.visible check
-            // (belt-and-suspenders above) can still move them back cleanly.
-            if (performance.now() - this._lostTime > 1500) {
-              this._ghost.visible = false;
-            } else if (this._hasOrient) {
-              // Still within hold window — update ghost with gyro compensation
-              this._deltaQ.multiplyQuaternions(this._devQuat, this._devRefInv);
-              this._deltaQInv.copy(this._deltaQ).invert();
-              this._tmpVec.copy(this._lostWorldPos).applyQuaternion(this._deltaQInv);
-              this._ghost.position.copy(this._tmpVec);
-              this._tmpQuat.multiplyQuaternions(this._deltaQInv, this._lostWorldQuat);
-              this._ghost.quaternion.copy(this._tmpQuat);
-            }
-            return;
-          }
+          if (obj.visible) this._onFound();
+          else return;
         }
         if (!this._ready) return;
         // Force visible — overrides A-Frame 1.7 visible component tick-order reset
         obj.visible = true;
-        var alpha = this._snapFrames > 0 ? 0.6 : 0.2;
-        if (this._snapFrames > 0) this._snapFrames--;
-        this._pos.lerp(obj.position, alpha);
-        this._quat.slerp(obj.quaternion, alpha);
+        this._pos.lerp(obj.position, 0.3);
+        this._quat.slerp(obj.quaternion, 0.3);
         obj.position.copy(this._pos);
         obj.quaternion.copy(this._quat);
       }

@@ -1,43 +1,119 @@
 {
   "scene": {
+    // ── Source input ─────────────────────────────────────────────────────────
+    "sourceType": "webcam",
+    // 'webcam' | 'video' | 'image'. webcam = live camera feed
+    "sourceUrl": "",
+    // URL for video/image source — only used when sourceType is 'video' or 'image'
+    "deviceId": "",
+    // Force a specific camera device ID. Empty = use default camera
+    "sourceWidth": 1280,
+    "sourceHeight": 960,
+    // Camera capture resolution. Higher = better far/angle detection, more CPU
+    "displayWidth": -1,
+    "displayHeight": -1,
+    // Render display resolution. -1 = auto (matches viewport)
+
+    // ── Detection context ────────────────────────────────────────────────────
+    "canvasWidth": 1280,
+    "canvasHeight": 960,
+    // AR processing canvas resolution. Higher = better accuracy, more CPU/latency
     "detectionMode": "color_and_matrix",
-    // Runs both colour + matrix detection — colour pass keeps pipeline warm when no marker in frame
+    // 'color' | 'mono' | 'color_and_matrix' | 'mono_and_matrix'
+    // color_and_matrix = runs both pattern + barcode detection
     "matrixCodeType": "4x4_BCH_13_5_5",
-    // ArUco 4x4 barcode format used by the printed markers
+    // Barcode format: '3x3' | '3x3_HAMMING63' | '3x3_PARITY65' | '4x4' |
+    // '4x4_BCH_13_9_3' | '4x4_BCH_13_5_5' | '5x5' | '5x5_BCH_22_12_5' | '6x6'
+    "patternRatio": 0.5,
+    // Fraction of marker area occupied by the pattern (0–1). Default 0.5.
+    // Higher = larger pattern, may help detection at steep angles
+    "labelingMode": "black_region",
+    // 'black_region' = dark marker on white background (default)
+    // 'white_region' = white marker on dark background
     "maxDetectionRate": 60,
-    // Detection attempts per second. Higher = more responsive, more CPU. Capped at 60 by browser RAF
-    "sourceWidth": 1440,
-    "sourceHeight": 1080,
-    "canvasWidth": 1440,
-    "canvasHeight": 1080
-    // Camera feed + processing resolution. Higher = better distance detection but more ISP latency on iPhone
+    // Max detection attempts per second. Higher = more responsive, more CPU
+    "cameraParametersUrl": "",
+    // URL to camera_para.dat calibration file. Empty = use built-in default
+
+    // ── Performance ──────────────────────────────────────────────────────────
+    "performanceProfile": "default",
+    // Auto-sets canvasWidth/Height + maxDetectionRate:
+    // 'phone-slow'    = 240x180, 30fps
+    // 'phone-normal'  = 320x240, 30fps
+    // 'default'       = uses values set above
+    // 'desktop-normal'= 640x480, 60fps
+    // 'desktop-fast'  = 1920x1440, 60fps
+    "videoTexture": false,
+    // Render camera feed as WebGL texture instead of DOM video. Faster on some
+    // Android devices but BREAKS on iOS Safari — do not enable
+
+    // ── UI / debug ───────────────────────────────────────────────────────────
+    "debugUIEnabled": false,
+    // Show AR.js debug stats UI overlay
+    "debug": false,
+    // Show binarized image debug canvas
+    "errorPopup": ""
+    // DOM element ID to show AR init error messages
   },
+
   "marker": {
+    // ── Pose smoothing ───────────────────────────────────────────────────────
     "smooth": true,
-    // Enables AR.js built-in pose averaging
-    "smoothCount": 30,
-    // Frames to average. Higher = smoother but slower to settle. At 60fps, 30 = 0.5s of averaging
+    // Enable AR.js built-in pose averaging to reduce jitter
+    "smoothCount": 15,
+    // Frames to average. At 60fps, 15 = 0.25 s of averaging.
+    // Lower = snappier tracking; higher = smoother but slower to settle on re-detection
     "smoothTolerance": 0.15,
-    // Max metres a new pose can differ from average before rejected as outlier. Higher = more lenient
+    // Max metres a new pose can differ from average before rejected as outlier
     "smoothThreshold": 1,
     // Frames within tolerance needed to accept a pose. 1 = accept immediately
-    "minConfidence": 0.05
-    // Minimum ARToolKit confidence to accept a detection. 0.05 = 5%. Lower = picks up weak/distant markers
+
+    // ── Detection acceptance ─────────────────────────────────────────────────
+    "minConfidence": 0.20,
+    // Minimum ARToolKit confidence [0–1] to accept a detection.
+    // 0.20 = 20% — rejects weak detections from bad angles / partial occlusion.
+    // Lower (e.g. 0.05) = more detections but more jitter; raise if labels flicker
+    "size": 1,
+    // Physical marker size in A-Frame units. Affects pose scale
+    "changeMatrixMode": "modelViewMatrix",
+    // 'modelViewMatrix' = move the AR object | 'cameraTransformMatrix' = move the camera
+
+    // ── Type ─────────────────────────────────────────────────────────────────
+    "type": "barcode",
+    // 'pattern' | 'barcode' | 'nft'
+    "markerhelpers": false
+    // Show visual debug helpers on area markers
   },
+
   "runtime_patches": {
+    // Set via JS after AR init — not exposed as HTML attributes
     "thresholdMode": 3,
-    // 1=AUTO_MEDIAN, 2=AUTO_OTSU, 3=AUTO_ADAPTIVE — adaptive is best for small/distant markers
-    "labelingMode": 0,
-    // 0 = white region labeling (dark marker on white paper)
+    // 0=MANUAL | 1=AUTO_MEDIAN | 2=AUTO_OTSU | 3=AUTO_ADAPTIVE | 4=AUTO_BRACKETING
+    // AUTO_ADAPTIVE is most robust in varying lighting
+    "threshold": 100,
+    // Grayscale binarization threshold [0–255]. Only used when thresholdMode=0 (MANUAL)
     "imageProcMode": 0,
-    // 0 = full resolution detection, 1 = half resolution (faster, less accurate at distance)
-    "minUnvisibleDelay_seconds": 4.0
-    // Seconds AR.js keeps marker visible after detection drops before firing markerLost
+    // 0=full frame | 1=field (interlaced). Use 0 for normal camera sources
+    "projectionNearPlane": 0.1,
+    // Near clipping plane for AR projection matrix
+    "projectionFarPlane": 1000,
+    // Far clipping plane for AR projection matrix
+    "logLevel": 2
+    // 0=DEBUG | 1=INFO | 2=WARN | 3=ERROR | 4=REL_INFO
   },
+
   "pose_filter": {
-    "lerp_alpha": 0.2,
-    // Low-pass filter: each frame label moves this fraction toward new detected pose. Lower = smoother
+    // Custom pose-filter component (not part of AR.js — implemented in arjs/index.html).
+    // No hold mode or ghost — lost = hidden immediately.
+
+    "alpha": 0.3,
+    // Low-pass lerp factor during normal tracking [0–1].
+    // Each frame the label moves this fraction toward the newly detected pose.
+    // 0.3 = responsive with light smoothing.  1.0 = no smoothing, raw jitter.
+    // On re-detection _pos/_quat are reset to the detected pose instantly so
+    // there is no slow drift from a stale previous position.
+
     "markerLost_hide_delay_ms": 0
-    // Delay (ms) after markerLost before panel hides. 0 = immediate
+    // Delay (ms) after markerLost before the UI panel hides. 0 = immediate.
   }
 }
