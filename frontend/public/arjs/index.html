@@ -36,18 +36,30 @@
         this.el.object3D.position.copy(this._wp);
       }
     });
-    // Billboard — label always faces camera.
-    // In AR.js barcode mode the camera is fixed at world origin (0,0,0) — markers
-    // move, camera doesn't. We hardcode the target to (0,0,0) instead of calling
-    // cam.getWorldPosition(), which in A-Frame 1.7.0 can return a wrong position
-    // if sceneEl.camera resolves to a child object with an offset, causing the
-    // label to intermittently face the wrong direction and appear to drop.
+    // Yaw-only billboard — rotates around world Y only, never pitches.
+    // Full lookAt causes the label to pitch toward the camera when viewed at an
+    // angle, making it appear to drop forward. Yaw-only keeps the label perfectly
+    // vertical at all viewing angles.
+    // Camera is always at (0,0,0) in AR.js mode so we use that directly.
     AFRAME.registerComponent('billboard', {
       after: ['pose-filter'],
-      init: function () { this._origin = new THREE.Vector3(0, 0, 0); },
+      init: function () {
+        this._obj        = new THREE.Vector3();
+        this._euler      = new THREE.Euler(0, 0, 0, 'YXZ');
+        this._worldQuat  = new THREE.Quaternion();
+        this._parentQuat = new THREE.Quaternion();
+      },
       tick: function () {
         if (!this.el.parentEl.parentEl.object3D.visible) return;
-        this.el.object3D.lookAt(this._origin);
+        this.el.object3D.updateWorldMatrix(true, false);
+        this.el.object3D.getWorldPosition(this._obj);
+        // Yaw angle from label toward camera origin — ignore Y difference
+        this._euler.set(0, Math.atan2(-this._obj.x, -this._obj.z), 0);
+        this._worldQuat.setFromEuler(this._euler);
+        // Convert world yaw to label-local rotation by removing parent's world rotation
+        this.el.object3D.parent.getWorldQuaternion(this._parentQuat);
+        this._parentQuat.invert();
+        this.el.object3D.quaternion.multiplyQuaternions(this._parentQuat, this._worldQuat);
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
