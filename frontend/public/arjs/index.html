@@ -20,64 +20,36 @@
     // Always keep label on the world-up side of the marker
     AFRAME.registerComponent('up-track', {
       schema: { y: { default: 1.8 }, lockXZ: { default: false } },
-      after: ['pose-filter'],
       init: function () { this._v = new THREE.Vector3(); this._sign = 1; },
       tick: function () {
-        var mo = this.el.parentEl.object3D;
-        if (!mo.visible) return;
-        if (this.data.lockXZ) {
-          this.el.object3D.position.set(0, this.data.y, 0);
-        } else {
-          // Hysteresis: keep label on whichever side of the marker faces world-up
-          this._v.set(0, 1, 0).applyQuaternion(mo.quaternion);
-          if (this._v.y > 0.3)       this._sign =  1;
-          else if (this._v.y < -0.3) this._sign = -1;
-          this.el.object3D.position.set(0, this._sign * this.data.y, 0);
-        }
+        this._v.set(0, 1, 0).applyQuaternion(this.el.parentEl.object3D.quaternion);
+        if (this._v.y > 0.3)       this._sign =  1;
+        else if (this._v.y < -0.3) this._sign = -1;
+        this.el.object3D.position.y = this._sign * this.data.y;
+        if (this.data.lockXZ) { this.el.object3D.position.x = 0; this.el.object3D.position.z = 0; }
       }
     });
-    // Yaw-only billboard — rotates around world Y only, zero roll, no random tilt
+    // Billboard — label always faces camera
     AFRAME.registerComponent('billboard', {
-      after: ['pose-filter'],
-      init: function () {
-        this._dir        = new THREE.Vector3();
-        this._camPos     = new THREE.Vector3();
-        this._obj        = new THREE.Vector3();
-        this._euler      = new THREE.Euler(0, 0, 0, 'YXZ');
-        this._worldQuat  = new THREE.Quaternion();
-        this._parentQuat = new THREE.Quaternion();
-      },
+      init: function () { this._v = new THREE.Vector3(); },
       tick: function () {
-        if (!this.el.parentEl.parentEl.object3D.visible) return;
         var cam = this.el.sceneEl.camera;
         if (!cam) return;
-        // Rebuild this label's world matrix branch so pose-filter + up-track changes are visible
-        this.el.object3D.updateWorldMatrix(true, false);
-        cam.getWorldPosition(this._camPos);
-        this.el.object3D.getWorldPosition(this._obj);
-        this._dir.subVectors(this._camPos, this._obj);
-        // Only yaw — label stays perfectly upright, no roll possible
-        this._euler.set(0, Math.atan2(this._dir.x, this._dir.z), 0);
-        this._worldQuat.setFromEuler(this._euler);
-        // Convert world rotation to local by removing parent's world rotation
-        this.el.object3D.parent.getWorldQuaternion(this._parentQuat);
-        this._parentQuat.invert();
-        this.el.object3D.quaternion.multiplyQuaternions(this._parentQuat, this._worldQuat);
+        cam.getWorldPosition(this._v);
+        this.el.object3D.lookAt(this._v);
       }
     });
-    // Keep dashes pointing toward the marker regardless of orientation
+    // Keep dashes rising from marker
     AFRAME.registerComponent('dash-track', {
       schema: { dashH: { default: 0.1 }, pitch: { default: 0.2 } },
-      after: ['pose-filter'],
-      init: function () { this._kids = null; },
+      init: function () { this._v = new THREE.Vector3(); this._sign = 1; this._kids = null; },
       tick: function () {
-        var mo = this.el.parentEl.object3D;
-        if (!mo.visible) return;
         if (!this._kids) this._kids = Array.from(this.el.children);
-        var p = this.data.pitch, h = this.data.dashH;
-        for (var i = 0; i < this._kids.length; i++) {
-          this._kids[i].object3D.position.set(0, i * p + h / 2, 0);
-        }
+        this._v.set(0, 1, 0).applyQuaternion(this.el.parentEl.object3D.quaternion);
+        if (this._v.y > 0.3)       this._sign =  1;
+        else if (this._v.y < -0.3) this._sign = -1;
+        var p = this.data.pitch, h = this.data.dashH, s = this._sign;
+        this._kids.forEach(function (c, i) { c.object3D.position.y = s * (i * p + h / 2); });
       }
     });
     // pose-filter: A-Frame 1.7.0 compatibility only — no smoothing.
