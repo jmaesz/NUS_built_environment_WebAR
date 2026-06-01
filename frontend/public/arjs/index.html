@@ -6,7 +6,7 @@
   <title>NUScape-AR · ArUco</title>
   <link rel="preconnect" href="https://aframe.io">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <script src="https://aframe.io/releases/1.7.0/aframe.min.js"></script>
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@ar-js-org/ar.js@3.4.8/aframe/build/aframe-ar.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js" defer></script>
   <script>
@@ -104,8 +104,10 @@
           );
           self._devQuat.setFromEuler(self._euler);
         };
+        this._lastFoundTime = 0;
         this._onFound = function () {
           self._isLost = false;
+          self._lastFoundTime = performance.now();
           if (!self._ready) {
             self._pos.copy(self.el.object3D.position);
             self._quat.copy(self.el.object3D.quaternion);
