@@ -65,22 +65,15 @@
         }
       }
     });
-    // pose-filter: back-face prevention + A-Frame 1.7.0 visibility fix.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._pos        = new THREE.Vector3();
-        this._quat       = new THREE.Quaternion();
-        this._normal     = new THREE.Vector3();
-        this._toMarker   = new THREE.Vector3();
-        this._ready      = false;
-        this._isLost     = false;
-        this._hasGoodSeed = false;
-        this._frontStreak = 0;
+        this._ready  = false;
+        this._isLost = false;
         var self = this;
         this._onFound = function () { self._isLost = false; self._ready = true; };
-        this._onLost  = function () { self._isLost = true; self._hasGoodSeed = false; self._frontStreak = 0; };
+        this._onLost  = function () { self._isLost = true; };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
@@ -95,28 +88,6 @@
           else return;
         }
         if (!this._ready) return;
-        // Back-face prevention: marker normal (local +Z) must face toward camera (origin).
-        // dot > 0 means normal points away = back-face = AR.js picked wrong pose solution.
-        this._normal.set(0, 0, 1).applyQuaternion(obj.quaternion);
-        this._toMarker.copy(obj.position).normalize();
-        if (this._normal.dot(this._toMarker) > 0) {
-          this._frontStreak = 0;
-          if (this._hasGoodSeed) {
-            obj.position.copy(this._pos);
-            obj.quaternion.copy(this._quat);
-            obj.visible = true;
-          } else {
-            obj.visible = false;
-          }
-          return;
-        }
-        // Front-face — require 3 consecutive frames before trusting as seed
-        this._frontStreak++;
-        if (this._frontStreak >= 3) {
-          this._pos.copy(obj.position);
-          this._quat.copy(obj.quaternion);
-          this._hasGoodSeed = true;
-        }
         obj.visible = true;
       }
     });
@@ -543,7 +514,6 @@
 
           // Billboard
           var label = document.createElement('a-entity');
-          label.setAttribute('billboard', '');
 
           // Main label plane
           var bg = document.createElement('a-plane');
