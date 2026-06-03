@@ -88,6 +88,7 @@
           else return;
         }
         if (!this._ready) return;
+        obj.quaternion.set(0, 0, 0, 1);
         obj.visible = true;
       }
     });
@@ -514,6 +515,7 @@
 
           // Billboard
           var label = document.createElement('a-entity');
+          label.setAttribute('billboard', '');
 
           // Main label plane
           var bg = document.createElement('a-plane');
