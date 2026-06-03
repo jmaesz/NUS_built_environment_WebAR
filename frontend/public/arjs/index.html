@@ -44,10 +44,13 @@
     // label to intermittently face the wrong direction and appear to drop.
     AFRAME.registerComponent('billboard', {
       after: ['pose-filter'],
-      init: function () { this._origin = new THREE.Vector3(0, 0, 0); },
+      init: function () { this._wp = new THREE.Vector3(); this._target = new THREE.Vector3(); },
       tick: function () {
         if (!this.el.parentEl.parentEl.object3D.visible) return;
-        this.el.object3D.lookAt(this._origin);
+        var obj = this.el.object3D;
+        obj.getWorldPosition(this._wp);
+        this._target.set(0, this._wp.y, 0);
+        obj.lookAt(this._target);
       }
     });
     // Keep dashes pointing toward the marker regardless of orientation
