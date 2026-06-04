@@ -724,7 +724,7 @@
               var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
               flImg.setAttribute('position', (-8.5 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
-              flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat');
+              flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat; depthTest: true');
               (function(el, src) {
                 var tmpImg = new Image();
                 tmpImg.onload = function() {
@@ -747,6 +747,7 @@
                     mesh.material.map = tex;
                     mesh.material.transparent = true;
                     mesh.material.alphaTest = 0.05;
+                    mesh.material.depthTest = true;
                     mesh.material.needsUpdate = true;
                   }
                   setTimeout(tryApply, 600);
