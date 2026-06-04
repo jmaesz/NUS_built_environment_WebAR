@@ -81,7 +81,7 @@
     // ── Type ─────────────────────────────────────────────────────────────────
     "type": "barcode",
     // 'pattern' | 'barcode' | 'nft'
-    "markerhelpers": false
+    "markerhelpers": true
     // Show visual debug helpers on area markers
   },
 
@@ -106,12 +106,15 @@
     // Custom pose-filter component (not part of AR.js — implemented in arjs/index.html).
     // No hold mode or ghost — lost = hidden immediately.
 
-    "alpha": 0.3,
-    // Low-pass lerp factor during normal tracking [0–1].
-    // Each frame the label moves this fraction toward the newly detected pose.
-    // 0.3 = responsive with light smoothing.  1.0 = no smoothing, raw jitter.
-    // On re-detection _pos/_quat are reset to the detected pose instantly so
-    // there is no slow drift from a stale previous position.
+    "position_smoothing": "none",
+    // Currently no position smoothing — raw AR.js position every frame.
+    // alpha=0.3 lerp was tested and reverted (no visible change).
+    // Next to try: outlier rejection — hard discard frames where position
+    // jumps more than a threshold from last known good position.
+
+    "rotation": "zeroed",
+    // Marker rotation is forced to identity (0,0,0,1) every frame.
+    // AR.js detected rotation is discarded entirely — fixes back-face pose flip.
 
     "markerLost_hide_delay_ms": 0
     // Delay (ms) after markerLost before the UI panel hides. 0 = immediate.
