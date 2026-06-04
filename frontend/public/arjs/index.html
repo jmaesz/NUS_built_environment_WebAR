@@ -65,36 +65,23 @@
         }
       }
     });
-    // pose-filter: A-Frame 1.7.0 compatibility only — no smoothing.
-    // In 1.5.0, arjs-anchor ran last and overwrote obj.position/quaternion every frame,
-    // so pose-filter's lerp was invisible — arjs-anchor's smoothCount=30 did all the work.
-    // In 1.7.0 pose-filter runs after arjs-anchor, so any extra smoothing we apply on top
-    // fights arjs-anchor's smoother and causes oscillation. Solution: don't touch
-    // position/quaternion at all — just handle visibility and re-detection.
+    // pose-filter: back-face rejection + A-Frame 1.7.0 visibility fix.
+    // AR.js occasionally solves the marker pose from the wrong side (back-face ambiguity):
+    // the marker appears at negative world Y (below table), so the label drops to surface
+    // level. We reject any frame where the marker normal points away from the camera.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._ready     = false;
-        this._isLost    = false;
-        this._foundCount = 0;
-        this._lostCount  = 0;
-        this._lastFoundAt = 0;
+        this._pos     = new THREE.Vector3();
+        this._quat    = new THREE.Quaternion();
         this._normal  = new THREE.Vector3();
         this._toMarker = new THREE.Vector3();
-        this._euler   = new THREE.Euler();
-        this._isDebug = (this.el.id === 'marker-17');
+        this._ready   = false;
+        this._isLost  = false;
         var self = this;
-        this._onFound = function () {
-          self._isLost = false;
-          self._ready  = true;
-          self._foundCount++;
-          self._lastFoundAt = performance.now();
-        };
-        this._onLost = function () {
-          self._isLost = true;
-          self._lostCount++;
-        };
+        this._onFound = function () { self._isLost = false; };
+        this._onLost  = function () { self._isLost = true;  };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
@@ -106,40 +93,29 @@
         var obj = this.el.object3D;
         if (this._isLost) {
           if (obj.visible) this._onFound();
-          else {
-            if (this._isDebug) this._updateDebug(obj, 'LOST');
-            return;
-          }
+          else return;
         }
-        if (!this._ready) return;
+        if (!this._ready) {
+          if (!obj.visible) return;
+          this._pos.copy(obj.position);
+          this._quat.copy(obj.quaternion);
+          this._ready = true;
+          return;
+        }
         obj.visible = true;
-        if (this._isDebug) this._updateDebug(obj, 'DETECTED');
-      },
-      _updateDebug: function (obj, state) {
-        var dbg = document.getElementById('ar-debug');
-        if (!dbg) return;
-        var p = obj.position;
-        var dist = p.length().toFixed(2);
-        this._euler.setFromQuaternion(obj.quaternion, 'YXZ');
-        var rx = (this._euler.x * 180 / Math.PI).toFixed(1);
-        var ry = (this._euler.y * 180 / Math.PI).toFixed(1);
-        var rz = (this._euler.z * 180 / Math.PI).toFixed(1);
+        // Back-face rejection: marker normal (local Z) must face toward camera (origin).
+        // If dot(normal, -toMarker) < 0 the pose is flipped — use last good pose instead.
         this._normal.set(0, 0, 1).applyQuaternion(obj.quaternion);
-        this._toMarker.copy(p).normalize();
-        var dot = this._normal.dot(this._toMarker).toFixed(3);
-        var face = parseFloat(dot) > 0 ? 'BACK-FACE !' : 'front-face';
-        var secsSince = this._lastFoundAt ? ((performance.now() - this._lastFoundAt) / 1000).toFixed(1) : '-';
-        dbg.textContent = [
-          'SDE3 — ' + state,
-          'found: ' + this._foundCount + '  lost: ' + this._lostCount,
-          'last found: ' + secsSince + 's ago',
-          '---',
-          'pos  x:' + p.x.toFixed(2) + ' y:' + p.y.toFixed(2) + ' z:' + p.z.toFixed(2),
-          'dist: ' + dist + 'm',
-          'rot  p:' + rx + ' y:' + ry + ' r:' + rz,
-          'normal dot: ' + dot + ' (' + face + ')',
-        ].join('
-');
+        this._toMarker.copy(obj.position).normalize();
+        if (this._normal.dot(this._toMarker) > 0) {
+          // Back-face detected — restore last good pose
+          obj.position.copy(this._pos);
+          obj.quaternion.copy(this._quat);
+          return;
+        }
+        // Front-face — accept and store
+        this._pos.copy(obj.position);
+        this._quat.copy(obj.quaternion);
       }
     });
   </script>
@@ -169,13 +145,6 @@
     #landscape-scroll-btn .hint-arrow { font-size: 20px; line-height: 1; }
     #landscape-scroll-btn .hint-text { font-size: 8px; font-weight: 700; letter-spacing: 0.06em; line-height: 1.4; }
     @media (orientation: landscape) { #landscape-scroll-btn { display: flex; } }
-
-    #ar-debug {
-      position: fixed; bottom: 80px; left: 8px; z-index: 2000;
-      background: rgba(0,0,0,0.75); color: #0f0; font-family: monospace;
-      font-size: 10px; line-height: 1.6; padding: 8px 10px; border-radius: 6px;
-      pointer-events: none; max-width: 260px; white-space: pre;
-    }
     #scan-hint {
       position: fixed; bottom: 36px; left: 50%; transform: translateX(-50%);
       z-index: 1000; background: rgba(0,0,0,0.55); color: #fff;
@@ -385,7 +354,6 @@
     <a href="/" id="back-btn" onclick="window.location.href='/'; return false;">← BACK</a>
     <div id="landscape-scroll-btn"><span class="hint-arrow">↑</span><span class="hint-text">SCROLL<br>UP</span></div>
     <div id="scan-hint">POINT CAMERA AT MODEL</div>
-    <div id="ar-debug">SDE3: waiting...</div>
     <div id="camera-retry" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.88);flex-direction:column;align-items:center;justify-content:center;color:#fff;font-family:-apple-system,sans-serif;">
       <p style="font-size:13px;letter-spacing:0.12em;margin-bottom:18px;text-align:center;">CAMERA UNAVAILABLE<br><span style="font-size:11px;opacity:0.55;letter-spacing:0.06em;">Check permissions and try again</span></p>
       <button onclick="window.location.reload()" style="padding:12px 28px;font-size:11px;font-weight:700;letter-spacing:0.1em;background:#107b7f;color:#fff;border:none;border-radius:4px;cursor:pointer;">RETRY</button>
@@ -446,7 +414,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: color_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; sourceWidth: 1920; sourceHeight: 1440; canvasWidth: 1920; canvasHeight: 1440;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: color_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; sourceWidth: 1280; sourceHeight: 960; canvasWidth: 1280; canvasHeight: 960;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true; logarithmicDepthBuffer: true;"
     device-orientation-permission-ui="enabled: false"
