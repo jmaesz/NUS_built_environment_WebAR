@@ -519,6 +519,9 @@
           marker.id = 'marker-' + idx;
 
           // Dashes
+          var dashContainer = document.createElement('a-entity');
+          dashContainer.id = 'ar-dash-' + idx;
+          dashContainer.setAttribute('up-track', 'y: 0; lockXZ: true');
           var dashH = 0.1, pitch = 0.2, numDashes = Math.floor(1.05 / pitch);
           for (var di = 0; di < numDashes; di++) {
             var dash = document.createElement('a-cylinder');
@@ -526,13 +529,14 @@
             dash.setAttribute('height', String(dashH));
             dash.setAttribute('material', 'color: #ffffff; shader: flat; opacity: 0.85');
             dash.setAttribute('position', '0 ' + (di * pitch + dashH / 2).toFixed(2) + ' 0');
-            marker.appendChild(dash);
+            dashContainer.appendChild(dash);
           }
+          marker.appendChild(dashContainer);
 
           // Up-track container
           var upContainer = document.createElement('a-entity');
           upContainer.id = 'ar-up-' + idx;
-          upContainer.setAttribute('position', '0 1.1 0');
+          upContainer.setAttribute('up-track', 'y: 1.1; lockXZ: true');
           upContainer.setAttribute('visible', 'false');
 
           // Billboard
