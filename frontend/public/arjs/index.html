@@ -42,16 +42,6 @@
     // cam.getWorldPosition(), which in A-Frame 1.7.0 can return a wrong position
     // if sceneEl.camera resolves to a child object with an offset, causing the
     // label to intermittently face the wrong direction and appear to drop.
-    AFRAME.registerComponent('zero-marker-rotation', {
-      init: function () { this._inv = new THREE.Quaternion(); },
-      tick: function () {
-        var parent = this.el.object3D.parent;
-        if (!parent) return;
-        parent.getWorldQuaternion(this._inv);
-        this._inv.invert();
-        this.el.object3D.quaternion.copy(this._inv);
-      }
-    });
     AFRAME.registerComponent('billboard', {
       after: ['pose-filter'],
       init: function () { this._origin = new THREE.Vector3(0, 0, 0); },
@@ -514,7 +504,6 @@
           // Dashes
           var dashContainer = document.createElement('a-entity');
           dashContainer.id = 'ar-dash-' + idx;
-          dashContainer.setAttribute('zero-marker-rotation', '');
           var dashH = 0.1, pitch = 0.2, numDashes = Math.floor(1.05 / pitch);
           for (var di = 0; di < numDashes; di++) {
             var dash = document.createElement('a-cylinder');
@@ -531,7 +520,6 @@
           var upContainer = document.createElement('a-entity');
           upContainer.id = 'ar-up-' + idx;
           upContainer.setAttribute('position', '0 1.1 0');
-          upContainer.setAttribute('zero-marker-rotation', '');
 
           // Billboard
           var label = document.createElement('a-entity');
