@@ -65,23 +65,21 @@
         }
       }
     });
-    // pose-filter: back-face rejection + A-Frame 1.7.0 visibility fix.
-    // AR.js occasionally solves the marker pose from the wrong side (back-face ambiguity):
-    // the marker appears at negative world Y (below table), so the label drops to surface
-    // level. We reject any frame where the marker normal points away from the camera.
+    // pose-filter: A-Frame 1.7.0 compatibility only — no smoothing.
+    // In 1.5.0, arjs-anchor ran last and overwrote obj.position/quaternion every frame,
+    // so pose-filter's lerp was invisible — arjs-anchor's smoothCount=30 did all the work.
+    // In 1.7.0 pose-filter runs after arjs-anchor, so any extra smoothing we apply on top
+    // fights arjs-anchor's smoother and causes oscillation. Solution: don't touch
+    // position/quaternion at all — just handle visibility and re-detection.
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._pos     = new THREE.Vector3();
-        this._quat    = new THREE.Quaternion();
-        this._normal  = new THREE.Vector3();
-        this._toMarker = new THREE.Vector3();
-        this._ready   = false;
-        this._isLost  = false;
+        this._ready  = false;
+        this._isLost = false;
         var self = this;
-        this._onFound = function () { self._isLost = false; };
-        this._onLost  = function () { self._isLost = true;  };
+        this._onFound = function () { self._isLost = false; self._ready = true; };
+        this._onLost  = function () { self._isLost = true; };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
@@ -92,30 +90,15 @@
       tick: function () {
         var obj = this.el.object3D;
         if (this._isLost) {
+          // Belt-and-suspenders: if arjs-anchor detected the marker but markerFound
+          // didn't fire due to wasVisible poisoning, exit lost state now.
           if (obj.visible) this._onFound();
           else return;
         }
-        if (!this._ready) {
-          if (!obj.visible) return;
-          this._pos.copy(obj.position);
-          this._quat.copy(obj.quaternion);
-          this._ready = true;
-          return;
-        }
+        if (!this._ready) return;
+        // Force visible — overrides A-Frame 1.7 visible component tick-order reset.
+        // Do NOT touch position/quaternion — arjs-anchor's smoothCount=30 is sufficient.
         obj.visible = true;
-        // Back-face rejection: marker normal (local Z) must face toward camera (origin).
-        // If dot(normal, -toMarker) < 0 the pose is flipped — use last good pose instead.
-        this._normal.set(0, 0, 1).applyQuaternion(obj.quaternion);
-        this._toMarker.copy(obj.position).normalize();
-        if (this._normal.dot(this._toMarker) > 0) {
-          // Back-face detected — restore last good pose
-          obj.position.copy(this._pos);
-          obj.quaternion.copy(this._quat);
-          return;
-        }
-        // Front-face — accept and store
-        this._pos.copy(obj.position);
-        this._quat.copy(obj.quaternion);
       }
     });
   </script>
@@ -414,7 +397,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: color_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; sourceWidth: 1280; sourceHeight: 960; canvasWidth: 1280; canvasHeight: 960;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: color_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; sourceWidth: 1920; sourceHeight: 1440; canvasWidth: 1920; canvasHeight: 1440;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true; logarithmicDepthBuffer: true;"
     device-orientation-permission-ui="enabled: false"
