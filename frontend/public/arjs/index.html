@@ -790,39 +790,11 @@
             assets.appendChild(simg);
             var solarMat = document.createElement('a-plane');
             solarMat.id = 'solar-mat-' + idx;
+            solarMat.setAttribute('src', '#solar-img-' + idx);
             solarMat.setAttribute('rotation', '-90 ' + solarD.ry + ' 0');
             solarMat.setAttribute('position', solarD.x + ' 0.01 ' + solarD.z);
             solarMat.setAttribute('width',  solarD.w);
             solarMat.setAttribute('height', solarD.h);
-            (function(el, src) {
-              var tmpImg = new Image();
-              tmpImg.onload = function() {
-                var cv = document.createElement('canvas');
-                cv.width = tmpImg.width; cv.height = tmpImg.height;
-                var ctx = cv.getContext('2d');
-                ctx.drawImage(tmpImg, 0, 0);
-                var id = ctx.getImageData(0, 0, cv.width, cv.height);
-                var d = id.data;
-                for (var pi = 0; pi < d.length; pi += 4) {
-                  if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
-                }
-                ctx.putImageData(id, 0, 0);
-                function tryApply() {
-                  var mesh = el.getObject3D('mesh');
-                  if (!mesh || !mesh.material) { setTimeout(tryApply, 100); return; }
-                  var tex = new THREE.CanvasTexture(cv);
-                  tex.colorSpace = THREE.SRGBColorSpace;
-                  tex.needsUpdate = true;
-                  mesh.material.map = tex;
-                  mesh.material.transparent = true;
-                  mesh.material.alphaTest = 0.05;
-                  mesh.material.depthTest = true;
-                  mesh.material.needsUpdate = true;
-                }
-                setTimeout(tryApply, 600);
-              };
-              tmpImg.src = src;
-            })(solarMat, '/solar/' + b.name + '.webp');
             solarMat.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
             solarMat.setAttribute('visible', 'false');
             marker.appendChild(solarMat);

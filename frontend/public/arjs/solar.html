@@ -159,44 +159,24 @@
       marker.setAttribute('smoothThreshold', '1');
       marker.setAttribute('minConfidence', '0.05');
 
+      var img = document.createElement('img');
+      img.id = 'img-' + b.name;
+      img.src = '/solar/' + b.name + '.webp';
+      img.setAttribute('crossorigin', 'anonymous');
+      img.addEventListener('load', function() {
+        if (img.naturalWidth && img.naturalHeight) aspects[b.name] = img.naturalWidth / img.naturalHeight;
+        applyMat(b.name);
+      });
+      assets.appendChild(img);
+
       var mat = document.createElement('a-plane');
       mat.id = 'mat-' + b.name;
+      mat.setAttribute('src', '#img-' + b.name);
       mat.setAttribute('rotation', '-90 0 0');
       mat.setAttribute('position', b.x + ' 0.01 ' + b.z);
       mat.setAttribute('width',  b.s);
       mat.setAttribute('height', b.s);
       mat.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
-      (function(el, name) {
-        var tmpImg = new Image();
-        tmpImg.crossOrigin = 'anonymous';
-        tmpImg.onload = function() {
-          if (tmpImg.naturalWidth && tmpImg.naturalHeight) aspects[name] = tmpImg.naturalWidth / tmpImg.naturalHeight;
-          var cv = document.createElement('canvas');
-          cv.width = tmpImg.width; cv.height = tmpImg.height;
-          var ctx = cv.getContext('2d');
-          ctx.drawImage(tmpImg, 0, 0);
-          var id = ctx.getImageData(0, 0, cv.width, cv.height);
-          var d = id.data;
-          for (var pi = 0; pi < d.length; pi += 4) {
-            if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
-          }
-          ctx.putImageData(id, 0, 0);
-          function tryApply() {
-            var mesh = el.getObject3D('mesh');
-            if (!mesh || !mesh.material) { setTimeout(tryApply, 100); return; }
-            var tex = new THREE.CanvasTexture(cv);
-            tex.colorSpace = THREE.SRGBColorSpace;
-            tex.needsUpdate = true;
-            mesh.material.map = tex;
-            mesh.material.transparent = true;
-            mesh.material.alphaTest = 0.05;
-            mesh.material.needsUpdate = true;
-            applyMat(name);
-          }
-          setTimeout(tryApply, 600);
-        };
-        tmpImg.src = '/solar/' + name + '.webp';
-      })(mat, b.name);
       mat.setAttribute('visible', 'false');
       marker.appendChild(mat);
       scene.appendChild(marker);
