@@ -519,8 +519,6 @@
           marker.id = 'marker-' + idx;
 
           // Dashes
-          var dashContainer = document.createElement('a-entity');
-          dashContainer.id = 'ar-dash-' + idx;
           var dashH = 0.1, pitch = 0.2, numDashes = Math.floor(1.05 / pitch);
           for (var di = 0; di < numDashes; di++) {
             var dash = document.createElement('a-cylinder');
@@ -529,9 +527,8 @@
             dash.setAttribute('color', '#ffffff');
             dash.setAttribute('opacity', '0.85');
             dash.setAttribute('position', '0 ' + (di * pitch + dashH / 2).toFixed(2) + ' 0');
-            dashContainer.appendChild(dash);
+            marker.appendChild(dash);
           }
-          marker.appendChild(dashContainer);
 
           // Up-track container
           var upContainer = document.createElement('a-entity');
