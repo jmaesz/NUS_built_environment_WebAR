@@ -72,11 +72,13 @@
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._ready  = false;
-        this._isLost = false;
+        this._ready   = false;
+        this._isLost  = false;
+        this._smoothPos = new THREE.Vector3();
+        this._seeded  = false;
         var self = this;
         this._onFound = function () { self._isLost = false; self._ready = true; };
-        this._onLost  = function () { self._isLost = true; };
+        this._onLost  = function () { self._isLost = true; self._seeded = false; };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
       },
@@ -92,6 +94,13 @@
         }
         if (!this._ready) return;
         obj.quaternion.set(0, 0, 0, 1);
+        if (!this._seeded) {
+          this._smoothPos.copy(obj.position);
+          this._seeded = true;
+        } else {
+          this._smoothPos.lerp(obj.position, 0.3);
+        }
+        obj.position.copy(this._smoothPos);
         obj.visible = true;
       }
     });
