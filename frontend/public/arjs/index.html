@@ -354,6 +354,10 @@
       'SDE3': { x:  1.30, z:  1.30, ry:   0, w: 17.51, h: 12.50 },
       'SDE4': { x: -0.50, z:  1.50, ry:   0, w: 17.50, h: 12.50 },
     };
+    // Extra solar mats on existing markers (file = image name in /solar/)
+    window.SOLAR_EXTRA = {
+      'E2': [{ file: 'LT1_LT2', x: 0.00, z: 0.00, ry: 0, w: 5.00, h: 5.00 }]
+    };
   </script>
 </head>
 <body>
@@ -800,6 +804,27 @@
             marker.appendChild(solarMat);
           }
 
+          // Extra solar mats (e.g. LT1_LT2 on E2 marker)
+          var extraMats = window.SOLAR_EXTRA && window.SOLAR_EXTRA[b.name];
+          if (extraMats) {
+            extraMats.forEach(function(ed, ei) {
+              var esimg = document.createElement('img');
+              esimg.id = 'solar-extra-img-' + idx + '-' + ei;
+              esimg.src = '/solar/' + ed.file + '.webp';
+              assets.appendChild(esimg);
+              var eMat = document.createElement('a-plane');
+              eMat.id = 'solar-extra-mat-' + idx + '-' + ei;
+              eMat.setAttribute('src', '#solar-extra-img-' + idx + '-' + ei);
+              eMat.setAttribute('rotation', '-90 ' + ed.ry + ' 0');
+              eMat.setAttribute('position', ed.x + ' 0.01 ' + ed.z);
+              eMat.setAttribute('width',  ed.w);
+              eMat.setAttribute('height', ed.h);
+              eMat.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
+              eMat.setAttribute('visible', 'false');
+              marker.appendChild(eMat);
+            });
+          }
+
           scene.appendChild(marker);
         });
       })();
@@ -1139,6 +1164,7 @@
           }
           var sm2 = document.getElementById('solar-mat-' + i);
           if (sm2 && sm2.object3D) sm2.object3D.visible = false;
+          var se2 = 0; while (document.getElementById('solar-extra-mat-' + i + '-' + se2)) { document.getElementById('solar-extra-mat-' + i + '-' + se2).object3D.visible = false; se2++; }
         }
       });
     }
@@ -1155,6 +1181,7 @@
       });
       var solarMat = document.getElementById('solar-mat-' + idx);
       if (solarMat && solarMat.object3D) solarMat.object3D.visible = true;
+      var sei = 0; while (document.getElementById('solar-extra-mat-' + idx + '-' + sei)) { document.getElementById('solar-extra-mat-' + idx + '-' + sei).object3D.visible = true; sei++; }
 
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
       document.getElementById('chart-building-name').textContent = b.name;
@@ -1217,6 +1244,7 @@
         });
         var sm = document.getElementById('solar-mat-' + activeIdx);
         if (sm && sm.object3D) sm.object3D.visible = false;
+        var sec = 0; while (document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec)) { document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec).object3D.visible = false; sec++; }
         // Release pose-filter hold so AR disappears with the panel
         var mel = document.getElementById('marker-' + activeIdx);
         var pf = mel && mel.components && mel.components['pose-filter'];
