@@ -43,13 +43,21 @@
     // if sceneEl.camera resolves to a child object with an offset, causing the
     // label to intermittently face the wrong direction and appear to drop.
     AFRAME.registerComponent('zero-marker-rotation', {
-      init: function () { this._inv = new THREE.Quaternion(); },
+      schema: { yOffset: { default: 0 } },
+      init: function () { this._inv = new THREE.Quaternion(); this._wp = new THREE.Vector3(); },
       tick: function () {
-        var parent = this.el.object3D.parent;
+        var obj = this.el.object3D;
+        var parent = obj.parent;
         if (!parent) return;
         parent.getWorldQuaternion(this._inv);
         this._inv.invert();
-        this.el.object3D.quaternion.copy(this._inv);
+        obj.quaternion.copy(this._inv);
+        if (this.data.yOffset !== 0) {
+          parent.getWorldPosition(this._wp);
+          this._wp.y += this.data.yOffset;
+          parent.worldToLocal(this._wp);
+          obj.position.copy(this._wp);
+        }
       }
     });
     AFRAME.registerComponent('billboard', {
@@ -530,8 +538,7 @@
           // Up-track container
           var upContainer = document.createElement('a-entity');
           upContainer.id = 'ar-up-' + idx;
-          upContainer.setAttribute('up-track', 'y: 1.1; lockXZ: true');
-          upContainer.setAttribute('zero-marker-rotation', '');
+          upContainer.setAttribute('zero-marker-rotation', 'yOffset: 1.1');
 
           // Billboard
           var label = document.createElement('a-entity');
