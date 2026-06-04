@@ -522,7 +522,6 @@
           // Dashes
           var dashContainer = document.createElement('a-entity');
           dashContainer.id = 'ar-dash-' + idx;
-          dashContainer.setAttribute('zero-marker-rotation', '');
           var dashH = 0.1, pitch = 0.2, numDashes = Math.floor(1.05 / pitch);
           for (var di = 0; di < numDashes; di++) {
             var dash = document.createElement('a-cylinder');
@@ -538,7 +537,7 @@
           // Up-track container
           var upContainer = document.createElement('a-entity');
           upContainer.id = 'ar-up-' + idx;
-          upContainer.setAttribute('zero-marker-rotation', 'yOffset: 1.1');
+          upContainer.setAttribute('position', '0 1.1 0');
 
           // Billboard
           var label = document.createElement('a-entity');
