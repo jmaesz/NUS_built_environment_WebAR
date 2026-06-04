@@ -23,7 +23,7 @@
     // above in world space regardless of detected marker orientation.
     AFRAME.registerComponent('up-track', {
       schema: { y: { default: 1.8 }, lockXZ: { default: false } },
-      after: ['pose-filter'],
+      after: ['arjs-anchor'],
       init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
         var mo = this.el.parentEl.object3D;
