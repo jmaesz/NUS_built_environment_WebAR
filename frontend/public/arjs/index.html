@@ -784,6 +784,10 @@
           // ── Solar mat (hidden until chart opens) ──────────────────────────
           var solarD = window.SOLAR_DATA && window.SOLAR_DATA[b.name];
           if (solarD) {
+            var simg = document.createElement('img');
+            simg.id = 'solar-img-' + idx;
+            simg.src = '/solar/' + b.name + '.webp';
+            assets.appendChild(simg);
             var solarMat = document.createElement('a-plane');
             solarMat.id = 'solar-mat-' + idx;
             solarMat.setAttribute('rotation', '-90 ' + solarD.ry + ' 0');
