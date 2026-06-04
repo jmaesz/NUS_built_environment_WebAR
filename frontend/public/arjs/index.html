@@ -77,23 +77,15 @@
       init: function () {
         this._ready     = false;
         this._isLost    = false;
-        this._foundCount = 0;
-        this._lostCount  = 0;
-        this._lastFoundAt = 0;
         this._normal  = new THREE.Vector3();
         this._toMarker = new THREE.Vector3();
-        this._euler   = new THREE.Euler();
-        this._isDebug = (this.el.id === 'marker-17');
         var self = this;
         this._onFound = function () {
           self._isLost = false;
           self._ready  = true;
-          self._foundCount++;
-          self._lastFoundAt = performance.now();
         };
         this._onLost = function () {
           self._isLost = true;
-          self._lostCount++;
         };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
@@ -107,39 +99,35 @@
         if (this._isLost) {
           if (obj.visible) this._onFound();
           else {
-            if (this._isDebug) this._updateDebug(obj, 'LOST');
             return;
           }
         }
         if (!this._ready) return;
-        obj.visible = true;
-        if (this._isDebug) this._updateDebug(obj, 'DETECTED');
-      },
-      _updateDebug: function (obj, state) {
-        var dbg = document.getElementById('ar-debug');
-        if (!dbg) return;
-        var p = obj.position;
-        var dist = p.length().toFixed(2);
-        this._euler.setFromQuaternion(obj.quaternion, 'YXZ');
-        var rx = (this._euler.x * 180 / Math.PI).toFixed(1);
-        var ry = (this._euler.y * 180 / Math.PI).toFixed(1);
-        var rz = (this._euler.z * 180 / Math.PI).toFixed(1);
+        // Back-face prevention: marker normal (local +Z) must point toward camera (origin).
+        // dot(normal, toMarker) > 0 means normal points away = back-face = wrong pose.
+        // Require 3 consecutive front-face frames before seeding to avoid bad first-frame lock.
         this._normal.set(0, 0, 1).applyQuaternion(obj.quaternion);
-        this._toMarker.copy(p).normalize();
-        var dot = this._normal.dot(this._toMarker).toFixed(3);
-        var face = parseFloat(dot) > 0 ? 'BACK-FACE !' : 'front-face';
-        var secsSince = this._lastFoundAt ? ((performance.now() - this._lastFoundAt) / 1000).toFixed(1) : '-';
-        dbg.textContent = [
-          'SDE3 — ' + state,
-          'found: ' + this._foundCount + '  lost: ' + this._lostCount,
-          'last found: ' + secsSince + 's ago',
-          '---',
-          'pos  x:' + p.x.toFixed(2) + ' y:' + p.y.toFixed(2) + ' z:' + p.z.toFixed(2),
-          'dist: ' + dist + 'm',
-          'rot  p:' + rx + ' y:' + ry + ' r:' + rz,
-          'normal dot: ' + dot + ' (' + face + ')',
-        ].join('
-');
+        this._toMarker.copy(obj.position).normalize();
+        var isBackFace = this._normal.dot(this._toMarker) > 0;
+        if (isBackFace) {
+          this._frontStreak = 0;
+          if (this._isDebug) this._updateDebug(obj, 'BACK-FACE BLOCKED');
+          if (this._hasGoodSeed) {
+            obj.position.copy(this._pos);
+            obj.quaternion.copy(this._quat);
+          } else {
+            obj.visible = false;
+          }
+          return;
+        }
+        // Front-face — count streak before trusting seed
+        this._frontStreak = (this._frontStreak || 0) + 1;
+        if (this._frontStreak >= 3) {
+          this._pos.copy(obj.position);
+          this._quat.copy(obj.quaternion);
+          this._hasGoodSeed = true;
+        }
+        obj.visible = true;
       }
     });
   </script>
