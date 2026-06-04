@@ -7,16 +7,16 @@
     // URL for video/image source — only used when sourceType is 'video' or 'image'
     "deviceId": "",
     // Force a specific camera device ID. Empty = use default camera
-    "sourceWidth": 1920,
-    "sourceHeight": 1440,
+    "sourceWidth": 1280,
+    "sourceHeight": 960,
     // Camera capture resolution. Higher = better far/angle detection, more CPU
     "displayWidth": -1,
     "displayHeight": -1,
     // Render display resolution. -1 = auto (matches viewport)
 
     // ── Detection context ────────────────────────────────────────────────────
-    "canvasWidth": 1920,
-    "canvasHeight": 1440,
+    "canvasWidth": 1280,
+    "canvasHeight": 960,
     // AR processing canvas resolution. Higher = better accuracy, more CPU/latency
     "detectionMode": "color_and_matrix",
     // 'color' | 'mono' | 'color_and_matrix' | 'mono_and_matrix'

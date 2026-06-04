@@ -524,8 +524,7 @@
             var dash = document.createElement('a-cylinder');
             dash.setAttribute('radius', '0.06');
             dash.setAttribute('height', String(dashH));
-            dash.setAttribute('color', '#ffffff');
-            dash.setAttribute('opacity', '0.85');
+            dash.setAttribute('material', 'color: #ffffff; shader: flat; opacity: 0.85');
             dash.setAttribute('position', '0 ' + (di * pitch + dashH / 2).toFixed(2) + ' 0');
             marker.appendChild(dash);
           }
