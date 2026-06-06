@@ -90,27 +90,6 @@
     // In 1.7.0 pose-filter runs after arjs-anchor, so any extra smoothing we apply on top
     // fights arjs-anchor's smoother and causes oscillation. Solution: don't touch
     // position/quaternion at all — just handle visibility and re-detection.
-    AFRAME.registerComponent('ar-hold-tracker', {
-      init: function () {
-        this._initCamQuat  = new THREE.Quaternion();
-        this._initPos      = new THREE.Vector3();
-        this._invInitQuat  = new THREE.Quaternion();
-        this._curQuat      = new THREE.Quaternion();
-        this._newPos       = new THREE.Vector3();
-        this._camEl        = document.querySelector('a-entity[camera]') || document.querySelector('[camera]');
-      },
-      tick: function () {
-        if (!this._camEl) return;
-        this._camEl.object3D.getWorldQuaternion(this._curQuat);
-        // delta = current * inverse(initial)
-        this._newPos.copy(this._initPos)
-          .applyQuaternion(this._invInitQuat)
-          .applyQuaternion(this._curQuat);
-        this.el.object3D.position.copy(this._newPos);
-        // Force all children visible
-        this.el.object3D.traverse(function(child) { child.visible = true; });
-      }
-    });
     AFRAME.registerComponent('pose-filter', {
       schema: {},
       after: ['visible', 'arjs-anchor'],
@@ -1289,31 +1268,23 @@
 
       // Reparent AR content to camera entity in DOM so it stays visible when marker leaves frame
       if (_activeGhost) {
-        _ghostChildren.forEach(function(item) { item.el.object3D._inGhost = false; if (item.origDomParent) item.origDomParent.appendChild(item.el); });
+        _ghostChildren.forEach(function(item) { if (item.origDomParent) item.origDomParent.appendChild(item.el); });
         _activeGhost.parentNode && _activeGhost.parentNode.removeChild(_activeGhost);
         _activeGhost = null; _ghostChildren = [];
       }
       var camEl = document.querySelector('a-entity[camera]') || document.querySelector('[camera]');
       var markerObj = mel.object3D;
       if (camEl) {
+        // Create ghost a-entity as child of camera, positioned at marker's camera-relative location
         _activeGhost = document.createElement('a-entity');
         _activeGhost.id = 'ar-hold-ghost';
         var markerWorldPos = new THREE.Vector3();
         markerObj.getWorldPosition(markerWorldPos);
-        var camQuat = new THREE.Quaternion();
-        camEl.object3D.getWorldQuaternion(camQuat);
-        _activeGhost.setAttribute('position', markerWorldPos.x + ' ' + markerWorldPos.y + ' ' + markerWorldPos.z);
-        _activeGhost.setAttribute('ar-hold-tracker', '');
-        document.querySelector('a-scene').appendChild(_activeGhost);
-        // Seed tracker with initial values
-        _activeGhost.addEventListener('componentinitialized', function onInit(e) {
-          if (e.detail.name !== 'ar-hold-tracker') return;
-          _activeGhost.removeEventListener('componentinitialized', onInit);
-          var t = _activeGhost.components['ar-hold-tracker'];
-          t._initPos.copy(markerWorldPos);
-          t._initCamQuat.copy(camQuat);
-          t._invInitQuat.copy(camQuat).invert();
-        });
+        var camObj = camEl.object3D;
+        camObj.updateWorldMatrix(true, false);
+        var camLocal = camObj.worldToLocal(markerWorldPos.clone());
+        _activeGhost.setAttribute('position', camLocal.x + ' ' + camLocal.y + ' ' + camLocal.z);
+        camEl.appendChild(_activeGhost);
         _ghostChildren = [];
         var ghostTargets = [document.getElementById('ar-up-' + idx)];
         var sm = document.getElementById('solar-mat-' + idx);
@@ -1378,7 +1349,6 @@
           _ghostChildren.forEach(function(item) {
             item.el.object3D._inGhost = false;
             if (item.origDomParent) item.origDomParent.appendChild(item.el);
-            item.el.object3D.visible = true;
           });
           _activeGhost.parentNode && _activeGhost.parentNode.removeChild(_activeGhost);
           _activeGhost = null; _ghostChildren = [];
