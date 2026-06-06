@@ -93,8 +93,11 @@
       schema: {},
       after: ['visible', 'arjs-anchor'],
       init: function () {
-        this._ready  = false;
-        this._isLost = false;
+        this._ready    = false;
+        this._isLost   = false;
+        this._holdMode = false;
+        this._lastPos  = new THREE.Vector3();
+        this._lastQuat = new THREE.Quaternion();
         var self = this;
         this._onFound = function () { self._isLost = false; self._ready = true; };
         this._onLost  = function () { self._isLost = true; };
@@ -108,14 +111,18 @@
       tick: function () {
         var obj = this.el.object3D;
         if (this._isLost) {
-          // Belt-and-suspenders: if arjs-anchor detected the marker but markerFound
-          // didn't fire due to wasVisible poisoning, exit lost state now.
+          if (this._holdMode) {
+            obj.position.copy(this._lastPos);
+            obj.quaternion.copy(this._lastQuat);
+            obj.visible = true;
+            return;
+          }
           if (obj.visible) this._onFound();
           else return;
         }
         if (!this._ready) return;
-        // Force visible — overrides A-Frame 1.7 visible component tick-order reset.
-        // Do NOT touch position/quaternion — arjs-anchor's smoothCount=30 is sufficient.
+        this._lastPos.copy(obj.position);
+        this._lastQuat.copy(obj.quaternion);
         obj.visible = true;
       }
     });
@@ -1254,6 +1261,10 @@
       document.getElementById('pie-divider').style.display   = _pie ? 'block' : 'none';
       document.getElementById('total-row').style.display     = _pie ? 'flex' : 'none';
 
+      var mel = document.getElementById('marker-' + idx);
+      var pf = mel && mel.components && mel.components['pose-filter'];
+      if (pf) pf._holdMode = true;
+
       chartPanel.classList.remove('collapsed');
       document.getElementById('chart-chevron').textContent = '‹';
       chartPanel.classList.add('visible');
@@ -1293,7 +1304,7 @@
         // Release pose-filter hold so AR disappears with the panel
         var mel = document.getElementById('marker-' + activeIdx);
         var pf = mel && mel.components && mel.components['pose-filter'];
-        if (pf) { pf._ready = false; pf._isLost = false; }
+        if (pf) { pf._holdMode = false; pf._ready = false; pf._isLost = false; }
       }
       if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; setPlayBtn(_speechIdx, false); _speaking = false; _speechIdx = -1; }
       setOtherLabelsVisible(-1, true);
