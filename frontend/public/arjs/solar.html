@@ -210,10 +210,8 @@
     function toggleBld(name) {
       enabled[name] = !enabled[name];
       document.getElementById('tog-' + name).classList.toggle('on', enabled[name]);
-      if (!enabled[name]) {
-        var mat = document.getElementById('mat-' + name);
-        if (mat && mat.object3D) mat.object3D.visible = false;
-      }
+      var mat = document.getElementById('mat-' + name);
+      if (mat && mat.object3D) mat.object3D.visible = enabled[name] && document.getElementById('marker-' + name).object3D.visible;
     }
 
     function applyMat(name) {
