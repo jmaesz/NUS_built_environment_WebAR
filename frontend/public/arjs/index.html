@@ -26,6 +26,7 @@
       after: ['arjs-anchor'],
       init: function () { this._wp = new THREE.Vector3(); },
       tick: function () {
+        if (this.el.object3D._inGhost) return;
         var mo = this.el.parentEl.object3D;
         if (!mo.visible) return;
         mo.updateWorldMatrix(true, false);
@@ -1297,6 +1298,8 @@
           if (!el) return;
           _ghostChildren.push({ el: el, origParent: el.object3D.parent });
           _activeGhost.attach(el.object3D);
+          el.object3D._inGhost = true;
+          el.object3D.visible = true;
         });
       }
 
@@ -1341,7 +1344,10 @@
         var pf = mel && mel.components && mel.components['pose-filter'];
         if (pf) { pf._holdMode = false; pf._ready = false; pf._isLost = false; }
         if (_activeGhost) {
-          _ghostChildren.forEach(function(item) { if (item.origParent) item.origParent.attach(item.el.object3D); });
+          _ghostChildren.forEach(function(item) {
+            item.el.object3D._inGhost = false;
+            if (item.origParent) item.origParent.attach(item.el.object3D);
+          });
           _activeGhost.parent && _activeGhost.parent.remove(_activeGhost);
           _activeGhost = null; _ghostChildren = [];
         }
