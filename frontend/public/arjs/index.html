@@ -1265,6 +1265,41 @@
       var pf = mel && mel.components && mel.components['pose-filter'];
       if (pf) pf._holdMode = true;
 
+      // Reparent AR content to camera space so it stays visible when marker leaves frame
+      if (_activeGhost) {
+        _ghostChildren.forEach(function(item) { if (item.origParent) item.origParent.attach(item.el.object3D); });
+        _activeGhost.parent && _activeGhost.parent.remove(_activeGhost);
+        _activeGhost = null; _ghostChildren = [];
+      }
+      var camEl = document.querySelector('a-entity[camera]') || document.querySelector('[camera]');
+      var camObj = camEl ? camEl.object3D : null;
+      var markerObj = mel.object3D;
+      if (camObj) {
+        _activeGhost = new THREE.Group();
+        // Convert marker world position to camera local space
+        var markerWorldPos = new THREE.Vector3();
+        markerObj.getWorldPosition(markerWorldPos);
+        var camLocalPos = camObj.worldToLocal(markerWorldPos.clone());
+        _activeGhost.position.copy(camLocalPos);
+        camObj.add(_activeGhost);
+        _ghostChildren = [];
+        var ghostTargets = [document.getElementById('ar-up-' + idx)];
+        var sm = document.getElementById('solar-mat-' + idx);
+        if (sm) ghostTargets.push(sm);
+        var sei2 = 0, se2el;
+        while ((se2el = document.getElementById('solar-extra-mat-' + idx + '-' + sei2))) { ghostTargets.push(se2el); sei2++; }
+        var dfloors2 = window.DAYLIGHT_FLOORS[b.name];
+        if (dfloors2) dfloors2.forEach(function(f) {
+          var fup = document.getElementById('fl-up-' + idx + '-' + f.key);
+          if (fup) ghostTargets.push(fup);
+        });
+        ghostTargets.forEach(function(el) {
+          if (!el) return;
+          _ghostChildren.push({ el: el, origParent: el.object3D.parent });
+          _activeGhost.attach(el.object3D);
+        });
+      }
+
       chartPanel.classList.remove('collapsed');
       document.getElementById('chart-chevron').textContent = '‹';
       chartPanel.classList.add('visible');
@@ -1305,6 +1340,11 @@
         var mel = document.getElementById('marker-' + activeIdx);
         var pf = mel && mel.components && mel.components['pose-filter'];
         if (pf) { pf._holdMode = false; pf._ready = false; pf._isLost = false; }
+        if (_activeGhost) {
+          _ghostChildren.forEach(function(item) { if (item.origParent) item.origParent.attach(item.el.object3D); });
+          _activeGhost.parent && _activeGhost.parent.remove(_activeGhost);
+          _activeGhost = null; _ghostChildren = [];
+        }
       }
       if (_speaking && _audio) { _audio.pause(); _audio.currentTime = 0; setPlayBtn(_speechIdx, false); _speaking = false; _speechIdx = -1; }
       setOtherLabelsVisible(-1, true);
