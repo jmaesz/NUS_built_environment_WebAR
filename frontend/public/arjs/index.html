@@ -769,8 +769,8 @@
               // Daylight image — flat mat on marker surface
               var flImg = document.createElement('a-plane');
               flImg.id = 'fl-img-' + idx + '-' + fl.key;
-              flImg.setAttribute('width', '5.5');
               flImg.setAttribute('height', '4.1');
+              flImg.setAttribute('width', '5.5');
               var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
               flImg.setAttribute('position', (-8.5 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
@@ -788,6 +788,8 @@
                     if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
                   }
                   ctx.putImageData(id, 0, 0);
+                  var aspect = cv.width / cv.height;
+                  el.setAttribute('width', (4.1 * aspect).toFixed(3));
                   function tryApply() {
                     var mesh = el.getObject3D('mesh');
                     if (!mesh || !mesh.material) { setTimeout(tryApply, 100); return; }
