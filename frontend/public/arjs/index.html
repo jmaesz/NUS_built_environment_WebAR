@@ -1549,7 +1549,11 @@
     });
 
     window.addEventListener('orientationchange', function () {
-      setTimeout(function () { window.location.reload(); }, 150);
+      var before = window.innerWidth > window.innerHeight;
+      setTimeout(function () {
+        var after = window.innerWidth > window.innerHeight;
+        if (before !== after) window.location.reload();
+      }, 150);
     });
 
     // Release camera tracks before page unloads so refresh gets a clean stream
