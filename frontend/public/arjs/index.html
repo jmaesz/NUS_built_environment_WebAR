@@ -96,10 +96,11 @@
         this._ready    = false;
         this._isLost   = false;
         this._holdMode = false;
+        this._hasRef   = false;
         this._lastPos  = new THREE.Vector3();
         this._lastQuat = new THREE.Quaternion();
         var self = this;
-        this._onFound = function () { self._isLost = false; self._ready = true; };
+        this._onFound = function () { self._isLost = false; self._ready = true; self._hasRef = false; };
         this._onLost  = function () { self._isLost = true; };
         this.el.addEventListener('markerFound', this._onFound);
         this.el.addEventListener('markerLost',  this._onLost);
@@ -121,8 +122,20 @@
           else return;
         }
         if (!this._ready) return;
+        // Reject 180° pose flips: if the incoming quaternion differs from the last
+        // stable one by more than ~60° (dot < 0.5), AR.js has likely resolved the
+        // marker ambiguously — restore the last good pose instead.
+        if (this._hasRef) {
+          var dot = Math.abs(obj.quaternion.dot(this._lastQuat));
+          if (dot < 0.5) {
+            obj.position.copy(this._lastPos);
+            obj.quaternion.copy(this._lastQuat);
+            return;
+          }
+        }
         this._lastPos.copy(obj.position);
         this._lastQuat.copy(obj.quaternion);
+        this._hasRef = true;
         obj.visible = true;
       }
     });
