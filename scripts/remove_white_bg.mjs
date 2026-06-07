@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import { readdir } from 'fs/promises';
 import path from 'path';
 
-const srcDir = '../source-assets/Solar/solarnew';
+const srcDir = '../source-assets/Solar';
 const dstDir = '../frontend/public/solar';
 
 const files = await readdir(srcDir);
