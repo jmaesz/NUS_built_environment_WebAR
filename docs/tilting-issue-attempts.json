@@ -1,0 +1,34 @@
+{
+  "issue": "AR labels intermittently tilt/pitch backward and downward — happens to any marker, not just one",
+  "confirmed_facts": [
+    "Intermittent — not constant",
+    "Affects any marker, not specific ones",
+    "Label pitches backward/downward, not sideways",
+    "Not the same as the dropping issue — dropping is fixed, this is separate"
+  ],
+  "attempts": [
+    {
+      "id": 1,
+      "what": "Yaw-only billboard — lookAt target set to (0, worldY, 0)",
+      "why": "Full lookAt(0,0,0) pitches toward camera when marker Y position jitters — yaw-only ignores pitch",
+      "result": "Partially helped but tilt still occurs intermittently"
+    },
+    {
+      "id": 2,
+      "what": "Position smoothing in pose-filter — lerp alpha=0.3, seed on first frame, reset on markerLost",
+      "why": "Depth spikes from AR.js cause single-frame position jumps which tilt the label — lerp averages them out",
+      "result": "Reverted — no visible change, tilt still occurred"
+    },
+    {
+      "id": 3,
+      "what": "Billboard fixed Y — seed lookAt target Y from first detection, never update it",
+      "why": "Yaw-only billboard recalculates worldY every frame — depth spike changes worldY, lookAt target shifts, label rotates off-axis and appears to shrink",
+      "result": "Reverted — no visible change"
+    }
+  ],
+  "current_state": {
+    "billboard": "yaw-only, lookAt(0, worldY, 0)"
+  },
+  "leading_hypothesis": "AR.js position estimate is noisy frame-to-frame — sudden depth/position spikes cause the label to lurch even with yaw-only billboard",
+  "next": "Position smoothing on marker detected position"
+}

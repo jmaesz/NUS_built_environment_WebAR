@@ -1,0 +1,140 @@
+{
+  "issue": "AR label drops forward/down at distance and angle, intermittently — pops back up after. Root cause: AR.js back-face pose ambiguity.",
+  "confirmed_facts": [
+    "Only occurs at distance (not close up)",
+    "Only occurs at angled view (not top-down)",
+    "Intermittent — drops then corrects itself",
+    "Drops FORWARD toward camera direction, not straight down",
+    "Not a lerp issue",
+    "Root cause: AR.js randomly picks back-face pose solution — places marker at wrong world position (below table surface), label follows and appears to drop",
+    "Same marker can render correctly AND dropped simultaneously for different detections in the same frame",
+    "Not caused by user walking to back of marker — AR.js guesses wrong pose from the front"
+  ],
+  "attempts": [
+    {
+      "id": 1,
+      "what": "Add after:['visible','arjs-anchor'] to pose-filter",
+      "why": "Fix A-Frame 1.7.0 tick order so pose-filter runs after arjs-anchor",
+      "result": "Fixed re-detection bug but did not fix dropping"
+    },
+    {
+      "id": 2,
+      "what": "Ghost group — move marker children to scene-level THREE.Group on markerLost",
+      "why": "Prevent wasVisible poisoning while showing hold-mode content",
+      "result": "Fixed re-detection, unrelated to dropping"
+    },
+    {
+      "id": 3,
+      "what": "Hard-reject quaternions > 40deg from smoothed value",
+      "why": "Catch 180deg barcode flip ambiguity",
+      "result": "Did not fix dropping — dropping is position not rotation"
+    },
+    {
+      "id": 4,
+      "what": "Restore smoothCount 30 + minConfidence 0.05",
+      "why": "More AR.js samples to average away bad poses",
+      "result": "Did not fix dropping"
+    },
+    {
+      "id": 5,
+      "what": "Disable look-controls on camera entity",
+      "why": "Suspected A-Frame 1.7.0 default look-controls rotating camera with phone movement",
+      "result": "Did not fix dropping — wrong diagnosis"
+    },
+    {
+      "id": 6,
+      "what": "Add after:['pose-filter'] to up-track, billboard, dash-track",
+      "why": "Ensure child components read pose-filter's smoothed marker transform not raw arjs-anchor values",
+      "result": "Did not fix dropping"
+    },
+    {
+      "id": 7,
+      "what": "Revert up-track to hysteresis marker-local Y (no worldToLocal)",
+      "why": "worldToLocal was suspected to give wrong positions in 1.7.0 tick order",
+      "result": "Made it worse — hysteresis uses marker-local Y which changes with camera angle"
+    },
+    {
+      "id": 8,
+      "what": "Remove all lerp from pose-filter — let arjs-anchor smoothCount=30 do everything",
+      "why": "Two smoothers fighting each other causing oscillation",
+      "result": "Did not fix dropping"
+    },
+    {
+      "id": 9,
+      "what": "Restore da4e292 exact components — hysteresis up-track, full lookAt billboard, no after constraints",
+      "why": "Last known working version before issues started",
+      "result": "Did not fix dropping — reverted"
+    },
+    {
+      "id": 10,
+      "what": "Change billboard from full lookAt to lookAt(0,0,0) hardcoded origin",
+      "why": "cam.getWorldPosition() in A-Frame 1.7.0 might return wrong position causing label to face wrong direction",
+      "result": "Partial — full lookAt causes pitch toward camera at angle, which looks like dropping"
+    },
+    {
+      "id": 11,
+      "what": "Restore worldToLocal in up-track (world-Y offset)",
+      "why": "Hysteresis uses marker-local Y which is wrong at angle — worldToLocal always offsets in world Y",
+      "result": "Correct approach for positioning but dropping still occurs"
+    },
+    {
+      "id": 12,
+      "what": "Restore yaw-only billboard using hardcoded camera origin (0,0,0)",
+      "why": "Full lookAt pitches label toward camera at angle — yaw-only keeps label perfectly vertical",
+      "result": "Correct for orientation but dropping still occurs at distance"
+    },
+    {
+      "id": 13,
+      "what": "Distance-adaptive lerp (alpha = 0.15/dist, min 0.03 max 0.3)",
+      "why": "Heavier smoothing at distance where AR.js depth estimation is worse",
+      "result": "User confirmed not a lerp issue — did not fix"
+    },
+    {
+      "id": 14,
+      "what": "Lock position on markerFound — freeze pose, only billboard updates",
+      "why": "Ignore all per-frame AR.js noise after initial detection",
+      "result": "Label completely frozen — unacceptable UX, reverted"
+    },
+    {
+      "id": 15,
+      "what": "Two-phase lerp: alpha=0.3 first 20 frames, alpha=0.05 steady state + quat rejection",
+      "why": "Fast initial lock then very slow steady tracking to resist noise",
+      "result": "User confirmed not a lerp issue"
+    },
+    {
+      "id": 16,
+      "what": "Alpha = 1.0 (no smoothing, raw AR.js output)",
+      "why": "Test pure AR.js output to isolate whether smoothing is involved",
+      "result": "Reverted — confirmed not a lerp issue"
+    },
+    {
+      "id": 17,
+      "what": "Increase source+canvas resolution to 1920x1440",
+      "why": "Higher resolution gives AR.js finer pixel accuracy on marker corners, improving 3D depth calculation especially for edge-of-frame markers",
+      "result": "Reverted — not tested"
+    },
+    {
+      "id": 18,
+      "what": "Back-face pose rejection — check marker normal dot product with camera direction, freeze to last good pose",
+      "why": "AR.js pose ambiguity: two valid poses exist for a flat marker. Back-face detection places marker at wrong world Y, so label drops. Reject frames where marker normal points away from camera.",
+      "result": "Fixed mirroring but caused label dropping on its own — unacceptable, reverted"
+    },
+    {
+      "id": 19,
+      "what": "Zero marker rotation every frame in pose-filter tick: obj.quaternion.set(0,0,0,1)",
+      "why": "Discard AR.js detected rotation entirely — use marker position only. Back-face vs front-face rotation ambiguity becomes irrelevant. Billboard (yaw-only) handles facing camera.",
+      "result": "FIXED. No dropping observed. Labels correctly face camera regardless of AR.js pose solution. Commit 6e0003b."
+    }
+  ],
+  "current_state": {
+    "pose_filter": "visibility only + zero rotation every frame (obj.quaternion.set(0,0,0,1))",
+    "up_track": "worldToLocal with world-Y offset, after:['pose-filter']",
+    "billboard": "yaw-only, lookAt(0, worldY, 0), after:['pose-filter']",
+    "dash_track": "marker-local Y, after:['pose-filter']"
+  },
+  "open_issue": {
+    "description": "Intermittent label tilt — labels occasionally pitch backward/downward for a frame",
+    "hypothesis": "AR.js position estimate is noisy frame-to-frame. Yaw-only billboard helps but position spikes still cause visible lurches.",
+    "next": "Position smoothing on marker detected position"
+  }
+}

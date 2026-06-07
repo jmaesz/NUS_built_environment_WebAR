@@ -13,6 +13,7 @@
     "msedge-tts": "*",
     "puppeteer": "^25.0.4",
     "rhino3dm": "^8.17.0",
+    "sharp": "^0.34.5",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
