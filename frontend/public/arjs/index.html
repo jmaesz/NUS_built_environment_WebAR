@@ -1609,6 +1609,7 @@
           } catch(e) {}
           // Force A-Frame to re-sync renderer size with the now-settled viewport
           setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 300);
+          setTimeout(function () { window.dispatchEvent(new Event('resize')); }, 600);
           return;
         }
         if (++checks >= 3) {
