@@ -829,7 +829,7 @@
               flImg.setAttribute('position', (-8.5 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat; depthTest: true');
-              (function(el, src, imgZ, xOff) {
+              (function(el, src, imgZ, xOff, sc) {
                 var tmpImg = new Image();
                 tmpImg.onload = function() {
                   var cv = document.createElement('canvas');
@@ -845,7 +845,7 @@
                   var aspect = cv.width / cv.height;
                   var w = 4.1 * aspect;
                   el.setAttribute('width', w.toFixed(3));
-                  el.setAttribute('position', (-6.58 - w / 2 + xOff) + ' 0 ' + imgZ.toFixed(2));
+                  el.setAttribute('position', (-6.58 - (w * sc) / 2 + xOff) + ' 0 ' + imgZ.toFixed(2));
                   function tryApply() {
                     var mesh = el.getObject3D('mesh');
                     if (!mesh || !mesh.material) { setTimeout(tryApply, 100); return; }
@@ -861,7 +861,7 @@
                   setTimeout(tryApply, 600);
                 };
                 tmpImg.src = src;
-              })(flImg, fl.img, flImgZ, flXOff);
+              })(flImg, fl.img, flImgZ, flXOff, flImgScale);
 
               flDg.appendChild(flImg);
               tapBb.appendChild(tapIconEl);
