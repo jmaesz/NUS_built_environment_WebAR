@@ -1602,6 +1602,18 @@
       }, 150);
     });
 
+    // Intercept A-Frame's built-in webglcontextlost reload — attempt recovery instead
+    var _glCanvas = document.querySelector('canvas');
+    if (_glCanvas) {
+      _glCanvas.addEventListener('webglcontextlost', function (e) {
+        e.preventDefault();
+      }, false);
+    }
+    document.querySelector('a-scene').addEventListener('loaded', function () {
+      var _c = document.querySelector('canvas');
+      if (_c) _c.addEventListener('webglcontextlost', function (e) { e.preventDefault(); }, false);
+    });
+
     // Release camera tracks before page unloads so refresh gets a clean stream
     function _stopCamera() {
       document.querySelectorAll('video').forEach(function (v) {
