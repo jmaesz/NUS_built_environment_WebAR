@@ -794,8 +794,7 @@
               var nFloors = daylightFloors.length;
               var fanAngle = 0;
               var alpha = fanAngle * Math.PI / 180;
-              var xSOff = (b.name === 'T-Lab' || b.name === 'E7' || b.name === 'EW1' || b.name === 'E4' || b.name === 'E3') ? -1 : 0;
-              var xS = -5.65 + flXOff + (flXOff >= 2 ? 2 : 0) + xSOff, xE = -2.35 + flXOff, nFanDashes = 6;
+              var xS = -4.65 + flXOff, xE = -2.35 + flXOff, nFanDashes = 6;
               var yL = Math.tan(alpha) * (xE - xS);                // left-side y — unchanged
               var yR = -yL;                                         // right-side y mirrored → steeper slope
               var actualSlope = (yR - yL) / (xE - xS);
