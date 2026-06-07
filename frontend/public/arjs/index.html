@@ -715,6 +715,8 @@
               fx.fillStyle = '#0a0a0a';
               fx.font = 'bold 108px Arial, sans-serif';
               fx.fillText(fl.key, 110, 70);
+              if (!window._floorBtnCanvases) window._floorBtnCanvases = {};
+              window._floorBtnCanvases[idx + '-' + fl.key] = { canvas: fc, label: fl.key };
               var fimg = document.createElement('img');
               fimg.id = 'flbl-' + idx + '-' + fl.key;
               fimg.src = fc.toDataURL('image/png');
@@ -1169,15 +1171,39 @@
       }
     }
 
+    function updateFloorBtn(idx, floorKey, active) {
+      var entry = window._floorBtnCanvases && window._floorBtnCanvases[idx + '-' + floorKey];
+      if (!entry) return;
+      var fc = entry.canvas, fx = fc.getContext('2d');
+      fc.width = fc.width;
+      fx.fillStyle = active ? '#7ec87e' : '#ffffff';
+      fx.fillRect(0, 0, 220, 140);
+      fx.textAlign = 'center'; fx.textBaseline = 'middle';
+      fx.fillStyle = active ? '#0a3a0a' : '#0a0a0a';
+      fx.font = 'bold 108px Arial, sans-serif';
+      fx.fillText(entry.label, 110, 70);
+      var btn = document.getElementById('fl-btn-' + idx + '-' + floorKey);
+      if (!btn) return;
+      var mesh = btn.getObject3D('mesh');
+      if (!mesh || !mesh.material) return;
+      if (mesh.material.map) mesh.material.map.dispose();
+      var tex = new THREE.CanvasTexture(fc);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      mesh.material.map = tex;
+      mesh.material.needsUpdate = true;
+    }
+
     function toggleDaylightFloor(idx, floorKey) {
       const key = idx + '-' + floorKey;
       const dg  = document.getElementById('fl-dg-' + idx + '-' + floorKey);
       if (openDaylightFloors.has(key)) {
         if (dg && dg.object3D) dg.object3D.visible = false;
         openDaylightFloors.delete(key);
+        updateFloorBtn(idx, floorKey, false);
       } else {
         if (dg && dg.object3D) dg.object3D.visible = true;
         openDaylightFloors.add(key);
+        updateFloorBtn(idx, floorKey, true);
       }
     }
 
@@ -1188,6 +1214,7 @@
         const fk  = key.slice(sep + 1);
         const dg  = document.getElementById('fl-dg-' + bi + '-' + fk);
         if (dg && dg.object3D) dg.object3D.visible = false;
+        updateFloorBtn(bi, fk, false);
       });
       openDaylightFloors.clear();
     }
