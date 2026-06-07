@@ -404,8 +404,8 @@
       ],
       'T-Lab': [
         { key: '10F', yUp: -0.3,  img: '/daylight/T-Lab/T-Lab-10F.webp' },
-        { key: '5F',  yUp: -0.5,  img: '/daylight/T-Lab/T-Lab-5F.webp' },
-        { key: '3F',  yUp: -1.2,  img: '/daylight/T-Lab/T-Lab-3F.webp' },
+        { key: '5F',  yUp: -1.0,  img: '/daylight/T-Lab/T-Lab-5F.webp' },
+        { key: '3F',  yUp: -1.7,  img: '/daylight/T-Lab/T-Lab-3F.webp' },
       ],
       'E7': [
         { key: '8F', yUp: -0.5,  img: '/daylight/E7/E7-8F.webp' },
@@ -702,7 +702,8 @@
           // ── Daylight floor buttons (SDE4 only) ────────────────────────────
           var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
           if (daylightFloors) {
-            var flXOff = (b.name === 'E2A' || b.name === 'EA' || b.name === 'T-Lab' || b.name === 'E7' || b.name === 'EW1' || b.name === 'E4' || b.name === 'E3') ? 2 : (b.name === 'E1') ? -2 : 0;
+            var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1 };
+            var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
             daylightFloors.forEach(function (fl, flIdx) {
               // Floor button canvas
               var fc = document.createElement('canvas');
@@ -792,7 +793,7 @@
               var fanAngle = 0;
               var alpha = fanAngle * Math.PI / 180;
               var xSOff = (b.name === 'T-Lab' || b.name === 'E7' || b.name === 'EW1' || b.name === 'E4' || b.name === 'E3') ? -1 : 0;
-              var xS = -5.65 + flXOff + (flXOff > 0 ? 2 : 0) + xSOff, xE = -2.35 + flXOff, nFanDashes = 6;
+              var xS = -5.65 + flXOff + (flXOff >= 2 ? 2 : 0) + xSOff, xE = -2.35 + flXOff, nFanDashes = 6;
               var yL = Math.tan(alpha) * (xE - xS);                // left-side y — unchanged
               var yR = -yL;                                         // right-side y mirrored → steeper slope
               var actualSlope = (yR - yL) / (xE - xS);
