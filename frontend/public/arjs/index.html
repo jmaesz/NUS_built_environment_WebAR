@@ -689,7 +689,7 @@
           // ── Daylight floor buttons (SDE4 only) ────────────────────────────
           var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
           if (daylightFloors) {
-            var flXOff = (b.name === 'E2A' || b.name === 'EA') ? 2 : 0;
+            var flXOff = (b.name === 'E2A' || b.name === 'EA' || b.name === 'T-Lab' || b.name === 'E7' || b.name === 'EW1' || b.name === 'E4' || b.name === 'E3') ? 2 : (b.name === 'E1') ? -2 : 0;
             daylightFloors.forEach(function (fl, flIdx) {
               // Floor button canvas
               var fc = document.createElement('canvas');
