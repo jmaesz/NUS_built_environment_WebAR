@@ -1607,12 +1607,12 @@
             delete _hideTimers[idx];
             hideChart();
             releaseBuildingTextures(idx);
-          }, 5000);
+          }, 0);
         } else {
           _hideTimers[idx] = setTimeout(() => {
             delete _hideTimers[idx];
             releaseBuildingTextures(idx);
-          }, 5000);
+          }, 500);
         }
         if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
