@@ -1140,6 +1140,7 @@
           planeEl._textureMap = tex;
           planeEl._textureCanvas = cv;
           planeEl._textureLoading = false;
+          if (opts.showOnLoad && planeEl.object3D) planeEl.object3D.visible = true;
         }
         tryApply();
       };
@@ -1449,13 +1450,13 @@
       });
       var solarMat = document.getElementById('solar-mat-' + idx);
       if (solarMat && solarMat.object3D) {
-        ensureImagePlaneTexture(solarMat, solarMat.dataset && solarMat.dataset.src, { maxDim: 2048, transparent: true, alphaTest: 0.05 });
-        solarMat.object3D.visible = true;
+        solarMat.object3D.visible = !!solarMat._textureMap;
+        ensureImagePlaneTexture(solarMat, solarMat.dataset && solarMat.dataset.src, { maxDim: 2048, transparent: true, alphaTest: 0.05, showOnLoad: true });
       }
       var sei = 0; while (document.getElementById('solar-extra-mat-' + idx + '-' + sei)) {
         var extraSolar = document.getElementById('solar-extra-mat-' + idx + '-' + sei);
-        ensureImagePlaneTexture(extraSolar, extraSolar.dataset && extraSolar.dataset.src, { maxDim: 2048, transparent: true, alphaTest: 0.05 });
-        extraSolar.object3D.visible = true;
+        extraSolar.object3D.visible = !!extraSolar._textureMap;
+        ensureImagePlaneTexture(extraSolar, extraSolar.dataset && extraSolar.dataset.src, { maxDim: 2048, transparent: true, alphaTest: 0.05, showOnLoad: true });
         sei++;
       }
 
