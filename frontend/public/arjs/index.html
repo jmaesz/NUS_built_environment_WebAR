@@ -1367,7 +1367,11 @@
       if (daylightFloors) {
         daylightFloors.forEach(function (fl) {
           disposeMat('fl-btn-' + idx + '-' + fl.key);
-          disposeMat('fl-tap-' + idx + '-' + fl.key);
+          // tap icon uses shared _tapIconCanvas — dispose texture only, don't release canvas backing
+          (function() {
+            var el = document.getElementById('fl-tap-' + idx + '-' + fl.key);
+            if (el) { var mesh = el.getObject3D('mesh'); if (mesh && mesh.material) disposeMaterialMap(mesh.material, false); }
+          })();
           var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
           if (flImg) {
             if (flImg._textureMap) {
