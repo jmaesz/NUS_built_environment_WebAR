@@ -528,6 +528,35 @@
         assets.setAttribute('timeout', '10000');
         scene.insertBefore(assets, scene.firstChild);
 
+        // Pre-build tap icon canvas once so it's ready for applyCanvasTexture
+        var _tapIconCanvas = (function() {
+          var tic = document.createElement('canvas');
+          tic.width = 256; tic.height = 256;
+          var tt = tic.getContext('2d');
+          tt.fillStyle = '#107b7f';
+          tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
+          tt.strokeStyle = 'rgba(255,255,255,0.22)';
+          tt.lineWidth = 5;
+          tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
+          tt.fillStyle = '#ffffff';
+          tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
+          tt.fillRect(102, 52, 32, 74);
+          tt.beginPath();
+          tt.moveTo(92, 120); tt.lineTo(182, 120);
+          tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
+          tt.lineTo(92, 156);
+          tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
+          tt.closePath(); tt.fill();
+          tt.fillRect(92, 138, 108, 52);
+          tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
+          tt.fillRect(102, 118, 32, 8);
+          tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
+          tt.fillRect(66, 126, 28, 46);
+          tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
+          return tic;
+        })();
+        window._tapIconCanvas = _tapIconCanvas;
+
         // Word-wrap helper: draws text, returns line count
         function wrapText(cx, text, x, y, maxW, lh) {
           var words = text.split(' '), line = '', count = 0;
@@ -691,42 +720,12 @@
               flDotGroup.id = 'fl-dot-' + idx + '-' + fl.key;
               flDotGroup.setAttribute('position', '0 0 0');
 
-              if (!document.getElementById('tap-icon-shared')) {
-                var tic = document.createElement('canvas');
-                tic.width = 256; tic.height = 256;
-                var tt = tic.getContext('2d');
-                tt.fillStyle = '#107b7f';
-                tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
-                tt.strokeStyle = 'rgba(255,255,255,0.22)';
-                tt.lineWidth = 5;
-                tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
-                tt.fillStyle = '#ffffff';
-                tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
-                tt.fillRect(102, 52, 32, 74);
-                tt.beginPath();
-                tt.moveTo(92, 120); tt.lineTo(182, 120);
-                tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
-                tt.lineTo(92, 156);
-                tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
-                tt.closePath(); tt.fill();
-                tt.fillRect(92, 138, 108, 52);
-                tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
-                tt.fillRect(102, 118, 32, 8);
-                tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
-                tt.fillRect(66, 126, 28, 46);
-                tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
-                var tishared = document.createElement('img');
-                tishared.id = 'tap-icon-shared';
-                tishared.src = tic.toDataURL('image/png');
-                assets.appendChild(tishared);
-              }
-
               var tapIconEl = document.createElement('a-plane');
               tapIconEl.id = 'fl-tap-' + idx + '-' + fl.key;
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
               tapIconEl.setAttribute('position', (-5.58 + flXOff) + ' 0 0');
-              tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
+              tapIconEl.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               // All lines straight and parallel — no fanning
@@ -1340,6 +1339,9 @@
           window._floorBtnCanvases[idx + '-' + fl.key] = { canvas: fc, label: fl.key };
           var flBtn = document.getElementById('fl-btn-' + idx + '-' + fl.key);
           if (flBtn) applyCanvasTexture(flBtn, fc);
+
+          var tapIconEl = document.getElementById('fl-tap-' + idx + '-' + fl.key);
+          if (tapIconEl) applyCanvasTexture(tapIconEl, window._tapIconCanvas, { transparent: true, alphaTest: 0.05 });
 
           var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
           if (flImg) flImg._textureLoaded = false;
