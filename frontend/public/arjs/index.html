@@ -515,7 +515,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: color_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; sourceWidth: 1280; sourceHeight: 960; canvasWidth: 1280; canvasHeight: 960;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 20; sourceWidth: 1280; sourceHeight: 960; canvasWidth: 1280; canvasHeight: 960;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true; logarithmicDepthBuffer: true;"
     device-orientation-permission-ui="enabled: false"
@@ -570,42 +570,6 @@
         window._justifyText = justifyText;
 
         window.BUILDINGS.forEach(function (b, idx) {
-          // ── Main label canvas ──────────────────────────────────────────────
-          var cv = document.createElement('canvas');
-          cv.width = 1024; cv.height = 512;
-          var cx = cv.getContext('2d');
-          cx.fillStyle = '#ffffff';
-          cx.fillRect(0, 0, 1024, 512);
-          cx.textAlign = 'center'; cx.textBaseline = 'middle';
-          cx.fillStyle = '#000000';
-          cx.font = 'bold 140px Arial, sans-serif';
-          cx.fillText(b.name, 512, 180);
-          cx.font = '110px Arial, sans-serif';
-          cx.fillStyle = '#333333';
-          cx.fillText('Tap for details', 512, 370);
-          var img = document.createElement('img');
-          img.id = 'lbl-' + idx;
-          img.src = cv.toDataURL('image/png');
-          assets.appendChild(img);
-
-          // ── Info label canvas ──────────────────────────────────────────────
-          var ic = document.createElement('canvas');
-          ic.width = 1024; ic.height = 512;
-          var ix = ic.getContext('2d');
-          ix.fillStyle = '#ffffff';
-          ix.fillRect(0, 0, 1024, 512);
-          ix.textAlign = 'center'; ix.textBaseline = 'middle';
-          ix.font = 'bold 100px Arial, sans-serif';
-          ix.fillStyle = '#107b7f';
-          ix.fillText('Building Info', 512, 195);
-          ix.font = '80px Arial, sans-serif';
-          ix.fillStyle = '#555555';
-          ix.fillText('Tap for details', 512, 335);
-          var iimg = document.createElement('img');
-          iimg.id = 'ilbl-' + idx;
-          iimg.src = ic.toDataURL('image/png');
-          assets.appendChild(iimg);
-
           // ── Marker setup ───────────────────────────────────────────────────
           var marker = document.createElement('a-marker');
           marker.setAttribute('type', 'barcode');
@@ -649,7 +613,7 @@
           bg.setAttribute('width', '2.2');
           bg.setAttribute('height', '1.1');
           bg.setAttribute('rotation', '0 0 0');
-          bg.setAttribute('material', 'src: #lbl-' + idx + '; side: double; transparent: false; shader: flat');
+          bg.setAttribute('material', 'side: double; transparent: false; shader: flat');
 
           // Description group (hidden until tap)
           var descGroup = document.createElement('a-entity');
@@ -680,7 +644,7 @@
           infoLbl.setAttribute('height', '1.1');
           infoLbl.setAttribute('position', '2.5 0 0');
           infoLbl.setAttribute('visible', 'false');
-          infoLbl.setAttribute('material', 'src: #ilbl-' + idx + '; side: double; transparent: false; shader: flat');
+          infoLbl.setAttribute('material', 'side: double; transparent: false; shader: flat');
 
           // Invisible X-button hitbox — top-right of desc panel (now on right side)
           var xHitbox = document.createElement('a-plane');
@@ -705,23 +669,6 @@
             var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
             var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
             daylightFloors.forEach(function (fl, flIdx) {
-              // Floor button canvas
-              var fc = document.createElement('canvas');
-              fc.width = 220; fc.height = 140;
-              var fx = fc.getContext('2d');
-              fx.fillStyle = '#ffffff';
-              fx.fillRect(0, 0, 220, 140);
-              fx.textAlign = 'center'; fx.textBaseline = 'middle';
-              fx.fillStyle = '#0a0a0a';
-              fx.font = 'bold 108px Arial, sans-serif';
-              fx.fillText(fl.key, 110, 70);
-              if (!window._floorBtnCanvases) window._floorBtnCanvases = {};
-              window._floorBtnCanvases[idx + '-' + fl.key] = { canvas: fc, label: fl.key };
-              var fimg = document.createElement('img');
-              fimg.id = 'flbl-' + idx + '-' + fl.key;
-              fimg.src = fc.toDataURL('image/png');
-              assets.appendChild(fimg);
-
               // Up-track container for this floor (hidden until chart opens)
               var flUpEl = document.createElement('a-entity');
               flUpEl.id = 'fl-up-' + idx + '-' + fl.key;
@@ -738,45 +685,7 @@
               flBtn.setAttribute('width', '0.47');
               flBtn.setAttribute('height', '0.30');
               flBtn.setAttribute('position', (-5.0 + flXOff) + ' 0 0');
-              flBtn.setAttribute('material', 'src: #flbl-' + idx + '-' + fl.key + '; side: double; transparent: false; shader: flat');
-
-              // "Tap here" hand-cursor icon (LEFT of floor label)
-              if (!document.getElementById('tap-icon-shared')) {
-                var tic = document.createElement('canvas');
-                tic.width = 256; tic.height = 256;
-                var tt = tic.getContext('2d');
-                // Teal circle
-                tt.fillStyle = '#107b7f';
-                tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
-                // Subtle inner ring
-                tt.strokeStyle = 'rgba(255,255,255,0.22)';
-                tt.lineWidth = 5;
-                tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
-                // White pointer hand cursor
-                tt.fillStyle = '#ffffff';
-                // Index finger (rounded top)
-                tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
-                tt.fillRect(102, 52, 32, 74);
-                // Fist body (other fingers curled)
-                tt.beginPath();
-                tt.moveTo(92, 120); tt.lineTo(182, 120);
-                tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
-                tt.lineTo(92, 156);
-                tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
-                tt.closePath(); tt.fill();
-                tt.fillRect(92, 138, 108, 52);
-                tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
-                // Connect finger to fist
-                tt.fillRect(102, 118, 32, 8);
-                // Thumb (left side)
-                tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
-                tt.fillRect(66, 126, 28, 46);
-                tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
-                var tishared = document.createElement('img');
-                tishared.id = 'tap-icon-shared';
-                tishared.src = tic.toDataURL('image/png');
-                assets.appendChild(tishared);
-              }
+              flBtn.setAttribute('material', 'side: double; transparent: false; shader: flat');
 
               var flDotGroup = document.createElement('a-entity');
               flDotGroup.id = 'fl-dot-' + idx + '-' + fl.key;
@@ -787,7 +696,7 @@
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
               tapIconEl.setAttribute('position', (-5.58 + flXOff) + ' 0 0');
-              tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
+              tapIconEl.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               // All lines straight and parallel — no fanning
@@ -821,49 +730,19 @@
               // Daylight image — flat mat on marker surface
               var _flScaleMap = { 'E5': 0.7, 'E2': 0.7, 'E2A': 0.85, 'EA': 1.3, 'EW1': 0.85, 'E7': 1.15, 'E4A': 0.7 };
               var flImgScale = _flScaleMap[b.name] !== undefined ? _flScaleMap[b.name] : 1;
+              var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
               var flImg = document.createElement('a-plane');
               flImg.id = 'fl-img-' + idx + '-' + fl.key;
+              flImg.dataset.src = fl.img;
+              flImg.dataset.scale = String(flImgScale);
+              flImg.dataset.z = flImgZ.toFixed(2);
+              flImg.dataset.xoff = String(flXOff);
               flImg.setAttribute('height', (4.1 * flImgScale).toFixed(3));
               flImg.setAttribute('width', '5.5');
-              var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
               flImg.setAttribute('position', (-8.5 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat; depthTest: true');
-              (function(el, src, imgZ, xOff, sc) {
-                var tmpImg = new Image();
-                tmpImg.onload = function() {
-                  var cv = document.createElement('canvas');
-                  cv.width = tmpImg.width; cv.height = tmpImg.height;
-                  var ctx = cv.getContext('2d');
-                  ctx.drawImage(tmpImg, 0, 0);
-                  var id = ctx.getImageData(0, 0, cv.width, cv.height);
-                  var d = id.data;
-                  for (var pi = 0; pi < d.length; pi += 4) {
-                    if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
-                  }
-                  ctx.putImageData(id, 0, 0);
-                  var aspect = cv.width / cv.height;
-                  var w = 4.1 * sc * aspect;
-                  el.setAttribute('width', w.toFixed(3));
-                  el.setAttribute('height', (4.1 * sc).toFixed(3));
-                  el.setAttribute('position', (-6.58 - w / 2 + xOff) + ' 0 ' + imgZ.toFixed(2));
-                  function tryApply() {
-                    var mesh = el.getObject3D('mesh');
-                    if (!mesh || !mesh.material) { setTimeout(tryApply, 100); return; }
-                    if (mesh.material.map) mesh.material.map.dispose();
-                    var tex = new THREE.CanvasTexture(cv);
-                    tex.colorSpace = THREE.SRGBColorSpace;
-                    tex.needsUpdate = true;
-                    mesh.material.map = tex;
-                    mesh.material.transparent = true;
-                    mesh.material.alphaTest = 0.05;
-                    mesh.material.depthTest = true;
-                    mesh.material.needsUpdate = true;
-                  }
-                  setTimeout(tryApply, 600);
-                };
-                tmpImg.src = src;
-              })(flImg, fl.img, flImgZ, flXOff, flImgScale);
+              flImg.setAttribute('visible', 'false');
 
               flDg.appendChild(flImg);
               tapBb.appendChild(tapIconEl);
@@ -889,13 +768,9 @@
           // ── Solar mat (hidden until chart opens) ──────────────────────────
           var solarD = window.SOLAR_DATA && window.SOLAR_DATA[b.name];
           if (solarD) {
-            var simg = document.createElement('img');
-            simg.id = 'solar-img-' + idx;
-            simg.src = '/solar/' + b.name + '.webp';
-            assets.appendChild(simg);
             var solarMat = document.createElement('a-plane');
             solarMat.id = 'solar-mat-' + idx;
-            solarMat.setAttribute('src', '#solar-img-' + idx);
+            solarMat.dataset.src = '/solar/' + b.name + '.webp';
             solarMat.setAttribute('rotation', '-90 ' + solarD.ry + ' 0');
             solarMat.setAttribute('position', solarD.x + ' 0.01 ' + solarD.z);
             solarMat.setAttribute('width',  solarD.w);
@@ -909,13 +784,9 @@
           var extraMats = window.SOLAR_EXTRA && window.SOLAR_EXTRA[b.name];
           if (extraMats) {
             extraMats.forEach(function(ed, ei) {
-              var esimg = document.createElement('img');
-              esimg.id = 'solar-extra-img-' + idx + '-' + ei;
-              esimg.src = '/solar/' + ed.file + '.webp';
-              assets.appendChild(esimg);
               var eMat = document.createElement('a-plane');
               eMat.id = 'solar-extra-mat-' + idx + '-' + ei;
-              eMat.setAttribute('src', '#solar-extra-img-' + idx + '-' + ei);
+              eMat.dataset.src = '/solar/' + ed.file + '.webp';
               eMat.setAttribute('rotation', '-90 ' + ed.ry + ' 0');
               eMat.setAttribute('position', ed.x + ' 0.01 ' + ed.z);
               eMat.setAttribute('width',  ed.w);
@@ -1140,7 +1011,7 @@
       function tryApply() {
         var mesh = plane.getObject3D('mesh');
         if (!mesh || !mesh.material) { setTimeout(tryApply, 50); return; }
-        if (mesh.material.map) mesh.material.map.dispose();
+        disposeMaterialMap(mesh.material, true);
         var tex = new THREE.CanvasTexture(dv);
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
@@ -1187,7 +1058,7 @@
       if (!btn) return;
       var mesh = btn.getObject3D('mesh');
       if (!mesh || !mesh.material) return;
-      if (mesh.material.map) mesh.material.map.dispose();
+      disposeMaterialMap(mesh.material, false);
       var tex = new THREE.CanvasTexture(fc);
       tex.colorSpace = THREE.SRGBColorSpace;
       mesh.material.map = tex;
@@ -1199,9 +1070,13 @@
       const dg  = document.getElementById('fl-dg-' + idx + '-' + floorKey);
       if (openDaylightFloors.has(key)) {
         if (dg && dg.object3D) dg.object3D.visible = false;
+        var closingFlImg = document.getElementById('fl-img-' + idx + '-' + floorKey);
+        if (closingFlImg && closingFlImg.object3D) closingFlImg.object3D.visible = false;
         openDaylightFloors.delete(key);
         updateFloorBtn(idx, floorKey, false);
       } else {
+        var flImg = document.getElementById('fl-img-' + idx + '-' + floorKey);
+        ensureDaylightTexture(flImg);
         if (dg && dg.object3D) dg.object3D.visible = true;
         openDaylightFloors.add(key);
         updateFloorBtn(idx, floorKey, true);
@@ -1220,11 +1095,308 @@
       openDaylightFloors.clear();
     }
 
+    function releaseCanvasBacking(canvas) {
+      if (!canvas || !canvas.getContext) return;
+      canvas.width = 1;
+      canvas.height = 1;
+    }
+
+    function disposeTexture(tex, releaseImage) {
+      if (!tex) return;
+      var img = tex.image;
+      tex.dispose();
+      tex.image = null;
+      if (releaseImage && img && img.tagName === 'CANVAS') releaseCanvasBacking(img);
+    }
+
+    function disposeMaterialMap(material, releaseImage) {
+      if (!material || !material.map) return;
+      disposeTexture(material.map, releaseImage);
+      material.map = null;
+      material.needsUpdate = true;
+    }
+
+    function applyCanvasTexture(planeEl, canvas, opts) {
+      opts = opts || {};
+      function tryApply() {
+        var mesh = planeEl.getObject3D('mesh');
+        if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
+        disposeMaterialMap(mesh.material, !!opts.releasePreviousImage);
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.needsUpdate = true;
+        mesh.material.map = tex;
+        if (opts.transparent) {
+          mesh.material.transparent = true;
+          mesh.material.alphaTest = opts.alphaTest || 0;
+        }
+        mesh.material.needsUpdate = true;
+      }
+      tryApply();
+    }
+
+    function canvasFromImage(img, maxDim) {
+      var scale = maxDim && Math.max(img.width, img.height) > maxDim ? maxDim / Math.max(img.width, img.height) : 1;
+      var w = Math.max(1, Math.round(img.width * scale));
+      var h = Math.max(1, Math.round(img.height * scale));
+      var cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      return cv;
+    }
+
+    function ensureImagePlaneTexture(planeEl, src, opts) {
+      opts = opts || {};
+      if (!planeEl || !src || planeEl._textureMap || planeEl._textureLoading) return;
+      planeEl._textureLoading = true;
+      var token = (planeEl._textureToken || 0) + 1;
+      planeEl._textureToken = token;
+      var img = new Image();
+      img.onload = function () {
+        if (planeEl._textureToken !== token) return;
+        var cv = canvasFromImage(img, opts.maxDim || 2048);
+        function tryApply() {
+          if (planeEl._textureToken !== token) return;
+          var mesh = planeEl.getObject3D('mesh');
+          if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
+          disposeMaterialMap(mesh.material, true);
+          var tex = new THREE.CanvasTexture(cv);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.needsUpdate = true;
+          mesh.material.map = tex;
+          mesh.material.transparent = opts.transparent !== false;
+          mesh.material.alphaTest = opts.alphaTest || 0.05;
+          mesh.material.needsUpdate = true;
+          planeEl._textureMap = tex;
+          planeEl._textureCanvas = cv;
+          planeEl._textureLoading = false;
+          if (opts.showOnLoad && planeEl.object3D) planeEl.object3D.visible = true;
+        }
+        tryApply();
+      };
+      img.onerror = function () { planeEl._textureLoading = false; };
+      img.src = src;
+    }
+
+    function releaseImagePlaneTexture(planeEl) {
+      if (!planeEl) return;
+      var mesh = planeEl.getObject3D && planeEl.getObject3D('mesh');
+      var map = mesh && mesh.material && mesh.material.map;
+      if (map) disposeMaterialMap(mesh.material, true);
+      if (planeEl._textureMap && planeEl._textureMap !== map) disposeTexture(planeEl._textureMap, true);
+      releaseCanvasBacking(planeEl._textureCanvas);
+      planeEl._textureMap = null;
+      planeEl._textureCanvas = null;
+      planeEl._textureLoading = false;
+      planeEl._textureLoaded = false;
+      planeEl._textureToken = (planeEl._textureToken || 0) + 1;
+    }
+
+    function ensureDaylightTexture(flImg) {
+      if (!flImg) return;
+      if (flImg.object3D) flImg.object3D.visible = !!flImg._textureMap;
+      if (flImg._textureMap || flImg._textureLoading) return;
+      var src = flImg.dataset && flImg.dataset.src;
+      if (!src) return;
+      flImg._textureLoading = true;
+      var token = (flImg._textureToken || 0) + 1;
+      flImg._textureToken = token;
+      var tmpImg = new Image();
+      tmpImg.onload = function() {
+        if (flImg._textureToken !== token) return;
+        var dcv = canvasFromImage(tmpImg, 1536);
+        var ctx = dcv.getContext('2d');
+        var id = ctx.getImageData(0, 0, dcv.width, dcv.height);
+        var d = id.data;
+        for (var pi = 0; pi < d.length; pi += 4) {
+          if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
+        }
+        ctx.putImageData(id, 0, 0);
+        var flImgScale = parseFloat(flImg.dataset.scale || '1');
+        var flImgZ = parseFloat(flImg.dataset.z || '0');
+        var flXOff = parseFloat(flImg.dataset.xoff || '0');
+        var aspect = dcv.width / dcv.height;
+        var w = 4.1 * flImgScale * aspect;
+        flImg.setAttribute('width', w.toFixed(3));
+        flImg.setAttribute('height', (4.1 * flImgScale).toFixed(3));
+        flImg.setAttribute('position', (-6.58 - w / 2 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
+        function tryApplyImg() {
+          if (flImg._textureToken !== token) return;
+          var mesh = flImg.getObject3D('mesh');
+          if (!mesh || !mesh.material) { setTimeout(tryApplyImg, 100); return; }
+          disposeMaterialMap(mesh.material, true);
+          var tex = new THREE.CanvasTexture(dcv);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.needsUpdate = true;
+          mesh.material.map = tex;
+          mesh.material.transparent = true;
+          mesh.material.alphaTest = 0.05;
+          mesh.material.depthTest = true;
+          mesh.material.needsUpdate = true;
+          flImg._textureMap = tex;
+          flImg._textureCanvas = dcv;
+          flImg._textureLoading = false;
+          flImg._textureLoaded = true;
+          if (flImg.object3D) flImg.object3D.visible = true;
+        }
+        tryApplyImg();
+      };
+      tmpImg.onerror = function () { if (flImg._textureToken === token) flImg._textureLoading = false; };
+      tmpImg.src = src;
+    }
+
+    function initBuildingTextures(idx) {
+      if (window._lblCanvases && window._lblCanvases[idx]) return; // Already initialized
+      const b = BUILDINGS[idx];
+
+      // 1. Main label canvas
+      var cv = document.createElement('canvas');
+      cv.width = 1024; cv.height = 512;
+      var cx = cv.getContext('2d');
+      cx.fillStyle = '#ffffff';
+      cx.fillRect(0, 0, 1024, 512);
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillStyle = '#000000';
+      cx.font = 'bold 140px Arial, sans-serif';
+      cx.fillText(b.name, 512, 180);
+      cx.font = '110px Arial, sans-serif';
+      cx.fillStyle = '#333333';
+      cx.fillText('Tap for details', 512, 370);
+      if (!window._lblCanvases) window._lblCanvases = [];
+      window._lblCanvases[idx] = cv;
+      var bg = document.getElementById('ar-bg-' + idx);
+      if (bg) applyCanvasTexture(bg, cv);
+
+      // 2. Info label canvas
+      var ic = document.createElement('canvas');
+      ic.width = 1024; ic.height = 512;
+      var ix = ic.getContext('2d');
+      ix.fillStyle = '#ffffff';
+      ix.fillRect(0, 0, 1024, 512);
+      ix.textAlign = 'center'; ix.textBaseline = 'middle';
+      ix.font = 'bold 100px Arial, sans-serif';
+      ix.fillStyle = '#107b7f';
+      ix.fillText('Building Info', 512, 195);
+      ix.font = '80px Arial, sans-serif';
+      ix.fillStyle = '#555555';
+      ix.fillText('Tap for details', 512, 335);
+      if (!window._infoCanvases) window._infoCanvases = [];
+      window._infoCanvases[idx] = ic;
+      var infoLbl = document.getElementById('ar-ilbl-' + idx);
+      if (infoLbl) applyCanvasTexture(infoLbl, ic);
+
+      // 3. Floor buttons + Tap Icon + Daylight Images
+      var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
+      if (daylightFloors) {
+        var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
+        var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
+
+        // Ensure tap icon is created
+        if (!window._tapIconCanvas) {
+          var tic = document.createElement('canvas');
+          tic.width = 256; tic.height = 256;
+          var tt = tic.getContext('2d');
+          tt.fillStyle = '#107b7f';
+          tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
+          tt.strokeStyle = 'rgba(255,255,255,0.22)';
+          tt.lineWidth = 5;
+          tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
+          tt.fillStyle = '#ffffff';
+          tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
+          tt.fillRect(102, 52, 32, 74);
+          tt.beginPath();
+          tt.moveTo(92, 120); tt.lineTo(182, 120);
+          tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
+          tt.lineTo(92, 156);
+          tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
+          tt.closePath(); tt.fill();
+          tt.fillRect(92, 138, 108, 52);
+          tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
+          tt.fillRect(102, 118, 32, 8);
+          tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
+          tt.fillRect(66, 126, 28, 46);
+          tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
+          window._tapIconCanvas = tic;
+        }
+
+        daylightFloors.forEach(function (fl, flIdx) {
+          // Floor Button Canvas
+          var fc = document.createElement('canvas');
+          fc.width = 220; fc.height = 140;
+          var fx = fc.getContext('2d');
+          fx.fillStyle = '#ffffff';
+          fx.fillRect(0, 0, 220, 140);
+          fx.textAlign = 'center'; fx.textBaseline = 'middle';
+          fx.fillStyle = '#0a0a0a';
+          fx.font = 'bold 108px Arial, sans-serif';
+          fx.fillText(fl.key, 110, 70);
+          if (!window._floorBtnCanvases) window._floorBtnCanvases = {};
+          window._floorBtnCanvases[idx + '-' + fl.key] = { canvas: fc, label: fl.key };
+          var flBtn = document.getElementById('fl-btn-' + idx + '-' + fl.key);
+          if (flBtn) applyCanvasTexture(flBtn, fc);
+
+          var tapIconEl = document.getElementById('fl-tap-' + idx + '-' + fl.key);
+          if (tapIconEl) applyCanvasTexture(tapIconEl, window._tapIconCanvas, { transparent: true, alphaTest: 0.05 });
+
+          var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
+          if (flImg) flImg._textureLoaded = false;
+        });
+      }
+    }
+
+    function releaseBuildingTextures(idx) {
+      if (!window._lblCanvases || !window._lblCanvases[idx]) return;
+
+      function disposeMat(elId) {
+        var el = document.getElementById(elId);
+        if (el) {
+          var mesh = el.getObject3D('mesh');
+          if (mesh && mesh.material && mesh.material.map) disposeMaterialMap(mesh.material, true);
+        }
+      }
+
+      disposeMat('ar-bg-' + idx);
+      disposeMat('ar-ilbl-' + idx);
+      var b = window.BUILDINGS[idx];
+      var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
+      if (daylightFloors) {
+        daylightFloors.forEach(function (fl) {
+          disposeMat('fl-btn-' + idx + '-' + fl.key);
+          disposeMat('fl-tap-' + idx + '-' + fl.key);
+          var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
+          if (flImg) {
+            if (flImg._textureMap) {
+              disposeTexture(flImg._textureMap, true);
+              flImg._textureMap = null;
+            }
+            flImg._textureLoaded = false;
+            disposeMat('fl-img-' + idx + '-' + fl.key);
+          }
+      if (window._floorBtnCanvases) {
+             delete window._floorBtnCanvases[idx + '-' + fl.key];
+          }
+        });
+      }
+
+      disposeMat('ar-desc-plane-' + idx);
+      var solarMat = document.getElementById('solar-mat-' + idx);
+      releaseImagePlaneTexture(solarMat);
+      var sei = 0;
+      while (document.getElementById('solar-extra-mat-' + idx + '-' + sei)) {
+        releaseImagePlaneTexture(document.getElementById('solar-extra-mat-' + idx + '-' + sei));
+        sei++;
+      }
+      if (window._descCanvases) window._descCanvases[idx] = null;
+
+      window._lblCanvases[idx] = null;
+      if (window._infoCanvases) window._infoCanvases[idx] = null;
+    }
+
     function setLabelHint(idx, isOpen) {
       const bg = document.getElementById('ar-bg-' + idx);
       if (!bg || !bg.object3D) return;
       const b = BUILDINGS[idx];
-      const cv = document.createElement('canvas');
+      const cv = (window._lblCanvases && window._lblCanvases[idx]) || document.createElement('canvas');
       cv.width = 1024; cv.height = 512;
       const cx = cv.getContext('2d');
       cx.fillStyle = '#ffffff';
@@ -1236,12 +1408,14 @@
       cx.font = '110px Arial, sans-serif';
       cx.fillStyle = isOpen ? '#e53935' : '#333333';
       cx.fillText(isOpen ? 'Tap to close' : 'Tap for details', 512, 370);
-      const tex = new THREE.CanvasTexture(cv);
-      tex.colorSpace = THREE.SRGBColorSpace;
       bg.object3D.traverse(function (child) {
         if (!child.isMesh || !child.material) return;
-        if (child.material.map) child.material.map.dispose();
-        child.material.map = tex;
+        if (child.material.map && child.material.map.image === cv) {
+          child.material.map.needsUpdate = true;
+          return;
+        }
+        disposeMaterialMap(child.material, false);
+        child.material.map = new THREE.CanvasTexture(cv);
         child.material.needsUpdate = true;
       });
     }
@@ -1290,8 +1464,13 @@
             if (openDaylightFloors.size > 0) hideDaylightFloor();
           }
           var sm2 = document.getElementById('solar-mat-' + i);
-          if (sm2 && sm2.object3D) sm2.object3D.visible = false;
-          var se2 = 0; while (document.getElementById('solar-extra-mat-' + i + '-' + se2)) { document.getElementById('solar-extra-mat-' + i + '-' + se2).object3D.visible = false; se2++; }
+          if (sm2 && sm2.object3D) { sm2.object3D.visible = false; releaseImagePlaneTexture(sm2); }
+          var se2 = 0; while (document.getElementById('solar-extra-mat-' + i + '-' + se2)) {
+            var extraSm2 = document.getElementById('solar-extra-mat-' + i + '-' + se2);
+            extraSm2.object3D.visible = false;
+            releaseImagePlaneTexture(extraSm2);
+            se2++;
+          }
         }
       });
     }
@@ -1307,8 +1486,16 @@
         if (fup && fup.object3D) fup.object3D.visible = true;
       });
       var solarMat = document.getElementById('solar-mat-' + idx);
-      if (solarMat && solarMat.object3D) solarMat.object3D.visible = true;
-      var sei = 0; while (document.getElementById('solar-extra-mat-' + idx + '-' + sei)) { document.getElementById('solar-extra-mat-' + idx + '-' + sei).object3D.visible = true; sei++; }
+      if (solarMat && solarMat.object3D) {
+        solarMat.object3D.visible = !!solarMat._textureMap;
+        ensureImagePlaneTexture(solarMat, solarMat.dataset && solarMat.dataset.src, { maxDim: 2048, transparent: true, alphaTest: 0.05, showOnLoad: true });
+      }
+      var sei = 0; while (document.getElementById('solar-extra-mat-' + idx + '-' + sei)) {
+        var extraSolar = document.getElementById('solar-extra-mat-' + idx + '-' + sei);
+        extraSolar.object3D.visible = !!extraSolar._textureMap;
+        ensureImagePlaneTexture(extraSolar, extraSolar.dataset && extraSolar.dataset.src, { maxDim: 2048, transparent: true, alphaTest: 0.05, showOnLoad: true });
+        sei++;
+      }
 
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
       document.getElementById('chart-building-name').textContent = b.name;
@@ -1374,8 +1561,13 @@
           if (fup && fup.object3D) fup.object3D.visible = false;
         });
         var sm = document.getElementById('solar-mat-' + activeIdx);
-        if (sm && sm.object3D) sm.object3D.visible = false;
-        var sec = 0; while (document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec)) { document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec).object3D.visible = false; sec++; }
+        if (sm && sm.object3D) { sm.object3D.visible = false; releaseImagePlaneTexture(sm); }
+        var sec = 0; while (document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec)) {
+          var extraSm = document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec);
+          extraSm.object3D.visible = false;
+          releaseImagePlaneTexture(extraSm);
+          sec++;
+        }
         // Release pose-filter hold so AR disappears with the panel
         var mel = document.getElementById('marker-' + activeIdx);
         var pf = mel && mel.components && mel.components['pose-filter'];
@@ -1394,7 +1586,9 @@
     // ── AR.js threshold + smoothing tuning ────────────────────────────────────
     const sceneEl  = document.querySelector('a-scene');
     sceneEl.addEventListener('loaded', function () {
+      var tuneAttempts = 0;
       var tryTune = setInterval(function () {
+        if (++tuneAttempts > 50) { clearInterval(tryTune); return; }
         var ctx = sceneEl.systems && sceneEl.systems['arjs'];
         var ac  = ctx && ctx.ArToolkitContext && ctx.ArToolkitContext.arController;
         if (!ac) return;
@@ -1438,6 +1632,7 @@
       const marker = document.getElementById('marker-' + idx);
       if (!marker) return;
       marker.addEventListener('markerFound', () => {
+        initBuildingTextures(idx);
         visibleMarkers.add(idx);
         if (_hideTimers[idx]) { clearTimeout(_hideTimers[idx]); delete _hideTimers[idx]; }
         scanHint.style.opacity = '0';
@@ -1448,7 +1643,13 @@
           _hideTimers[idx] = setTimeout(() => {
             delete _hideTimers[idx];
             hideChart();
+            releaseBuildingTextures(idx);
           }, 0);
+        } else {
+          _hideTimers[idx] = setTimeout(() => {
+            delete _hideTimers[idx];
+            releaseBuildingTextures(idx);
+          }, 500);
         }
         if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
