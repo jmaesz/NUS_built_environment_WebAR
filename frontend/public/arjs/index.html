@@ -1185,31 +1185,25 @@
       planeEl._textureLoading = true;
       var token = (planeEl._textureToken || 0) + 1;
       planeEl._textureToken = token;
-      var img = new Image();
-      img.onload = function () {
-        if (planeEl._textureToken !== token) return;
-        var cv = canvasFromImage(img, opts.maxDim || 2048);
+      new THREE.TextureLoader().load(src, function(tex) {
+        if (planeEl._textureToken !== token) { tex.dispose(); return; }
+        tex.colorSpace = THREE.SRGBColorSpace;
         function tryApply() {
           if (planeEl._textureToken !== token) return;
           var mesh = planeEl.getObject3D('mesh');
           if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
           disposeMaterialMap(mesh.material, true);
-          var tex = new THREE.CanvasTexture(cv);
-          tex.colorSpace = THREE.SRGBColorSpace;
-          tex.needsUpdate = true;
           mesh.material.map = tex;
           mesh.material.transparent = opts.transparent !== false;
           mesh.material.alphaTest = opts.alphaTest || 0.05;
           mesh.material.needsUpdate = true;
           planeEl._textureMap = tex;
-          planeEl._textureCanvas = cv;
+          planeEl._textureCanvas = null;
           planeEl._textureLoading = false;
           if (opts.showOnLoad && planeEl.object3D) planeEl.object3D.visible = true;
         }
         tryApply();
-      };
-      img.onerror = function () { planeEl._textureLoading = false; };
-      img.src = src;
+      }, undefined, function() { planeEl._textureLoading = false; });
     }
 
     function releaseImagePlaneTexture(planeEl) {
@@ -1238,7 +1232,14 @@
       var tmpImg = new Image();
       tmpImg.onload = function() {
         if (flImg._textureToken !== token) return;
-        var dcv = canvasFromImage(tmpImg, 1536);
+        var decodePromise = (typeof createImageBitmap === 'function')
+          ? createImageBitmap(tmpImg)
+          : Promise.resolve(null);
+        decodePromise.then(function(bmp) {
+          if (flImg._textureToken !== token) { if (bmp) bmp.close(); return; }
+          var src2 = bmp || tmpImg;
+          var dcv = canvasFromImage(src2, 1536);
+          if (bmp) bmp.close();
         var ctx = dcv.getContext('2d');
         var id = ctx.getImageData(0, 0, dcv.width, dcv.height);
         var d = id.data;
@@ -1274,6 +1275,9 @@
           if (flImg.object3D) flImg.object3D.visible = true;
         }
         tryApplyImg();
+        }).catch(function() {
+          if (flImg._textureToken === token) flImg._textureLoading = false;
+        });
       };
       tmpImg.onerror = function () { if (flImg._textureToken === token) flImg._textureLoading = false; };
       tmpImg.src = src;
