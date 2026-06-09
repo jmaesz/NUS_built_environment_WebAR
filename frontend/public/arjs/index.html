@@ -742,6 +742,7 @@
               flImg.setAttribute('position', (-8.5 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat; depthTest: true');
+              flImg.setAttribute('visible', 'false');
 
               flDg.appendChild(flImg);
               tapBb.appendChild(tapIconEl);
@@ -1069,6 +1070,8 @@
       const dg  = document.getElementById('fl-dg-' + idx + '-' + floorKey);
       if (openDaylightFloors.has(key)) {
         if (dg && dg.object3D) dg.object3D.visible = false;
+        var closingFlImg = document.getElementById('fl-img-' + idx + '-' + floorKey);
+        if (closingFlImg && closingFlImg.object3D) closingFlImg.object3D.visible = false;
         openDaylightFloors.delete(key);
         updateFloorBtn(idx, floorKey, false);
       } else {
@@ -1190,7 +1193,9 @@
     }
 
     function ensureDaylightTexture(flImg) {
-      if (!flImg || flImg._textureMap || flImg._textureLoading) return;
+      if (!flImg) return;
+      if (flImg.object3D) flImg.object3D.visible = !!flImg._textureMap;
+      if (flImg._textureMap || flImg._textureLoading) return;
       var src = flImg.dataset && flImg.dataset.src;
       if (!src) return;
       flImg._textureLoading = true;
@@ -1232,6 +1237,7 @@
           flImg._textureCanvas = dcv;
           flImg._textureLoading = false;
           flImg._textureLoaded = true;
+          if (flImg.object3D) flImg.object3D.visible = true;
         }
         tryApplyImg();
       };
