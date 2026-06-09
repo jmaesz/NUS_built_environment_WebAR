@@ -730,11 +730,15 @@
               // Daylight image — flat mat on marker surface
               var _flScaleMap = { 'E5': 0.7, 'E2': 0.7, 'E2A': 0.85, 'EA': 1.3, 'EW1': 0.85, 'E7': 1.15, 'E4A': 0.7 };
               var flImgScale = _flScaleMap[b.name] !== undefined ? _flScaleMap[b.name] : 1;
+              var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
               var flImg = document.createElement('a-plane');
               flImg.id = 'fl-img-' + idx + '-' + fl.key;
+              flImg.dataset.src = fl.img;
+              flImg.dataset.scale = String(flImgScale);
+              flImg.dataset.z = flImgZ.toFixed(2);
+              flImg.dataset.xoff = String(flXOff);
               flImg.setAttribute('height', (4.1 * flImgScale).toFixed(3));
               flImg.setAttribute('width', '5.5');
-              var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
               flImg.setAttribute('position', (-8.5 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat; depthTest: true');
@@ -1006,7 +1010,7 @@
       function tryApply() {
         var mesh = plane.getObject3D('mesh');
         if (!mesh || !mesh.material) { setTimeout(tryApply, 50); return; }
-        if (mesh.material.map) mesh.material.map.dispose();
+        disposeMaterialMap(mesh.material, true);
         var tex = new THREE.CanvasTexture(dv);
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
@@ -1053,7 +1057,7 @@
       if (!btn) return;
       var mesh = btn.getObject3D('mesh');
       if (!mesh || !mesh.material) return;
-      if (mesh.material.map) mesh.material.map.dispose();
+      disposeMaterialMap(mesh.material, false);
       var tex = new THREE.CanvasTexture(fc);
       tex.colorSpace = THREE.SRGBColorSpace;
       mesh.material.map = tex;
@@ -1068,6 +1072,8 @@
         openDaylightFloors.delete(key);
         updateFloorBtn(idx, floorKey, false);
       } else {
+        var flImg = document.getElementById('fl-img-' + idx + '-' + floorKey);
+        ensureDaylightTexture(flImg);
         if (dg && dg.object3D) dg.object3D.visible = true;
         openDaylightFloors.add(key);
         updateFloorBtn(idx, floorKey, true);
@@ -1086,12 +1092,33 @@
       openDaylightFloors.clear();
     }
 
+    function releaseCanvasBacking(canvas) {
+      if (!canvas || !canvas.getContext) return;
+      canvas.width = 1;
+      canvas.height = 1;
+    }
+
+    function disposeTexture(tex, releaseImage) {
+      if (!tex) return;
+      var img = tex.image;
+      tex.dispose();
+      tex.image = null;
+      if (releaseImage && img && img.tagName === 'CANVAS') releaseCanvasBacking(img);
+    }
+
+    function disposeMaterialMap(material, releaseImage) {
+      if (!material || !material.map) return;
+      disposeTexture(material.map, releaseImage);
+      material.map = null;
+      material.needsUpdate = true;
+    }
+
     function applyCanvasTexture(planeEl, canvas, opts) {
       opts = opts || {};
       function tryApply() {
         var mesh = planeEl.getObject3D('mesh');
         if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
-        if (mesh.material.map) mesh.material.map.dispose();
+        disposeMaterialMap(mesh.material, !!opts.releasePreviousImage);
         var tex = new THREE.CanvasTexture(canvas);
         tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
@@ -1129,7 +1156,7 @@
           if (planeEl._textureToken !== token) return;
           var mesh = planeEl.getObject3D('mesh');
           if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
-          if (mesh.material.map) mesh.material.map.dispose();
+          disposeMaterialMap(mesh.material, true);
           var tex = new THREE.CanvasTexture(cv);
           tex.colorSpace = THREE.SRGBColorSpace;
           tex.needsUpdate = true;
@@ -1152,16 +1179,64 @@
       if (!planeEl) return;
       var mesh = planeEl.getObject3D && planeEl.getObject3D('mesh');
       var map = mesh && mesh.material && mesh.material.map;
-      if (map) {
-        map.dispose();
-        mesh.material.map = null;
-        mesh.material.needsUpdate = true;
-      }
-      if (planeEl._textureMap && planeEl._textureMap !== map) planeEl._textureMap.dispose();
+      if (map) disposeMaterialMap(mesh.material, true);
+      if (planeEl._textureMap && planeEl._textureMap !== map) disposeTexture(planeEl._textureMap, true);
+      releaseCanvasBacking(planeEl._textureCanvas);
       planeEl._textureMap = null;
       planeEl._textureCanvas = null;
       planeEl._textureLoading = false;
+      planeEl._textureLoaded = false;
       planeEl._textureToken = (planeEl._textureToken || 0) + 1;
+    }
+
+    function ensureDaylightTexture(flImg) {
+      if (!flImg || flImg._textureMap || flImg._textureLoading) return;
+      var src = flImg.dataset && flImg.dataset.src;
+      if (!src) return;
+      flImg._textureLoading = true;
+      var token = (flImg._textureToken || 0) + 1;
+      flImg._textureToken = token;
+      var tmpImg = new Image();
+      tmpImg.onload = function() {
+        if (flImg._textureToken !== token) return;
+        var dcv = canvasFromImage(tmpImg, 1536);
+        var ctx = dcv.getContext('2d');
+        var id = ctx.getImageData(0, 0, dcv.width, dcv.height);
+        var d = id.data;
+        for (var pi = 0; pi < d.length; pi += 4) {
+          if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
+        }
+        ctx.putImageData(id, 0, 0);
+        var flImgScale = parseFloat(flImg.dataset.scale || '1');
+        var flImgZ = parseFloat(flImg.dataset.z || '0');
+        var flXOff = parseFloat(flImg.dataset.xoff || '0');
+        var aspect = dcv.width / dcv.height;
+        var w = 4.1 * flImgScale * aspect;
+        flImg.setAttribute('width', w.toFixed(3));
+        flImg.setAttribute('height', (4.1 * flImgScale).toFixed(3));
+        flImg.setAttribute('position', (-6.58 - w / 2 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
+        function tryApplyImg() {
+          if (flImg._textureToken !== token) return;
+          var mesh = flImg.getObject3D('mesh');
+          if (!mesh || !mesh.material) { setTimeout(tryApplyImg, 100); return; }
+          disposeMaterialMap(mesh.material, true);
+          var tex = new THREE.CanvasTexture(dcv);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.needsUpdate = true;
+          mesh.material.map = tex;
+          mesh.material.transparent = true;
+          mesh.material.alphaTest = 0.05;
+          mesh.material.depthTest = true;
+          mesh.material.needsUpdate = true;
+          flImg._textureMap = tex;
+          flImg._textureCanvas = dcv;
+          flImg._textureLoading = false;
+          flImg._textureLoaded = true;
+        }
+        tryApplyImg();
+      };
+      tmpImg.onerror = function () { if (flImg._textureToken === token) flImg._textureLoading = false; };
+      tmpImg.src = src;
     }
 
     function initBuildingTextures(idx) {
@@ -1257,48 +1332,8 @@
           var tapIconEl = document.getElementById('fl-tap-' + idx + '-' + fl.key);
           if (tapIconEl) applyCanvasTexture(tapIconEl, window._tapIconCanvas, { transparent: true, alphaTest: 0.05 });
 
-          // Daylight Image Canvas
           var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
-          if (flImg && !flImg._textureLoaded) {
-            flImg._textureLoaded = true; // Mark as started to avoid double load
-            var _flScaleMap = { 'E5': 0.7, 'E2': 0.7, 'E2A': 0.85, 'EA': 1.3, 'EW1': 0.85, 'E7': 1.15, 'E4A': 0.7 };
-            var flImgScale = _flScaleMap[b.name] !== undefined ? _flScaleMap[b.name] : 1;
-            var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
-
-            var tmpImg = new Image();
-            tmpImg.onload = function() {
-              var dcv = canvasFromImage(tmpImg, 1536);
-              var ctx = dcv.getContext('2d');
-              var id = ctx.getImageData(0, 0, dcv.width, dcv.height);
-              var d = id.data;
-              for (var pi = 0; pi < d.length; pi += 4) {
-                if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
-              }
-              ctx.putImageData(id, 0, 0);
-              var aspect = dcv.width / dcv.height;
-              var w = 4.1 * flImgScale * aspect;
-              flImg.setAttribute('width', w.toFixed(3));
-              flImg.setAttribute('height', (4.1 * flImgScale).toFixed(3));
-              flImg.setAttribute('position', (-6.58 - w / 2 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
-              function tryApplyImg() {
-                var mesh = flImg.getObject3D('mesh');
-                if (!mesh || !mesh.material) { setTimeout(tryApplyImg, 100); return; }
-                if (mesh.material.map) mesh.material.map.dispose();
-                var tex = new THREE.CanvasTexture(dcv);
-                tex.colorSpace = THREE.SRGBColorSpace;
-                tex.needsUpdate = true;
-                mesh.material.map = tex;
-                mesh.material.transparent = true;
-                mesh.material.alphaTest = 0.05;
-                mesh.material.depthTest = true;
-                mesh.material.needsUpdate = true;
-                // Store the texture so we can dispose it later
-                flImg._textureMap = tex;
-              }
-              setTimeout(tryApplyImg, 600);
-            };
-            tmpImg.src = fl.img;
-          }
+          if (flImg) flImg._textureLoaded = false;
         });
       }
     }
@@ -1310,11 +1345,7 @@
         var el = document.getElementById(elId);
         if (el) {
           var mesh = el.getObject3D('mesh');
-          if (mesh && mesh.material && mesh.material.map) {
-            mesh.material.map.dispose();
-            mesh.material.map = null;
-            mesh.material.needsUpdate = true;
-          }
+          if (mesh && mesh.material && mesh.material.map) disposeMaterialMap(mesh.material, true);
         }
       }
 
@@ -1329,7 +1360,7 @@
           var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
           if (flImg) {
             if (flImg._textureMap) {
-              flImg._textureMap.dispose();
+              disposeTexture(flImg._textureMap, true);
               flImg._textureMap = null;
             }
             flImg._textureLoaded = false;
@@ -1377,7 +1408,7 @@
           child.material.map.needsUpdate = true;
           return;
         }
-        if (child.material.map) child.material.map.dispose();
+        disposeMaterialMap(child.material, false);
         child.material.map = new THREE.CanvasTexture(cv);
         child.material.needsUpdate = true;
       });
