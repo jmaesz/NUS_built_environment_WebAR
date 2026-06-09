@@ -1723,7 +1723,7 @@
       // Hit test main labels, info labels, and daylight floor buttons
       let bestIdx = -1, bestDist = 40;
       let bestInfoIdx = -1, bestInfoDist = 40;
-      let bestFloorIdx = -1, bestFloorKey = null, bestFloorDist = 40;
+      let bestFloorIdx = -1, bestFloorKey = null, bestFloorDist = 55;
 
       for (let idx = 0; idx < BUILDINGS.length; idx++) {
         const marker = document.getElementById('marker-' + idx);
@@ -1758,7 +1758,8 @@
         const dfloors = window.DAYLIGHT_FLOORS[BUILDINGS[idx].name];
         if (dfloors) {
           for (let fi = 0; fi < dfloors.length; fi++) {
-            const fbtn = document.getElementById('fl-tap-' + idx + '-' + dfloors[fi].key);
+            const fkey = dfloors[fi].key;
+            const fbtn = document.getElementById('fl-btn-' + idx + '-' + fkey);
             if (fbtn && fbtn.object3D.visible) {
               fbtn.object3D.getWorldPosition(_arVec);
               _arVec.project(sceneEl.camera);
@@ -1766,7 +1767,7 @@
                 const sx = (_arVec.x + 1) / 2 * r.width + r.left;
                 const sy = (-_arVec.y + 1) / 2 * r.height + r.top;
                 const dist = Math.sqrt((cx - sx) ** 2 + (cy - sy) ** 2);
-                if (dist < bestFloorDist) { bestFloorDist = dist; bestFloorIdx = idx; bestFloorKey = dfloors[fi].key; }
+                if (dist < bestFloorDist) { bestFloorDist = dist; bestFloorIdx = idx; bestFloorKey = fkey; }
               }
             }
           }
