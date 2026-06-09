@@ -528,8 +528,8 @@
         assets.setAttribute('timeout', '10000');
         scene.insertBefore(assets, scene.firstChild);
 
-        // Pre-build tap icon canvas once so it's ready for applyCanvasTexture
-        var _tapIconCanvas = (function() {
+        // Pre-build tap icon texture once — shared across all floor tap icons
+        window._tapIconTexture = (function() {
           var tic = document.createElement('canvas');
           tic.width = 256; tic.height = 256;
           var tt = tic.getContext('2d');
@@ -553,9 +553,10 @@
           tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
           tt.fillRect(66, 126, 28, 46);
           tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
-          return tic;
+          var tex = new THREE.CanvasTexture(tic);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          return tex;
         })();
-        window._tapIconCanvas = _tapIconCanvas;
 
         // Word-wrap helper: draws text, returns line count
         function wrapText(cx, text, x, y, maxW, lh) {
@@ -1341,7 +1342,15 @@
           if (flBtn) applyCanvasTexture(flBtn, fc);
 
           var tapIconEl = document.getElementById('fl-tap-' + idx + '-' + fl.key);
-          if (tapIconEl) applyCanvasTexture(tapIconEl, window._tapIconCanvas, { transparent: true, alphaTest: 0.05 });
+          if (tapIconEl) {
+            var mesh = tapIconEl.getObject3D('mesh');
+            if (mesh && mesh.material && mesh.material.map !== window._tapIconTexture) {
+              mesh.material.map = window._tapIconTexture;
+              mesh.material.transparent = true;
+              mesh.material.alphaTest = 0.05;
+              mesh.material.needsUpdate = true;
+            }
+          }
 
           var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
           if (flImg) flImg._textureLoaded = false;
@@ -1367,11 +1376,7 @@
       if (daylightFloors) {
         daylightFloors.forEach(function (fl) {
           disposeMat('fl-btn-' + idx + '-' + fl.key);
-          // tap icon uses shared _tapIconCanvas — dispose texture only, don't release canvas backing
-          (function() {
-            var el = document.getElementById('fl-tap-' + idx + '-' + fl.key);
-            if (el) { var mesh = el.getObject3D('mesh'); if (mesh && mesh.material) disposeMaterialMap(mesh.material, false); }
-          })();
+          // tap icon holds shared _tapIconTexture — leave it alone
           var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
           if (flImg) {
             if (flImg._textureMap) {
