@@ -528,24 +528,6 @@
         assets.setAttribute('timeout', '10000');
         scene.insertBefore(assets, scene.firstChild);
 
-        function applyCanvasTexture(planeEl, canvas, opts) {
-          opts = opts || {};
-          function tryApply() {
-            var mesh = planeEl.getObject3D('mesh');
-            if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
-            if (mesh.material.map) mesh.material.map.dispose();
-            var tex = new THREE.CanvasTexture(canvas);
-            tex.needsUpdate = true;
-            mesh.material.map = tex;
-            if (opts.transparent) {
-              mesh.material.transparent = true;
-              mesh.material.alphaTest = opts.alphaTest || 0;
-            }
-            mesh.material.needsUpdate = true;
-          }
-          tryApply();
-        }
-
         // Word-wrap helper: draws text, returns line count
         function wrapText(cx, text, x, y, maxW, lh) {
           var words = text.split(' '), line = '', count = 0;
@@ -588,39 +570,6 @@
         window._justifyText = justifyText;
 
         window.BUILDINGS.forEach(function (b, idx) {
-          // ── Main label canvas ──────────────────────────────────────────────
-          var cv = document.createElement('canvas');
-          cv.width = 1024; cv.height = 512;
-          var cx = cv.getContext('2d');
-          cx.fillStyle = '#ffffff';
-          cx.fillRect(0, 0, 1024, 512);
-          cx.textAlign = 'center'; cx.textBaseline = 'middle';
-          cx.fillStyle = '#000000';
-          cx.font = 'bold 140px Arial, sans-serif';
-          cx.fillText(b.name, 512, 180);
-          cx.font = '110px Arial, sans-serif';
-          cx.fillStyle = '#333333';
-          cx.fillText('Tap for details', 512, 370);
-          // Store canvas for setLabelHint to reuse
-          if (!window._lblCanvases) window._lblCanvases = [];
-          window._lblCanvases[idx] = cv;
-
-          // ── Info label canvas ──────────────────────────────────────────────
-          var ic = document.createElement('canvas');
-          ic.width = 1024; ic.height = 512;
-          var ix = ic.getContext('2d');
-          ix.fillStyle = '#ffffff';
-          ix.fillRect(0, 0, 1024, 512);
-          ix.textAlign = 'center'; ix.textBaseline = 'middle';
-          ix.font = 'bold 100px Arial, sans-serif';
-          ix.fillStyle = '#107b7f';
-          ix.fillText('Building Info', 512, 195);
-          ix.font = '80px Arial, sans-serif';
-          ix.fillStyle = '#555555';
-          ix.fillText('Tap for details', 512, 335);
-          if (!window._infoCanvases) window._infoCanvases = [];
-          window._infoCanvases[idx] = ic;
-
           // ── Marker setup ───────────────────────────────────────────────────
           var marker = document.createElement('a-marker');
           marker.setAttribute('type', 'barcode');
@@ -665,7 +614,6 @@
           bg.setAttribute('height', '1.1');
           bg.setAttribute('rotation', '0 0 0');
           bg.setAttribute('material', 'side: double; transparent: false; shader: flat');
-          (function(el, canvas) { applyCanvasTexture(el, canvas); })(bg, cv);
 
           // Description group (hidden until tap)
           var descGroup = document.createElement('a-entity');
@@ -696,7 +644,7 @@
           infoLbl.setAttribute('height', '1.1');
           infoLbl.setAttribute('position', '2.5 0 0');
           infoLbl.setAttribute('visible', 'false');
-          infoLbl.setAttribute('material', 'src: #ilbl-' + idx + '; side: double; transparent: false; shader: flat');
+          infoLbl.setAttribute('material', 'side: double; transparent: false; shader: flat');
 
           // Invisible X-button hitbox — top-right of desc panel (now on right side)
           var xHitbox = document.createElement('a-plane');
@@ -721,19 +669,6 @@
             var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
             var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
             daylightFloors.forEach(function (fl, flIdx) {
-              // Floor button canvas
-              var fc = document.createElement('canvas');
-              fc.width = 220; fc.height = 140;
-              var fx = fc.getContext('2d');
-              fx.fillStyle = '#ffffff';
-              fx.fillRect(0, 0, 220, 140);
-              fx.textAlign = 'center'; fx.textBaseline = 'middle';
-              fx.fillStyle = '#0a0a0a';
-              fx.font = 'bold 108px Arial, sans-serif';
-              fx.fillText(fl.key, 110, 70);
-              if (!window._floorBtnCanvases) window._floorBtnCanvases = {};
-              window._floorBtnCanvases[idx + '-' + fl.key] = { canvas: fc, label: fl.key };
-
               // Up-track container for this floor (hidden until chart opens)
               var flUpEl = document.createElement('a-entity');
               flUpEl.id = 'fl-up-' + idx + '-' + fl.key;
@@ -751,42 +686,6 @@
               flBtn.setAttribute('height', '0.30');
               flBtn.setAttribute('position', (-5.0 + flXOff) + ' 0 0');
               flBtn.setAttribute('material', 'side: double; transparent: false; shader: flat');
-              (function(el, canvas) { applyCanvasTexture(el, canvas); })(flBtn, fc);
-
-              // "Tap here" hand-cursor icon (LEFT of floor label)
-              if (!document.getElementById('tap-icon-shared')) {
-                var tic = document.createElement('canvas');
-                tic.width = 256; tic.height = 256;
-                var tt = tic.getContext('2d');
-                // Teal circle
-                tt.fillStyle = '#107b7f';
-                tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
-                // Subtle inner ring
-                tt.strokeStyle = 'rgba(255,255,255,0.22)';
-                tt.lineWidth = 5;
-                tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
-                // White pointer hand cursor
-                tt.fillStyle = '#ffffff';
-                // Index finger (rounded top)
-                tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
-                tt.fillRect(102, 52, 32, 74);
-                // Fist body (other fingers curled)
-                tt.beginPath();
-                tt.moveTo(92, 120); tt.lineTo(182, 120);
-                tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
-                tt.lineTo(92, 156);
-                tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
-                tt.closePath(); tt.fill();
-                tt.fillRect(92, 138, 108, 52);
-                tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
-                // Connect finger to fist
-                tt.fillRect(102, 118, 32, 8);
-                // Thumb (left side)
-                tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
-                tt.fillRect(66, 126, 28, 46);
-                tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
-                if (!window._tapIconCanvas) window._tapIconCanvas = tic;
-              }
 
               var flDotGroup = document.createElement('a-entity');
               flDotGroup.id = 'fl-dot-' + idx + '-' + fl.key;
@@ -798,7 +697,6 @@
               tapIconEl.setAttribute('height', '0.40');
               tapIconEl.setAttribute('position', (-5.58 + flXOff) + ' 0 0');
               tapIconEl.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
-              (function(el) { applyCanvasTexture(el, window._tapIconCanvas || tic, { transparent: true, alphaTest: 0.05 }); })(tapIconEl);
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               // All lines straight and parallel — no fanning
@@ -840,41 +738,6 @@
               flImg.setAttribute('position', (-8.5 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
               flImg.setAttribute('rotation', '-90 0 0');
               flImg.setAttribute('material', 'transparent: true; alphaTest: 0.05; side: double; shader: flat; depthTest: true');
-              (function(el, src, imgZ, xOff, sc) {
-                var tmpImg = new Image();
-                tmpImg.onload = function() {
-                  var cv = document.createElement('canvas');
-                  cv.width = tmpImg.width; cv.height = tmpImg.height;
-                  var ctx = cv.getContext('2d');
-                  ctx.drawImage(tmpImg, 0, 0);
-                  var id = ctx.getImageData(0, 0, cv.width, cv.height);
-                  var d = id.data;
-                  for (var pi = 0; pi < d.length; pi += 4) {
-                    if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
-                  }
-                  ctx.putImageData(id, 0, 0);
-                  var aspect = cv.width / cv.height;
-                  var w = 4.1 * sc * aspect;
-                  el.setAttribute('width', w.toFixed(3));
-                  el.setAttribute('height', (4.1 * sc).toFixed(3));
-                  el.setAttribute('position', (-6.58 - w / 2 + xOff) + ' 0 ' + imgZ.toFixed(2));
-                  function tryApply() {
-                    var mesh = el.getObject3D('mesh');
-                    if (!mesh || !mesh.material) { setTimeout(tryApply, 100); return; }
-                    if (mesh.material.map) mesh.material.map.dispose();
-                    var tex = new THREE.CanvasTexture(cv);
-                    tex.colorSpace = THREE.SRGBColorSpace;
-                    tex.needsUpdate = true;
-                    mesh.material.map = tex;
-                    mesh.material.transparent = true;
-                    mesh.material.alphaTest = 0.05;
-                    mesh.material.depthTest = true;
-                    mesh.material.needsUpdate = true;
-                  }
-                  setTimeout(tryApply, 600);
-                };
-                tmpImg.src = src;
-              })(flImg, fl.img, flImgZ, flXOff, flImgScale);
 
               flDg.appendChild(flImg);
               tapBb.appendChild(tapIconEl);
@@ -1231,6 +1094,207 @@
       openDaylightFloors.clear();
     }
 
+    function applyCanvasTexture(planeEl, canvas, opts) {
+      opts = opts || {};
+      function tryApply() {
+        var mesh = planeEl.getObject3D('mesh');
+        if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
+        if (mesh.material.map) mesh.material.map.dispose();
+        var tex = new THREE.CanvasTexture(canvas);
+        tex.needsUpdate = true;
+        mesh.material.map = tex;
+        if (opts.transparent) {
+          mesh.material.transparent = true;
+          mesh.material.alphaTest = opts.alphaTest || 0;
+        }
+        mesh.material.needsUpdate = true;
+      }
+      tryApply();
+    }
+
+    function initBuildingTextures(idx) {
+      if (window._lblCanvases && window._lblCanvases[idx]) return; // Already initialized
+      const b = BUILDINGS[idx];
+      
+      // 1. Main label canvas
+      var cv = document.createElement('canvas');
+      cv.width = 1024; cv.height = 512;
+      var cx = cv.getContext('2d');
+      cx.fillStyle = '#ffffff';
+      cx.fillRect(0, 0, 1024, 512);
+      cx.textAlign = 'center'; cx.textBaseline = 'middle';
+      cx.fillStyle = '#000000';
+      cx.font = 'bold 140px Arial, sans-serif';
+      cx.fillText(b.name, 512, 180);
+      cx.font = '110px Arial, sans-serif';
+      cx.fillStyle = '#333333';
+      cx.fillText('Tap for details', 512, 370);
+      if (!window._lblCanvases) window._lblCanvases = [];
+      window._lblCanvases[idx] = cv;
+      var bg = document.getElementById('ar-bg-' + idx);
+      if (bg) applyCanvasTexture(bg, cv);
+
+      // 2. Info label canvas
+      var ic = document.createElement('canvas');
+      ic.width = 1024; ic.height = 512;
+      var ix = ic.getContext('2d');
+      ix.fillStyle = '#ffffff';
+      ix.fillRect(0, 0, 1024, 512);
+      ix.textAlign = 'center'; ix.textBaseline = 'middle';
+      ix.font = 'bold 100px Arial, sans-serif';
+      ix.fillStyle = '#107b7f';
+      ix.fillText('Building Info', 512, 195);
+      ix.font = '80px Arial, sans-serif';
+      ix.fillStyle = '#555555';
+      ix.fillText('Tap for details', 512, 335);
+      if (!window._infoCanvases) window._infoCanvases = [];
+      window._infoCanvases[idx] = ic;
+      var infoLbl = document.getElementById('ar-ilbl-' + idx);
+      if (infoLbl) applyCanvasTexture(infoLbl, ic);
+
+      // 3. Floor buttons + Tap Icon + Daylight Images
+      var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
+      if (daylightFloors) {
+        var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
+        var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
+        
+        // Ensure tap icon is created
+        if (!window._tapIconCanvas) {
+          var tic = document.createElement('canvas');
+          tic.width = 256; tic.height = 256;
+          var tt = tic.getContext('2d');
+          tt.fillStyle = '#107b7f';
+          tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
+          tt.strokeStyle = 'rgba(255,255,255,0.22)';
+          tt.lineWidth = 5;
+          tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
+          tt.fillStyle = '#ffffff';
+          tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
+          tt.fillRect(102, 52, 32, 74);
+          tt.beginPath();
+          tt.moveTo(92, 120); tt.lineTo(182, 120);
+          tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
+          tt.lineTo(92, 156);
+          tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
+          tt.closePath(); tt.fill();
+          tt.fillRect(92, 138, 108, 52);
+          tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
+          tt.fillRect(102, 118, 32, 8);
+          tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
+          tt.fillRect(66, 126, 28, 46);
+          tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
+          window._tapIconCanvas = tic;
+        }
+
+        daylightFloors.forEach(function (fl, flIdx) {
+          // Floor Button Canvas
+          var fc = document.createElement('canvas');
+          fc.width = 220; fc.height = 140;
+          var fx = fc.getContext('2d');
+          fx.fillStyle = '#ffffff';
+          fx.fillRect(0, 0, 220, 140);
+          fx.textAlign = 'center'; fx.textBaseline = 'middle';
+          fx.fillStyle = '#0a0a0a';
+          fx.font = 'bold 108px Arial, sans-serif';
+          fx.fillText(fl.key, 110, 70);
+          if (!window._floorBtnCanvases) window._floorBtnCanvases = {};
+          window._floorBtnCanvases[idx + '-' + fl.key] = { canvas: fc, label: fl.key };
+          var flBtn = document.getElementById('fl-btn-' + idx + '-' + fl.key);
+          if (flBtn) applyCanvasTexture(flBtn, fc);
+
+          var tapIconEl = document.getElementById('fl-tap-' + idx + '-' + fl.key);
+          if (tapIconEl) applyCanvasTexture(tapIconEl, window._tapIconCanvas, { transparent: true, alphaTest: 0.05 });
+
+          // Daylight Image Canvas
+          var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
+          if (flImg && !flImg._textureLoaded) {
+            flImg._textureLoaded = true; // Mark as started to avoid double load
+            var _flScaleMap = { 'E5': 0.7, 'E2': 0.7, 'E2A': 0.85, 'EA': 1.3, 'EW1': 0.85, 'E7': 1.15, 'E4A': 0.7 };
+            var flImgScale = _flScaleMap[b.name] !== undefined ? _flScaleMap[b.name] : 1;
+            var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
+            
+            var tmpImg = new Image();
+            tmpImg.onload = function() {
+              var dcv = document.createElement('canvas');
+              dcv.width = tmpImg.width; dcv.height = tmpImg.height;
+              var ctx = dcv.getContext('2d');
+              ctx.drawImage(tmpImg, 0, 0);
+              var id = ctx.getImageData(0, 0, dcv.width, dcv.height);
+              var d = id.data;
+              for (var pi = 0; pi < d.length; pi += 4) {
+                if (d[pi] > 218 && d[pi+1] > 218 && d[pi+2] > 218) d[pi+3] = 0;
+              }
+              ctx.putImageData(id, 0, 0);
+              var aspect = dcv.width / dcv.height;
+              var w = 4.1 * flImgScale * aspect;
+              flImg.setAttribute('width', w.toFixed(3));
+              flImg.setAttribute('height', (4.1 * flImgScale).toFixed(3));
+              flImg.setAttribute('position', (-6.58 - w / 2 + flXOff) + ' 0 ' + flImgZ.toFixed(2));
+              function tryApplyImg() {
+                var mesh = flImg.getObject3D('mesh');
+                if (!mesh || !mesh.material) { setTimeout(tryApplyImg, 100); return; }
+                if (mesh.material.map) mesh.material.map.dispose();
+                var tex = new THREE.CanvasTexture(dcv);
+                tex.colorSpace = THREE.SRGBColorSpace;
+                tex.needsUpdate = true;
+                mesh.material.map = tex;
+                mesh.material.transparent = true;
+                mesh.material.alphaTest = 0.05;
+                mesh.material.depthTest = true;
+                mesh.material.needsUpdate = true;
+                // Store the texture so we can dispose it later
+                flImg._textureMap = tex;
+              }
+              setTimeout(tryApplyImg, 600);
+            };
+            tmpImg.src = fl.img;
+          }
+        });
+      }
+    }
+
+    function releaseBuildingTextures(idx) {
+      if (!window._lblCanvases || !window._lblCanvases[idx]) return;
+
+      function disposeMat(elId) {
+        var el = document.getElementById(elId);
+        if (el) {
+          var mesh = el.getObject3D('mesh');
+          if (mesh && mesh.material && mesh.material.map) {
+            mesh.material.map.dispose();
+            mesh.material.map = null;
+            mesh.material.needsUpdate = true;
+          }
+        }
+      }
+
+      disposeMat('ar-bg-' + idx);
+      disposeMat('ar-ilbl-' + idx);
+      var b = window.BUILDINGS[idx];
+      var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
+      if (daylightFloors) {
+        daylightFloors.forEach(function (fl) {
+          disposeMat('fl-btn-' + idx + '-' + fl.key);
+          disposeMat('fl-tap-' + idx + '-' + fl.key);
+          var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
+          if (flImg) {
+            if (flImg._textureMap) {
+              flImg._textureMap.dispose();
+              flImg._textureMap = null;
+            }
+            flImg._textureLoaded = false;
+            disposeMat('fl-img-' + idx + '-' + fl.key);
+          }
+          if (window._floorBtnCanvases) {
+             delete window._floorBtnCanvases[idx + '-' + fl.key];
+          }
+        });
+      }
+
+      window._lblCanvases[idx] = null;
+      if (window._infoCanvases) window._infoCanvases[idx] = null;
+    }
+
     function setLabelHint(idx, isOpen) {
       const bg = document.getElementById('ar-bg-' + idx);
       if (!bg || !bg.object3D) return;
@@ -1451,6 +1515,7 @@
       const marker = document.getElementById('marker-' + idx);
       if (!marker) return;
       marker.addEventListener('markerFound', () => {
+        initBuildingTextures(idx);
         visibleMarkers.add(idx);
         if (_hideTimers[idx]) { clearTimeout(_hideTimers[idx]); delete _hideTimers[idx]; }
         scanHint.style.opacity = '0';
@@ -1461,7 +1526,13 @@
           _hideTimers[idx] = setTimeout(() => {
             delete _hideTimers[idx];
             hideChart();
+            releaseBuildingTextures(idx);
           }, 0);
+        } else {
+          _hideTimers[idx] = setTimeout(() => {
+            delete _hideTimers[idx];
+            releaseBuildingTextures(idx);
+          }, 500);
         }
         if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
