@@ -515,7 +515,7 @@
 
   <a-scene
     embedded
-    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: color_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 60; sourceWidth: 1280; sourceHeight: 960; canvasWidth: 1280; canvasHeight: 960;"
+    arjs="sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 4x4_BCH_13_5_5; maxDetectionRate: 20; sourceWidth: 1280; sourceHeight: 960; canvasWidth: 1280; canvasHeight: 960;"
     vr-mode-ui="enabled: false"
     renderer="colorManagement: true; logarithmicDepthBuffer: true;"
     device-orientation-permission-ui="enabled: false"
@@ -763,13 +763,9 @@
           // ── Solar mat (hidden until chart opens) ──────────────────────────
           var solarD = window.SOLAR_DATA && window.SOLAR_DATA[b.name];
           if (solarD) {
-            var simg = document.createElement('img');
-            simg.id = 'solar-img-' + idx;
-            simg.src = '/solar/' + b.name + '.webp';
-            assets.appendChild(simg);
             var solarMat = document.createElement('a-plane');
             solarMat.id = 'solar-mat-' + idx;
-            solarMat.setAttribute('src', '#solar-img-' + idx);
+            solarMat.dataset.src = '/solar/' + b.name + '.webp';
             solarMat.setAttribute('rotation', '-90 ' + solarD.ry + ' 0');
             solarMat.setAttribute('position', solarD.x + ' 0.01 ' + solarD.z);
             solarMat.setAttribute('width',  solarD.w);
@@ -783,13 +779,9 @@
           var extraMats = window.SOLAR_EXTRA && window.SOLAR_EXTRA[b.name];
           if (extraMats) {
             extraMats.forEach(function(ed, ei) {
-              var esimg = document.createElement('img');
-              esimg.id = 'solar-extra-img-' + idx + '-' + ei;
-              esimg.src = '/solar/' + ed.file + '.webp';
-              assets.appendChild(esimg);
               var eMat = document.createElement('a-plane');
               eMat.id = 'solar-extra-mat-' + idx + '-' + ei;
-              eMat.setAttribute('src', '#solar-extra-img-' + idx + '-' + ei);
+              eMat.dataset.src = '/solar/' + ed.file + '.webp';
               eMat.setAttribute('rotation', '-90 ' + ed.ry + ' 0');
               eMat.setAttribute('position', ed.x + ' 0.01 ' + ed.z);
               eMat.setAttribute('width',  ed.w);
@@ -1101,6 +1093,7 @@
         if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
         if (mesh.material.map) mesh.material.map.dispose();
         var tex = new THREE.CanvasTexture(canvas);
+        tex.colorSpace = THREE.SRGBColorSpace;
         tex.needsUpdate = true;
         mesh.material.map = tex;
         if (opts.transparent) {
@@ -1112,10 +1105,68 @@
       tryApply();
     }
 
+    function canvasFromImage(img, maxDim) {
+      var scale = maxDim && Math.max(img.width, img.height) > maxDim ? maxDim / Math.max(img.width, img.height) : 1;
+      var w = Math.max(1, Math.round(img.width * scale));
+      var h = Math.max(1, Math.round(img.height * scale));
+      var cv = document.createElement('canvas');
+      cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      return cv;
+    }
+
+    function ensureImagePlaneTexture(planeEl, src, opts) {
+      opts = opts || {};
+      if (!planeEl || !src || planeEl._textureMap || planeEl._textureLoading) return;
+      planeEl._textureLoading = true;
+      var token = (planeEl._textureToken || 0) + 1;
+      planeEl._textureToken = token;
+      var img = new Image();
+      img.onload = function () {
+        if (planeEl._textureToken !== token) return;
+        var cv = canvasFromImage(img, opts.maxDim || 2048);
+        function tryApply() {
+          if (planeEl._textureToken !== token) return;
+          var mesh = planeEl.getObject3D('mesh');
+          if (!mesh || !mesh.material) { setTimeout(tryApply, 80); return; }
+          if (mesh.material.map) mesh.material.map.dispose();
+          var tex = new THREE.CanvasTexture(cv);
+          tex.colorSpace = THREE.SRGBColorSpace;
+          tex.needsUpdate = true;
+          mesh.material.map = tex;
+          mesh.material.transparent = opts.transparent !== false;
+          mesh.material.alphaTest = opts.alphaTest || 0.05;
+          mesh.material.needsUpdate = true;
+          planeEl._textureMap = tex;
+          planeEl._textureCanvas = cv;
+          planeEl._textureLoading = false;
+        }
+        tryApply();
+      };
+      img.onerror = function () { planeEl._textureLoading = false; };
+      img.src = src;
+    }
+
+    function releaseImagePlaneTexture(planeEl) {
+      if (!planeEl) return;
+      var mesh = planeEl.getObject3D && planeEl.getObject3D('mesh');
+      var map = mesh && mesh.material && mesh.material.map;
+      if (map) {
+        map.dispose();
+        mesh.material.map = null;
+        mesh.material.needsUpdate = true;
+      }
+      if (planeEl._textureMap && planeEl._textureMap !== map) planeEl._textureMap.dispose();
+      planeEl._textureMap = null;
+      planeEl._textureCanvas = null;
+      planeEl._textureLoading = false;
+      planeEl._textureToken = (planeEl._textureToken || 0) + 1;
+    }
+
     function initBuildingTextures(idx) {
       if (window._lblCanvases && window._lblCanvases[idx]) return; // Already initialized
       const b = BUILDINGS[idx];
-      
+
       // 1. Main label canvas
       var cv = document.createElement('canvas');
       cv.width = 1024; cv.height = 512;
@@ -1157,7 +1208,7 @@
       if (daylightFloors) {
         var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
         var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
-        
+
         // Ensure tap icon is created
         if (!window._tapIconCanvas) {
           var tic = document.createElement('canvas');
@@ -1212,13 +1263,11 @@
             var _flScaleMap = { 'E5': 0.7, 'E2': 0.7, 'E2A': 0.85, 'EA': 1.3, 'EW1': 0.85, 'E7': 1.15, 'E4A': 0.7 };
             var flImgScale = _flScaleMap[b.name] !== undefined ? _flScaleMap[b.name] : 1;
             var flImgZ = (daylightFloors.length - 1 - flIdx) * 0.04;
-            
+
             var tmpImg = new Image();
             tmpImg.onload = function() {
-              var dcv = document.createElement('canvas');
-              dcv.width = tmpImg.width; dcv.height = tmpImg.height;
+              var dcv = canvasFromImage(tmpImg, 1536);
               var ctx = dcv.getContext('2d');
-              ctx.drawImage(tmpImg, 0, 0);
               var id = ctx.getImageData(0, 0, dcv.width, dcv.height);
               var d = id.data;
               for (var pi = 0; pi < d.length; pi += 4) {
@@ -1292,6 +1341,13 @@
       }
 
       disposeMat('ar-desc-plane-' + idx);
+      var solarMat = document.getElementById('solar-mat-' + idx);
+      releaseImagePlaneTexture(solarMat);
+      var sei = 0;
+      while (document.getElementById('solar-extra-mat-' + idx + '-' + sei)) {
+        releaseImagePlaneTexture(document.getElementById('solar-extra-mat-' + idx + '-' + sei));
+        sei++;
+      }
       if (window._descCanvases) window._descCanvases[idx] = null;
 
       window._lblCanvases[idx] = null;
@@ -1370,8 +1426,13 @@
             if (openDaylightFloors.size > 0) hideDaylightFloor();
           }
           var sm2 = document.getElementById('solar-mat-' + i);
-          if (sm2 && sm2.object3D) sm2.object3D.visible = false;
-          var se2 = 0; while (document.getElementById('solar-extra-mat-' + i + '-' + se2)) { document.getElementById('solar-extra-mat-' + i + '-' + se2).object3D.visible = false; se2++; }
+          if (sm2 && sm2.object3D) { sm2.object3D.visible = false; releaseImagePlaneTexture(sm2); }
+          var se2 = 0; while (document.getElementById('solar-extra-mat-' + i + '-' + se2)) {
+            var extraSm2 = document.getElementById('solar-extra-mat-' + i + '-' + se2);
+            extraSm2.object3D.visible = false;
+            releaseImagePlaneTexture(extraSm2);
+            se2++;
+          }
         }
       });
     }
@@ -1387,8 +1448,16 @@
         if (fup && fup.object3D) fup.object3D.visible = true;
       });
       var solarMat = document.getElementById('solar-mat-' + idx);
-      if (solarMat && solarMat.object3D) solarMat.object3D.visible = true;
-      var sei = 0; while (document.getElementById('solar-extra-mat-' + idx + '-' + sei)) { document.getElementById('solar-extra-mat-' + idx + '-' + sei).object3D.visible = true; sei++; }
+      if (solarMat && solarMat.object3D) {
+        ensureImagePlaneTexture(solarMat, solarMat.dataset && solarMat.dataset.src, { maxDim: 2048, transparent: true, alphaTest: 0.05 });
+        solarMat.object3D.visible = true;
+      }
+      var sei = 0; while (document.getElementById('solar-extra-mat-' + idx + '-' + sei)) {
+        var extraSolar = document.getElementById('solar-extra-mat-' + idx + '-' + sei);
+        ensureImagePlaneTexture(extraSolar, extraSolar.dataset && extraSolar.dataset.src, { maxDim: 2048, transparent: true, alphaTest: 0.05 });
+        extraSolar.object3D.visible = true;
+        sei++;
+      }
 
       const total = b.equipment_kWh + b.lighting_kWh + b.cooling_kWh;
       document.getElementById('chart-building-name').textContent = b.name;
@@ -1454,8 +1523,13 @@
           if (fup && fup.object3D) fup.object3D.visible = false;
         });
         var sm = document.getElementById('solar-mat-' + activeIdx);
-        if (sm && sm.object3D) sm.object3D.visible = false;
-        var sec = 0; while (document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec)) { document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec).object3D.visible = false; sec++; }
+        if (sm && sm.object3D) { sm.object3D.visible = false; releaseImagePlaneTexture(sm); }
+        var sec = 0; while (document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec)) {
+          var extraSm = document.getElementById('solar-extra-mat-' + activeIdx + '-' + sec);
+          extraSm.object3D.visible = false;
+          releaseImagePlaneTexture(extraSm);
+          sec++;
+        }
         // Release pose-filter hold so AR disappears with the panel
         var mel = document.getElementById('marker-' + activeIdx);
         var pf = mel && mel.components && mel.components['pose-filter'];
@@ -1474,7 +1548,9 @@
     // ── AR.js threshold + smoothing tuning ────────────────────────────────────
     const sceneEl  = document.querySelector('a-scene');
     sceneEl.addEventListener('loaded', function () {
+      var tuneAttempts = 0;
       var tryTune = setInterval(function () {
+        if (++tuneAttempts > 50) { clearInterval(tryTune); return; }
         var ctx = sceneEl.systems && sceneEl.systems['arjs'];
         var ac  = ctx && ctx.ArToolkitContext && ctx.ArToolkitContext.arController;
         if (!ac) return;
