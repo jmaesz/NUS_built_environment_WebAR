@@ -1300,26 +1300,21 @@
           var tic = document.createElement('canvas');
           tic.width = 256; tic.height = 256;
           var tt = tic.getContext('2d');
-          tt.fillStyle = '#107b7f';
+          // Green circle background
+          tt.fillStyle = '#2ecc71';
           tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
-          tt.strokeStyle = 'rgba(255,255,255,0.22)';
-          tt.lineWidth = 5;
-          tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
+          // White 5-finger hand (scaled 2x from original 128px design)
           tt.fillStyle = '#ffffff';
-          tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
-          tt.fillRect(102, 52, 32, 74);
-          tt.beginPath();
-          tt.moveTo(92, 120); tt.lineTo(182, 120);
-          tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
-          tt.lineTo(92, 156);
-          tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
-          tt.closePath(); tt.fill();
-          tt.fillRect(92, 138, 108, 52);
-          tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
-          tt.fillRect(102, 118, 32, 8);
-          tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
-          tt.fillRect(66, 126, 28, 46);
-          tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
+          tt.beginPath(); tt.arc(128, 56, 24, 0, Math.PI * 2); tt.fill();  // index fingertip
+          tt.fillRect(104, 56, 48, 76);                                      // index finger
+          tt.beginPath(); tt.arc(172, 72, 20, 0, Math.PI * 2); tt.fill();  // middle fingertip
+          tt.fillRect(152, 72, 40, 64);                                      // middle finger
+          tt.beginPath(); tt.arc(212, 88, 18, 0, Math.PI * 2); tt.fill();  // ring fingertip
+          tt.fillRect(194, 88, 36, 56);                                      // ring finger
+          tt.beginPath(); tt.arc(76, 128, 20, 0, Math.PI * 2); tt.fill();  // thumb tip
+          tt.fillRect(56, 112, 40, 60);                                      // thumb
+          tt.fillRect(76, 132, 154, 84);                                     // palm
+          tt.beginPath(); tt.arc(128, 216, 44, 0, Math.PI * 2); tt.fill(); // lower palm
           window._tapIconCanvas = tic;
         }
 
