@@ -1285,11 +1285,14 @@
             flImg._textureLoaded = false;
             disposeMat('fl-img-' + idx + '-' + fl.key);
           }
-          if (window._floorBtnCanvases) {
+      if (window._floorBtnCanvases) {
              delete window._floorBtnCanvases[idx + '-' + fl.key];
           }
         });
       }
+
+      disposeMat('ar-desc-plane-' + idx);
+      if (window._descCanvases) window._descCanvases[idx] = null;
 
       window._lblCanvases[idx] = null;
       if (window._infoCanvases) window._infoCanvases[idx] = null;
@@ -1527,12 +1530,12 @@
             delete _hideTimers[idx];
             hideChart();
             releaseBuildingTextures(idx);
-          }, 0);
+          }, 5000);
         } else {
           _hideTimers[idx] = setTimeout(() => {
             delete _hideTimers[idx];
             releaseBuildingTextures(idx);
-          }, 500);
+          }, 5000);
         }
         if (visibleMarkers.size === 0) scanHint.style.opacity = '1';
       });
