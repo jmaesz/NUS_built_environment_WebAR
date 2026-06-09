@@ -1058,11 +1058,15 @@
       if (!btn) return;
       var mesh = btn.getObject3D('mesh');
       if (!mesh || !mesh.material) return;
-      disposeMaterialMap(mesh.material, false);
-      var tex = new THREE.CanvasTexture(fc);
-      tex.colorSpace = THREE.SRGBColorSpace;
-      mesh.material.map = tex;
-      mesh.material.needsUpdate = true;
+      if (mesh.material.map && mesh.material.map.image === fc) {
+        mesh.material.map.needsUpdate = true;
+      } else {
+        disposeMaterialMap(mesh.material, false);
+        var tex = new THREE.CanvasTexture(fc);
+        tex.colorSpace = THREE.SRGBColorSpace;
+        mesh.material.map = tex;
+        mesh.material.needsUpdate = true;
+      }
     }
 
     function toggleDaylightFloor(idx, floorKey) {
