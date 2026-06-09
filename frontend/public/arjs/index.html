@@ -691,12 +691,42 @@
               flDotGroup.id = 'fl-dot-' + idx + '-' + fl.key;
               flDotGroup.setAttribute('position', '0 0 0');
 
+              if (!document.getElementById('tap-icon-shared')) {
+                var tic = document.createElement('canvas');
+                tic.width = 256; tic.height = 256;
+                var tt = tic.getContext('2d');
+                tt.fillStyle = '#107b7f';
+                tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
+                tt.strokeStyle = 'rgba(255,255,255,0.22)';
+                tt.lineWidth = 5;
+                tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
+                tt.fillStyle = '#ffffff';
+                tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
+                tt.fillRect(102, 52, 32, 74);
+                tt.beginPath();
+                tt.moveTo(92, 120); tt.lineTo(182, 120);
+                tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
+                tt.lineTo(92, 156);
+                tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
+                tt.closePath(); tt.fill();
+                tt.fillRect(92, 138, 108, 52);
+                tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
+                tt.fillRect(102, 118, 32, 8);
+                tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
+                tt.fillRect(66, 126, 28, 46);
+                tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
+                var tishared = document.createElement('img');
+                tishared.id = 'tap-icon-shared';
+                tishared.src = tic.toDataURL('image/png');
+                assets.appendChild(tishared);
+              }
+
               var tapIconEl = document.createElement('a-plane');
               tapIconEl.id = 'fl-tap-' + idx + '-' + fl.key;
               tapIconEl.setAttribute('width', '0.40');
               tapIconEl.setAttribute('height', '0.40');
               tapIconEl.setAttribute('position', (-5.58 + flXOff) + ' 0 0');
-              tapIconEl.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
+              tapIconEl.setAttribute('material', 'src: #tap-icon-shared; transparent: true; alphaTest: 0.05; shader: flat; side: double');
               tapIconEl.setAttribute('animation__pulse', 'property: scale; from: 1 1 1; to: 1.22 1.22 1; dir: alternate; dur: 900; loop: true; easing: easeInOutSine');
 
               // All lines straight and parallel — no fanning
@@ -1295,34 +1325,6 @@
         var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
         var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
 
-        // Ensure tap icon is created
-        if (!window._tapIconCanvas) {
-          var tic = document.createElement('canvas');
-          tic.width = 256; tic.height = 256;
-          var tt = tic.getContext('2d');
-          tt.fillStyle = '#107b7f';
-          tt.beginPath(); tt.arc(128, 128, 124, 0, Math.PI * 2); tt.fill();
-          tt.strokeStyle = 'rgba(255,255,255,0.22)';
-          tt.lineWidth = 5;
-          tt.beginPath(); tt.arc(128, 128, 112, 0, Math.PI * 2); tt.stroke();
-          tt.fillStyle = '#ffffff';
-          tt.beginPath(); tt.arc(118, 52, 16, Math.PI, 0); tt.fill();
-          tt.fillRect(102, 52, 32, 74);
-          tt.beginPath();
-          tt.moveTo(92, 120); tt.lineTo(182, 120);
-          tt.arc(182, 138, 18, -Math.PI/2, Math.PI/2);
-          tt.lineTo(92, 156);
-          tt.arc(92, 138, 18, Math.PI/2, -Math.PI/2);
-          tt.closePath(); tt.fill();
-          tt.fillRect(92, 138, 108, 52);
-          tt.beginPath(); tt.arc(146, 190, 54, 0, Math.PI); tt.fill();
-          tt.fillRect(102, 118, 32, 8);
-          tt.beginPath(); tt.arc(80, 134, 14, 0, Math.PI * 2); tt.fill();
-          tt.fillRect(66, 126, 28, 46);
-          tt.beginPath(); tt.arc(80, 172, 14, 0, Math.PI * 2); tt.fill();
-          window._tapIconCanvas = tic;
-        }
-
         daylightFloors.forEach(function (fl, flIdx) {
           // Floor Button Canvas
           var fc = document.createElement('canvas');
@@ -1338,9 +1340,6 @@
           window._floorBtnCanvases[idx + '-' + fl.key] = { canvas: fc, label: fl.key };
           var flBtn = document.getElementById('fl-btn-' + idx + '-' + fl.key);
           if (flBtn) applyCanvasTexture(flBtn, fc);
-
-          var tapIconEl = document.getElementById('fl-tap-' + idx + '-' + fl.key);
-          if (tapIconEl) applyCanvasTexture(tapIconEl, window._tapIconCanvas, { transparent: true, alphaTest: 0.05 });
 
           var flImg = document.getElementById('fl-img-' + idx + '-' + fl.key);
           if (flImg) flImg._textureLoaded = false;
