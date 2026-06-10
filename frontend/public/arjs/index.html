@@ -700,17 +700,8 @@
           // ── Daylight floor buttons (SDE4 only) ────────────────────────────
           var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
           if (daylightFloors) {
-            var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 7.5, 'E7': 2, 'EW1': 3, 'E4': 0, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
+            var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 0, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
             var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
-            var _flRotYMap = { 'T-Lab': 180 };
-            var flRotY = _flRotYMap[b.name] || 0;
-            var flParent = marker;
-            if (flRotY) {
-              var flGroup = document.createElement('a-entity');
-              flGroup.setAttribute('rotation', '0 ' + flRotY + ' 0');
-              marker.appendChild(flGroup);
-              flParent = flGroup;
-            }
             daylightFloors.forEach(function (fl, flIdx) {
               // Up-track container for this floor (hidden until chart opens)
               var flUpEl = document.createElement('a-entity');
@@ -804,7 +795,7 @@
               flUpEl.appendChild(flBb);
               flUpEl.appendChild(tapBb);
               flUpEl.appendChild(flDg);
-              flParent.appendChild(flUpEl);
+              marker.appendChild(flUpEl);
             });
           }
 
@@ -1339,7 +1330,7 @@
       // 3. Floor buttons + Tap Icon + Daylight Images
       var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
       if (daylightFloors) {
-        var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 7.5, 'E7': 2, 'EW1': 3, 'E4': 0, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
+        var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 2, 'E7': 2, 'EW1': 3, 'E4': 0, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
         var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
 
         daylightFloors.forEach(function (fl, flIdx) {

@@ -80,10 +80,6 @@
       <button class="calib-close" onclick="document.getElementById('calib-panel').classList.add('hidden')">✕</button>
     </div>
 
-    <div class="section-lbl">Show buildings</div>
-    <div class="btn-row" id="toggle-row"></div>
-
-    <div class="section-lbl">Calibrate</div>
     <div class="btn-row" id="calib-row"></div>
 
     <div class="calib-grid">
@@ -219,14 +215,6 @@
         if (mat.object3D) mat.object3D.visible = false;
       });
 
-      // Toggle button
-      var tog = document.createElement('button');
-      tog.id = 'tog-' + b.name;
-      tog.className = 'toggle-btn';
-      tog.textContent = b.name;
-      tog.onclick = (function(name) { return function() { toggleBld(name); }; })(b.name);
-      document.getElementById('toggle-row').appendChild(tog);
-
       // Calibrate button
       var cb = document.createElement('button');
       cb.id = 'cb-' + b.name;
@@ -238,7 +226,6 @@
 
     function toggleBld(name) {
       enabled[name] = !enabled[name];
-      document.getElementById('tog-' + name).classList.toggle('on', enabled[name]);
       if (!enabled[name]) {
         var mat = document.getElementById('mat-' + name);
         if (mat && mat.object3D) mat.object3D.visible = false;
@@ -260,6 +247,7 @@
       document.querySelectorAll('.bld-btn').forEach(function(btn) {
         btn.classList.toggle('active', btn.textContent === name);
       });
+      if (!enabled[name]) toggleBld(name);
       var b = BLDS.find(function(x) { return x.name === name; });
       document.getElementById('sx').value  = b.x;
       document.getElementById('sz').value  = b.z;
