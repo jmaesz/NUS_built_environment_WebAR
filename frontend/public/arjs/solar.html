@@ -103,6 +103,10 @@
         <label class="calib-lbl">Scale <span id="vs">3.00</span></label>
         <input type="range" id="ss" min="0.5" max="30" step="0.5" value="3">
       </div>
+      <div class="calib-row">
+        <label class="calib-lbl">Y (height) <span id="vy">0.01</span></label>
+        <input type="range" id="sy" min="-5" max="5" step="0.01" value="0.01">
+      </div>
     </div>
     <div id="calib-values"></div>
     <button id="copy-btn" onclick="copyValues()">Copy Values</button>
@@ -122,7 +126,7 @@
   <script>
     // name, marker value, default calibration
     var BLDS = [
-      { name: 'CELC', val: 0,  x:  0.30, z:  0.50, ry:   0, s:  6.50 },
+      { name: 'CELC', val: 0,  x:  0.30, z:  0.50, y: 0.01, ry:   0, s:  6.50 },
       { name: 'E1A',  val: 2,  x: -0.10, z:  2.50, ry:  -1, s:  8.00 },
       { name: 'E2A',  val: 4,  x: -0.30, z:  0.50, ry:   1, s:  4.50 },
       { name: 'E4',   val: 7,  x:  6.20, z: -1.30, ry: 180, s: 19.00 },
@@ -134,6 +138,9 @@
       { name: 'E4A',  val: 8,  x:  0.10, z:  0.30, ry:-161, s:  7.00 },
       { name: 'E6',   val: 10, x:  0.10, z:  0.00, ry:-114, s:  8.50 },
       { name: 'T-Lab',  val: 19, x:  1.30, z:  1.50, ry:  65, s: 15.50 },
+      { name: 'T-Lab-left',   val: 19, src: '/solar/Tlab-left.png',   x:  1.30, z:  1.50, y: 0.01, ry:  65, s: 15.50 },
+      { name: 'T-Lab-middle', val: 19, src: '/solar/Tlab-middle.png', x:  1.30, z:  1.50, y: 0.01, ry:  65, s: 15.50 },
+      { name: 'T-Lab-right',  val: 19, src: '/solar/Tlab-right.png',  x:  1.30, z:  1.50, y: 0.01, ry:  65, s: 15.50 },
       { name: 'SDE2',   val: 16, x:  0.70, z: -0.50, ry:-180, s:  7.00 },
       { name: 'LT1_LT2', val: 3,  x:  2.60, z: -1.70, ry:  67, s:  6.50 },
       { name: 'E3',    val: 5,  x:  1.50, z:  1.10, ry:-180, s:  4.50 },
@@ -171,9 +178,10 @@
       marker.setAttribute('smoothThreshold', '1');
       marker.setAttribute('minConfidence', '0.05');
 
+      if (!b.y) b.y = 0.01;
       var img = document.createElement('img');
       img.id = 'img-' + b.name;
-      img.src = '/solar/' + b.name + '.webp';
+      img.src = b.src || '/solar/' + b.name + '.webp';
       img.setAttribute('crossorigin', 'anonymous');
       img.addEventListener('load', function() {
         if (img.naturalWidth && img.naturalHeight) aspects[b.name] = img.naturalWidth / img.naturalHeight;
@@ -186,7 +194,7 @@
       mat.id = 'mat-' + b.name;
       mat.setAttribute('src', '#img-' + b.name);
       mat.setAttribute('rotation', '-90 0 0');
-      mat.setAttribute('position', b.x + ' 0.01 ' + b.z);
+      mat.setAttribute('position', b.x + ' ' + b.y + ' ' + b.z);
       mat.setAttribute('width',  b.s);
       mat.setAttribute('height', b.s);
       mat.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
@@ -231,7 +239,7 @@
       var b = BLDS.find(function(x) { return x.name === name; });
       var mat = document.getElementById('mat-' + name);
       if (!mat || !b) return;
-      mat.setAttribute('position', b.x + ' 0.01 ' + b.z);
+      mat.setAttribute('position', b.x + ' ' + b.y + ' ' + b.z);
       mat.setAttribute('rotation', '-90 ' + b.ry + ' 0');
       mat.setAttribute('width',  b.s * aspects[name]);
       mat.setAttribute('height', b.s);
@@ -245,6 +253,7 @@
       var b = BLDS.find(function(x) { return x.name === name; });
       document.getElementById('sx').value  = b.x;
       document.getElementById('sz').value  = b.z;
+      document.getElementById('sy').value  = b.y;
       document.getElementById('sry').value = b.ry;
       document.getElementById('ss').value  = b.s;
       updateDisplay();
@@ -255,11 +264,12 @@
       var w = (b.s * aspects[activeBld]).toFixed(2);
       document.getElementById('vx').textContent  = b.x.toFixed(2);
       document.getElementById('vz').textContent  = b.z.toFixed(2);
+      document.getElementById('vy').textContent  = b.y.toFixed(2);
       document.getElementById('vry').textContent = b.ry + 'deg';
       document.getElementById('vs').textContent  = b.s.toFixed(2);
       document.getElementById('calib-values').textContent =
         '[' + activeBld + ']\n' +
-        'position="' + b.x.toFixed(2) + ' 0.01 ' + b.z.toFixed(2) + '"\n' +
+        'position="' + b.x.toFixed(2) + ' ' + b.y.toFixed(2) + ' ' + b.z.toFixed(2) + '"\n' +
         'rotation="-90 ' + b.ry + ' 0"\n' +
         'width="' + w + '" height="' + b.s.toFixed(2) + '"';
     }
@@ -268,13 +278,14 @@
       var b = BLDS.find(function(x) { return x.name === activeBld; });
       b.x  = parseFloat(document.getElementById('sx').value);
       b.z  = parseFloat(document.getElementById('sz').value);
+      b.y  = parseFloat(document.getElementById('sy').value);
       b.ry = parseFloat(document.getElementById('sry').value);
       b.s  = parseFloat(document.getElementById('ss').value);
       applyMat(activeBld);
       updateDisplay();
     }
 
-    ['sx','sz','sry','ss'].forEach(function(id) {
+    ['sx','sz','sy','sry','ss'].forEach(function(id) {
       document.getElementById(id).addEventListener('input', onSlider);
     });
 
