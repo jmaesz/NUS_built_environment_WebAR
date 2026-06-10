@@ -433,7 +433,6 @@
       'E4A':  { x:  0.10, z:  0.30, ry:-161, w:  9.80, h:  7.00 },
       'E6':   { x:  0.10, z:  0.00, ry:-114, w: 11.90, h:  8.50 },
       'E8':   { x: -0.90, z:  0.70, ry:-116, w: 16.80, h: 12.00 },
-      'T-Lab':{ x:  1.30, z:  1.50, ry:  65, w: 21.70, h: 15.50 },
       'SDE1': { x:  0.50, z:  1.70, ry:   0, w: 10.50, h:  7.50 },
       'SDE2': { x:  0.70, z: -0.50, ry:-180, w:  9.80, h:  7.00 },
       'SDE3': { x:  1.50, z:  1.50, ry:   1, w: 18.91, h: 13.50 },
@@ -446,7 +445,12 @@
     };
     // Extra solar mats on existing markers (file = image name in /solar/)
     window.SOLAR_EXTRA = {
-      'E2': [{ file: 'LT1_LT2', x: 2.60, z: -1.70, ry: 67, w: 9.10, h: 6.50 }]
+      'E2':    [{ file: 'LT1_LT2',    x:  2.60, z: -1.70, ry:  67, w:  9.10, h:  6.50 }],
+      'T-Lab': [
+        { src: '/solar/Tlab-left.png',   x: -2.06, z: -0.29, y: -1.54, ry:   1, w:  2.81, h:  3.58 },
+        { src: '/solar/Tlab-middle.png', x:  0.29, z: -0.10, y:  0.01, ry:  -1, w:  2.62, h:  4.55 },
+        { src: '/solar/Tlab-right.png',  x:  2.65, z:  0.49, y: -1.34, ry:  -1, w:  4.00, h:  3.78 },
+      ]
     };
   </script>
 </head>
@@ -816,9 +820,9 @@
             extraMats.forEach(function(ed, ei) {
               var eMat = document.createElement('a-plane');
               eMat.id = 'solar-extra-mat-' + idx + '-' + ei;
-              eMat.dataset.src = '/solar/' + ed.file + '.webp';
+              eMat.dataset.src = ed.src || '/solar/' + ed.file + '.webp';
               eMat.setAttribute('rotation', '-90 ' + ed.ry + ' 0');
-              eMat.setAttribute('position', ed.x + ' 0.01 ' + ed.z);
+              eMat.setAttribute('position', ed.x + ' ' + (ed.y !== undefined ? ed.y : 0.01) + ' ' + ed.z);
               eMat.setAttribute('width',  ed.w);
               eMat.setAttribute('height', ed.h);
               eMat.setAttribute('material', 'transparent: true; alphaTest: 0.05; shader: flat; side: double');
