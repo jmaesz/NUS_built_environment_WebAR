@@ -703,7 +703,7 @@
           // ── Daylight floor buttons (SDE4 only) ────────────────────────────
           var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
           if (daylightFloors) {
-            var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 0, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': -1 };
+            var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 0, 'E7': 2, 'EW1': 3, 'E4': 1, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': -1 };
             var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
             var _flRotYMap = { 'T-Lab': 180 };
             var _flGrpYMap = { 'T-Lab': -1.5 };
@@ -1345,7 +1345,7 @@
       // 3. Floor buttons + Tap Icon + Daylight Images
       var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
       if (daylightFloors) {
-        var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 0, 'E7': 2, 'EW1': 3, 'E4': 2, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': -1 };
+        var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 0, 'E7': 2, 'EW1': 3, 'E4': 1, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': -1 };
         var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
 
         daylightFloors.forEach(function (fl, flIdx) {
