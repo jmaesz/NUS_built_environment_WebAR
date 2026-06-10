@@ -446,6 +446,10 @@
     // Extra solar mats on existing markers (file = image name in /solar/)
     window.SOLAR_EXTRA = {
       'E2':    [{ file: 'LT1_LT2',    x:  2.60, z: -1.70, ry:  67, w:  9.10, h:  6.50 }],
+      'EA':    [
+        { src: '/solar/EA-bottom.png', x: -1.47, z: -0.10, y: -2.19, ry:   1, w:  2.87, h:  6.28 },
+        { src: '/solar/EA-top.png',    x:  2.65, z: -0.49, y:  0.01, ry:  -1, w:  7.31, h:  7.44 },
+      ],
       'T-Lab': [
         { src: '/solar/Tlab-left.png',   x: -2.06, z: -0.29, y: -1.54, ry:   1, w:  2.81, h:  3.58 },
         { src: '/solar/Tlab-middle.png', x:  0.29, z: -0.10, y:  0.01, ry:  -1, w:  2.62, h:  4.55 },
@@ -700,14 +704,17 @@
           // ── Daylight floor buttons (SDE4 only) ────────────────────────────
           var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
           if (daylightFloors) {
-            var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': -2, 'E7': 2, 'EW1': 3, 'E4': 0, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
+            var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 0, 'E7': 2, 'EW1': 3, 'E4': 0, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
             var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
             var _flRotYMap = { 'T-Lab': 180 };
+            var _flGrpYMap = { 'T-Lab': -1.5 };
             var flRotY = _flRotYMap[b.name] || 0;
+            var flGrpY = _flGrpYMap[b.name] || 0;
             var flParent = marker;
-            if (flRotY) {
+            if (flRotY || flGrpY) {
               var flGroup = document.createElement('a-entity');
               flGroup.setAttribute('rotation', '0 ' + flRotY + ' 0');
+              if (flGrpY) flGroup.setAttribute('position', '0 ' + flGrpY + ' 0');
               marker.appendChild(flGroup);
               flParent = flGroup;
             }
@@ -1339,7 +1346,7 @@
       // 3. Floor buttons + Tap Icon + Daylight Images
       var daylightFloors = window.DAYLIGHT_FLOORS[b.name];
       if (daylightFloors) {
-        var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': -2, 'E7': 2, 'EW1': 3, 'E4': 0, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
+        var _flXOffMap = { 'E2A': 2, 'EA': 2, 'T-Lab': 0, 'E7': 2, 'EW1': 3, 'E4': 0, 'E3': 2, 'E1': -2, 'IT': 0.5, 'E6': 0.5, 'E1A': 0.5, 'SDE4': 0.5, 'CELC': 1, 'E5': 1, 'E4A': 2 };
         var flXOff = _flXOffMap[b.name] !== undefined ? _flXOffMap[b.name] : 0;
 
         daylightFloors.forEach(function (fl, flIdx) {
