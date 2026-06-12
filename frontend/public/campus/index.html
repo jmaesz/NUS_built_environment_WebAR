@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>NUS Campus Energy Tour</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f4f0; color: #0a0a0a; min-height: 100dvh;
+    }
+
+    /* ── HEADER ── */
+    .site-header {
+      position: sticky; top: 0; background: #f5f4f0; z-index: 100;
+      border-bottom: 1px solid #0a0a0a;
+    }
+    .site-header-top {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 24px;
+    }
+    .site-logo { height: 22px; width: auto; display: block; }
+    .site-label {
+      font-size: 10px; font-weight: 500; letter-spacing: 0.15em;
+      text-transform: uppercase; color: #555;
+    }
+    .site-nav {
+      display: flex; align-items: center; gap: 0;
+      overflow-x: auto; scrollbar-width: none;
+      border-top: 1px solid rgba(0,0,0,0.1);
+      padding: 0 16px;
+    }
+    .site-nav::-webkit-scrollbar { display: none; }
+    .site-nav a {
+      flex-shrink: 0; text-decoration: none;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.06em;
+      color: #555; padding: 9px 10px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s, border-color 0.15s;
+      white-space: nowrap;
+    }
+    .site-nav a:hover { color: #0a0a0a; }
+    .site-nav a.active { color: #107b7f; border-bottom-color: #107b7f; }
+
+    /* ── GALLERY VIEW ── */
+    #gallery-view { display: block; }
+    .gallery-hero {
+      padding: 40px 24px 28px;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+    .gallery-tag {
+      font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase;
+      color: #107b7f; font-weight: 600; margin-bottom: 10px;
+    }
+    .gallery-title {
+      font-size: 28px; font-weight: 800; letter-spacing: -0.02em;
+      line-height: 1.15; margin-bottom: 12px;
+    }
+    .gallery-subtitle {
+      font-size: 13px; color: #555; line-height: 1.6; max-width: 480px;
+    }
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1px; background: rgba(0,0,0,0.1);
+      border-top: 1px solid rgba(0,0,0,0.1);
+    }
+    .building-card {
+      background: #f5f4f0; cursor: pointer;
+      transition: background 0.15s;
+      display: flex; flex-direction: column; overflow: hidden;
+      text-decoration: none; color: inherit;
+    }
+    .building-card:hover { background: #eeede9; }
+    .building-card:active { background: #e5e4e0; }
+    .card-thumb {
+      width: 100%; aspect-ratio: 16/9; object-fit: cover;
+      display: block; background: #ddd;
+      position: relative;
+    }
+    .card-thumb-wrap {
+      position: relative; overflow: hidden;
+      aspect-ratio: 16/9; background: #ddd;
+    }
+    .card-thumb-wrap img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+    }
+    .card-play-badge {
+      position: absolute; bottom: 10px; right: 10px;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(6px);
+      border-radius: 50%; width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card-play-badge::after {
+      content: ''; border-style: solid;
+      border-width: 7px 0 7px 13px;
+      border-color: transparent transparent transparent #fff;
+      margin-left: 2px;
+    }
+    .card-no-video {
+      position: absolute; bottom: 10px; right: 10px;
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(6px);
+      border-radius: 4px; padding: 3px 8px;
+      font-size: 9px; color: rgba(255,255,255,0.7);
+      letter-spacing: 0.08em; text-transform: uppercase;
+    }
+    .card-body { padding: 16px 20px 20px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .card-name { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+    .card-full { font-size: 11px; color: #107b7f; font-weight: 600; letter-spacing: 0.03em; }
+    .card-desc {
+      font-size: 11px; color: #555; line-height: 1.55;
+      margin-top: 6px;
+      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    /* ── BUILDING VIEW ── */
+    #building-view { display: none; }
+    .bld-back {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 24px; font-size: 11px; font-weight: 600;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: #555; cursor: pointer; border: none; background: none;
+      border-bottom: 1px solid rgba(0,0,0,0.1); width: 100%;
+      text-align: left; -webkit-tap-highlight-color: transparent;
+    }
+    .bld-back:hover { color: #0a0a0a; background: rgba(0,0,0,0.03); }
+    .bld-hero { position: relative; background: #0c0c10; }
+    .bld-video-wrap {
+      position: relative; width: 100%; aspect-ratio: 16/9;
+      cursor: pointer; overflow: hidden;
+    }
+    #bld-video {
+      width: 100%; height: 100%; object-fit: contain;
+      display: block; background: #0c0c10;
+    }
+    .bld-play-overlay {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.25);
+      transition: opacity 0.2s;
+    }
+    .bld-play-overlay.hidden { opacity: 0; pointer-events: none; }
+    .bld-play-btn {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: rgba(255,255,255,0.92);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+    }
+    .bld-play-btn::after {
+      content: ''; border-style: solid;
+      border-width: 12px 0 12px 22px;
+      border-color: transparent transparent transparent #0c0c10;
+      margin-left: 5px;
+    }
+    .bld-info { padding: 28px 24px 40px; }
+    .bld-tag { font-size: 10px; letter-spacing: 0.15em; text-transform: uppercase; color: #107b7f; font-weight: 600; margin-bottom: 8px; }
+    .bld-name { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; margin-bottom: 4px; }
+    .bld-full { font-size: 13px; color: #555; margin-bottom: 20px; font-weight: 500; }
+    .bld-divider { height: 1px; background: rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .bld-desc { font-size: 14px; color: #333; line-height: 1.7; }
+    .bld-watch-btn {
+      margin-top: 28px; display: inline-flex; align-items: center; gap: 8px;
+      background: #107b7f; color: #fff; border: none; border-radius: 6px;
+      padding: 12px 24px; font-size: 12px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .bld-watch-btn:active { background: #0d6568; }
+    .bld-watch-btn::before { content: '▶'; font-size: 10px; }
+    .bld-no-video {
+      margin-top: 20px; padding: 14px 18px;
+      background: rgba(0,0,0,0.05); border-radius: 6px;
+      font-size: 12px; color: #888; letter-spacing: 0.05em;
+    }
+
+    /* ── FULLSCREEN VIDEO OVERLAY ── */
+    #fs-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: #000; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    #fs-overlay.active { display: flex; }
+    #fs-video { width: 100%; height: 100%; object-fit: contain; display: block; }
+    #fs-back {
+      position: absolute; top: 16px; left: 16px; z-index: 10001;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+      border: none; border-radius: 8px; padding: 10px 18px;
+      color: #fff; font-size: 13px; font-weight: 700; cursor: pointer;
+      font-family: inherit; letter-spacing: 0.04em;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #fs-bld-name {
+      position: absolute; top: 16px; right: 16px; z-index: 10001;
+      background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+      border-radius: 8px; padding: 10px 14px;
+      color: #fff; font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
+    }
+
+    @media (max-width: 480px) {
+      .gallery-title { font-size: 22px; }
+      .gallery-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header-top">
+    <img src="/logo.webp" alt="NUScape" class="site-logo">
+    <span class="site-label">Energy Tour</span>
+  </div>
+  <nav class="site-nav" id="site-nav">
+    <a href="/campus/" onclick="event.preventDefault();showGallery()" id="nav-all">All Buildings</a>
+  </nav>
+</header>
+
+<!-- GALLERY VIEW -->
+<div id="gallery-view">
+  <div class="gallery-hero">
+    <div class="gallery-tag">NUS Campus</div>
+    <h1 class="gallery-title">Building Energy<br>Video Tour</h1>
+    <p class="gallery-subtitle">Explore energy use across NUS's College of Design and Engineering campus. Tap any building to learn more and watch its feature video.</p>
+  </div>
+  <div class="gallery-grid" id="gallery-grid"></div>
+</div>
+
+<!-- INDIVIDUAL BUILDING VIEW -->
+<div id="building-view">
+  <button class="bld-back" onclick="showGallery()">&#8592; &nbsp;All Buildings</button>
+  <div class="bld-hero">
+    <div class="bld-video-wrap" id="bld-video-wrap" onclick="openFullscreen()">
+      <video id="bld-video" playsinline preload="none" poster=""></video>
+      <div class="bld-play-overlay" id="bld-play-overlay">
+        <div class="bld-play-btn"></div>
+      </div>
+    </div>
+  </div>
+  <div class="bld-info">
+    <div class="bld-tag" id="bld-tag">Building</div>
+    <div class="bld-name" id="bld-name"></div>
+    <div class="bld-full" id="bld-full"></div>
+    <div class="bld-divider"></div>
+    <p class="bld-desc" id="bld-desc"></p>
+    <div id="bld-action"></div>
+  </div>
+</div>
+
+<!-- FULLSCREEN VIDEO OVERLAY -->
+<div id="fs-overlay">
+  <button id="fs-back" onclick="closeFullscreen()">&#8592; Back</button>
+  <div id="fs-bld-name"></div>
+  <video id="fs-video" controls playsinline></video>
+</div>
+
+<script>
+  var BUILDINGS = [
+    { name: 'CELC',  full: 'Centre for English Language Communication',   img: '/ar/imgs/celc.webp',        video: '/videos/CELC.mp4'  },
+    { name: 'E1',    full: 'Faculty of Engineering Block 1',               img: '/ar/imgs/E1mapview.webp',   video: '/videos/E1.mp4'    },
+    { name: 'E1A',   full: 'Faculty of Engineering Block 1A',              img: '/ar/imgs/e1a.webp',         video: '/videos/E1A.mp4'   },
+    { name: 'E2',    full: 'Faculty of Engineering Block 2',               img: '/ar/imgs/e2mapview.webp',   video: '/videos/E2.mp4'    },
+    { name: 'E2A',   full: 'Faculty of Engineering Block 2A',              img: '/ar/imgs/e2a.webp',         video: '/videos/E2A.mp4'   },
+    { name: 'E3',    full: 'Faculty of Engineering Block 3',               img: '/ar/imgs/e3mapview.webp',   video: '/videos/E3.mp4'    },
+    { name: 'E3A',   full: 'Faculty of Engineering Block 3A',              img: '/ar/imgs/e3amapview.webp',  video: '/videos/E3A.mp4'   },
+    { name: 'E4',    full: 'Faculty of Engineering Block 4',               img: '/ar/imgs/e4.webp',          video: '/videos/E4.mp4'    },
+    { name: 'E4A',   full: 'Faculty of Engineering Block 4A',              img: '/ar/imgs/e4a.webp',         video: '/videos/E4A.mp4'   },
+    { name: 'E5',    full: 'Faculty of Engineering Block 5',               img: '/ar/imgs/e5.webp',          video: '/videos/E5.mp4'    },
+    { name: 'E6',    full: 'Faculty of Engineering Block 6',               img: '/ar/imgs/e6.webp',          video: '/videos/E6.mp4'    },
+    { name: 'E7',    full: 'Faculty of Engineering Block 7',               img: '/ar/imgs/e7.webp',          video: '/videos/E7.mp4'    },
+    { name: 'E8',    full: 'Faculty of Engineering Block 8',               img: '/ar/imgs/e8.webp',          video: '/videos/E8.mp4'    },
+    { name: 'EA',    full: 'Engineering Auditorium',                        img: '/ar/imgs/ea.webp',          video: '/videos/EA.mp4'    },
+    { name: 'EW1',   full: 'Engineering Workshop 1',                        img: '/ar/imgs/ew1mpaview.webp',  video: '/videos/EW1.mp4'   },
+    { name: 'EW1A',  full: 'Engineering Workshop 1A',                       img: '/ar/imgs/EW1Amapview.webp', video: null               },
+    { name: 'IT',    full: 'NUS Information Technology',                    img: '/ar/imgs/it.webp',          video: '/videos/IT.mp4'    },
+    { name: 'SDE1',  full: 'School of Design and Environment Block 1',     img: '/ar/imgs/sde1.webp',        video: null               },
+    { name: 'SDE2',  full: 'School of Design and Environment Block 2',     img: '/ar/imgs/sde2.webp',        video: null               },
+    { name: 'SDE3',  full: 'School of Design and Environment Block 3',     img: '/ar/imgs/sde3mapoview.webp',video: null               },
+    { name: 'SDE4',  full: 'School of Design and Environment 4',           img: '/ar/imgs/sde4.webp',        video: null               },
+    { name: 'T-Lab', full: 'Temasek Laboratories at NUS',                  img: '/ar/imgs/TLabmapview.webp', video: '/videos/Tlab.mp4'  },
+  ];
+
+  var DESCS = {
+    'CELC':  "NUS's academic unit for English language skills. Located at 10 Architecture Drive, it benefits from surrounding greenery that moderates the urban heat island effect.",
+    'E1':    "Core teaching and office block of NUS's College of Design and Engineering. Connected via sheltered corridors with mature trees providing partial shading.",
+    'E1A':   "Houses Civil & Environmental Engineering and Industrial Systems Engineering at 1 Engineering Drive 2. Research focuses on reducing embodied carbon in civil infrastructure.",
+    'E2':    "Central engineering block of the Faculty of Engineering at 5 Engineering Drive 2, housing faculty offices, seminar rooms, and research labs.",
+    'E2A':   "Home of the Engineering Design and Innovation Centre (EDIC). Houses 6 iDP and MSc EDI project studios with 24/7 student access, an Electronics Workshop, and an Immersive Reality Lab for VR/AR innovation projects.",
+    'E3':    "Contains seminar rooms, tutorial rooms, active learning rooms, and a Cheers convenience store. Connected to neighbouring blocks via yellow-ceiling sheltered walkways — a campus landmark dating back to the 1970s Kent Ridge campus build.",
+    'E3A':   "Houses Materials Science and Engineering labs. Research spans advanced alloys, ceramics, biomaterials, and sustainable composites supporting Singapore's Green Plan 2030.",
+    'E4':    "Houses Electrical & Computer Engineering. Retrofitted with a faceted aluminium screen facade, earning BCA Green Mark Platinum in 2015.",
+    'E4A':   "Supplementary engineering block adjacent to E4, providing offices, labs, and teaching space within the mature tree canopy of Engineering Drive 3.",
+    'E5':    "Home of Chemical and Biomolecular Engineering. Research in green chemistry and bioprocessing supports Singapore's circular economy ambitions.",
+    'E6':    "Houses the Advanced Robotics Centre and Electrical & Computer Engineering research facilities at 5 Engineering Drive 1. A hub for robotics, control systems, and intelligent systems research.",
+    'E7':    "Opened in 2021 as NUS's hub for tech-driven healthcare innovation at 15 Kent Ridge Crescent. Eight storeys of advanced health technology research labs and startup incubation facilities.",
+    'E8':    "Houses the Department of Mechanical Engineering at 1 Engineering Drive 3, with research laboratories covering control, mechatronics, dynamics, and advanced manufacturing.",
+    'EA':    "Flagship building of NUS's College of Design and Engineering at 9 Engineering Drive 1. Houses the Dean's Office alongside study spaces and the Engineering Auditorium.",
+    'EW1':   "Houses the Civil & Environmental Engineering Structural Engineering Laboratory at 2 Engineering Drive 2. Features large-scale testing rigs and a shake table for seismic research.",
+    'EW1A':  "Annex workshop block adjacent to EW1 on Engineering Drive 2, providing supplementary workshop and laboratory space for the Faculty of Engineering.",
+    'IT':    "Information Technology building supporting NUS's digital infrastructure and computing services on the Kent Ridge campus.",
+    'SDE1':  "Net-zero energy retrofit (2023) housing Architecture. Features light shelves, solar screens, hybrid cooling, and a courtyard jungle garden. EUI 45 kWh/m²/yr, Green Mark Platinum.",
+    'SDE2':  "One of the original SDE buildings at 2 Architecture Drive, housing faculty offices and academic spaces for the College of Design and Engineering.",
+    'SDE3':  "Architecture studio building whose renovation completed February 2023, retaining its structural frame from the early 1980s to minimise embodied carbon. EUI 43 kWh/m²/yr.",
+    'SDE4':  "SE Asia's first net-zero energy building (2019), now net-positive — producing more energy than it consumes. Over 1,200 rooftop PV panels. BCA Green Mark Platinum Positive Energy.",
+    'T-Lab': "Defence R&D institute established by MINDEF at NUS, researching aeronautical sciences, electromagnetics, microelectronics, photonics, and information security. Highest energy consumer on campus.",
+  };
+
+  var byName = {};
+  BUILDINGS.forEach(function(b) { byName[b.name] = b; });
+
+  var currentBuilding = null;
+  var fsVideo = document.getElementById('fs-video');
+
+  // ── Router ──
+  function route() {
+    var params = new URLSearchParams(location.search);
+    var b = params.get('b');
+    if (b && byName[b]) {
+      showBuilding(b);
+    } else {
+      showGallery();
+    }
+  }
+
+  window.addEventListener('popstate', route);
+
+  // ── Gallery ──
+  function showGallery() {
+    document.getElementById('gallery-view').style.display = 'block';
+    document.getElementById('building-view').style.display = 'none';
+    document.title = 'NUS Campus Energy Tour';
+    if (history.state !== 'gallery') history.pushState('gallery', '', '/campus/');
+    setNavActive(null);
+    stopAllVideos();
+    renderGallery();
+  }
+
+  function renderGallery() {
+    var grid = document.getElementById('gallery-grid');
+    if (grid.children.length > 0) return;
+    BUILDINGS.forEach(function(b) {
+      var card = document.createElement('a');
+      card.className = 'building-card';
+      card.href = '/' + b.name;
+      card.addEventListener('click', function(e) {
+        e.preventDefault();
+        history.pushState({ b: b.name }, '', '/' + b.name);
+        showBuilding(b.name);
+      });
+
+      var thumbWrap = document.createElement('div');
+      thumbWrap.className = 'card-thumb-wrap';
+      var img = document.createElement('img');
+      img.src = b.img; img.alt = b.name; img.loading = 'lazy';
+      thumbWrap.appendChild(img);
+
+      if (b.video) {
+        var badge = document.createElement('div');
+        badge.className = 'card-play-badge';
+        thumbWrap.appendChild(badge);
+      } else {
+        var noVid = document.createElement('div');
+        noVid.className = 'card-no-video';
+        noVid.textContent = 'Coming soon';
+        thumbWrap.appendChild(noVid);
+      }
+
+      var body = document.createElement('div');
+      body.className = 'card-body';
+      body.innerHTML =
+        '<div class="card-name">' + b.name + '</div>' +
+        '<div class="card-full">' + b.full + '</div>' +
+        '<div class="card-desc">' + (DESCS[b.name] || '') + '</div>';
+
+      card.appendChild(thumbWrap);
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
+  }
+
+  // ── Building page ──
+  function showBuilding(name) {
+    var b = byName[name];
+    if (!b) { showGallery(); return; }
+    currentBuilding = b;
+
+    document.getElementById('gallery-view').style.display = 'none';
+    document.getElementById('building-view').style.display = 'block';
+    document.title = b.name + ' — NUS Energy Tour';
+    window.scrollTo(0, 0);
+    setNavActive(b.name);
+
+    document.getElementById('bld-tag').textContent = b.full;
+    document.getElementById('bld-name').textContent = b.name;
+    document.getElementById('bld-full').textContent = b.full;
+    document.getElementById('bld-desc').textContent = DESCS[b.name] || '';
+
+    var vid = document.getElementById('bld-video');
+    var overlay = document.getElementById('bld-play-overlay');
+    var action = document.getElementById('bld-action');
+    action.innerHTML = '';
+
+    if (b.video) {
+      vid.poster = b.img;
+      vid.src = b.video;
+      vid.preload = 'none';
+      document.getElementById('bld-video-wrap').style.display = 'block';
+      overlay.classList.remove('hidden');
+
+      var watchBtn = document.createElement('button');
+      watchBtn.className = 'bld-watch-btn';
+      watchBtn.textContent = ' Watch Video';
+      watchBtn.onclick = openFullscreen;
+      action.appendChild(watchBtn);
+    } else {
+      document.getElementById('bld-video-wrap').style.display = 'none';
+      action.innerHTML = '<div class="bld-no-video">Video coming soon</div>';
+    }
+  }
+
+  // ── Fullscreen player ──
+  function openFullscreen() {
+    var b = currentBuilding;
+    if (!b || !b.video) return;
+    document.getElementById('fs-bld-name').textContent = b.name;
+    fsVideo.src = b.video;
+    fsVideo.poster = b.img;
+    document.getElementById('fs-overlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    fsVideo.play();
+  }
+
+  function closeFullscreen() {
+    fsVideo.pause();
+    fsVideo.src = '';
+    document.getElementById('fs-overlay').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  fsVideo.addEventListener('ended', function() {
+    closeFullscreen();
+  });
+
+  // Close fullscreen on back gesture (history)
+  window.addEventListener('popstate', function(e) {
+    if (document.getElementById('fs-overlay').classList.contains('active')) {
+      closeFullscreen();
+      return;
+    }
+    route();
+  });
+
+  function stopAllVideos() {
+    fsVideo.pause(); fsVideo.src = '';
+    document.getElementById('bld-video').pause();
+    document.getElementById('fs-overlay').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  // ── Nav bar ──
+  function buildNav() {
+    var nav = document.getElementById('site-nav');
+    BUILDINGS.forEach(function(b) {
+      var a = document.createElement('a');
+      a.textContent = b.name;
+      a.href = '/' + b.name;
+      a.id = 'nav-' + b.name;
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        history.pushState({ b: b.name }, '', '/' + b.name);
+        showBuilding(b.name);
+      });
+      nav.appendChild(a);
+    });
+  }
+
+  function setNavActive(name) {
+    document.querySelectorAll('.site-nav a').forEach(function(a) { a.classList.remove('active'); });
+    var target = document.getElementById('nav-' + (name || 'all'));
+    if (target) {
+      target.classList.add('active');
+      target.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' });
+    }
+  }
+
+  // ── Init ──
+  buildNav();
+  renderGallery();
+  route();
+</script>
+</body>
+</html>
