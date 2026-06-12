@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/campus/:b", "destination": "/campus/?b=:b" },
+    { "source": "/campus/:b", "destination": "/campus/index.html?b=:b" },
     { "source": "/((?!assets/|arjs/|solar/|daylight/|videos/|campus/).*)", "destination": "/index.html" }
   ]
 }
