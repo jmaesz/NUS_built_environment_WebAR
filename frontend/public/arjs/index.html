@@ -257,6 +257,35 @@
       color: #fff; font-size: 9px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; width: 100%;
     }
     #maps-play-btn:active { background: #0d6568; }
+    #video-overlay {
+      position: fixed; inset: 0; z-index: 9999; background: #000;
+      display: none; flex-direction: column; align-items: center; justify-content: center;
+    }
+    #video-overlay.active { display: flex; }
+    #video-player { width: 100%; height: 100%; object-fit: contain; }
+    #video-back-btn {
+      position: absolute; top: 16px; left: 16px; z-index: 10000;
+      background: rgba(0,0,0,0.65); backdrop-filter: blur(8px);
+      border: none; border-radius: 8px; padding: 10px 16px;
+      color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+      font-family: inherit; letter-spacing: 0.04em;
+    }
+    #maps-panel-play-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.35);
+      display: none; align-items: center; justify-content: center; cursor: pointer;
+    }
+    #maps-panel-img-wrap.has-video #maps-panel-play-overlay { display: flex; }
+    #maps-panel-play-icon {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: rgba(255,255,255,0.92);
+      display: flex; align-items: center; justify-content: center;
+    }
+    #maps-panel-play-icon::after {
+      content: ''; border-style: solid;
+      border-width: 9px 0 9px 17px;
+      border-color: transparent transparent transparent #111;
+      margin-left: 4px;
+    }
   </style>
 
   <script>
@@ -308,6 +337,26 @@
       'T-Lab': `Defence R&D institute established by MINDEF at NUS, researching aeronautical sciences, electromagnetics, microelectronics, photonics, and information security. Highest energy consumer on campus; a priority decarbonisation target.`,
       'E7':    `Opened in 2021 as NUS's hub for tech-driven healthcare innovation at 15 Kent Ridge Crescent. Eight storeys of advanced health technology research labs and startup incubation facilities, bridging engineering, medicine, and business to develop affordable medical technology across digital medicine, theranostics, and robotics.`,
       'IT':    `Information Technology building supporting NUS's digital infrastructure and computing services on the Kent Ridge campus.`,
+    };
+
+    window.BUILDING_VIDEOS = {
+      'CELC':  '/videos/CELC.mp4',
+      'E1':    '/videos/E1.mp4',
+      'E1A':   '/videos/E1A.mp4',
+      'E2':    '/videos/E2.mp4',
+      'E2A':   '/videos/E2A.mp4',
+      'E3':    '/videos/E3.mp4',
+      'E3A':   '/videos/E3A.mp4',
+      'E4':    '/videos/E4.mp4',
+      'E4A':   '/videos/E4A.mp4',
+      'E5':    '/videos/E5.mp4',
+      'E6':    '/videos/E6.mp4',
+      'E7':    '/videos/E7.mp4',
+      'E8':    '/videos/E8.mp4',
+      'EA':    '/videos/EA.mp4',
+      'EW1':   '/videos/EW1.mp4',
+      'IT':    '/videos/IT.mp4',
+      'T-Lab': '/videos/Tlab.mp4',
     };
 
     window.DAYLIGHT_FLOORS = {
@@ -511,6 +560,9 @@
             <div id="maps-panel-addr-lbl"></div>
             <div id="maps-panel-cta">Open in Maps →</div>
           </div>
+          <div id="maps-panel-play-overlay" onclick="event.stopPropagation(); event.preventDefault(); openVideoPlayer()">
+            <div id="maps-panel-play-icon"></div>
+          </div>
         </div>
         <div id="maps-panel-desc-wrap">
           <div id="maps-panel-desc-text"></div>
@@ -518,6 +570,11 @@
         </div>
       </div>
     </a>
+
+    <div id="video-overlay">
+      <button id="video-back-btn" onclick="closeVideoPlayer()">&#8592; Back</button>
+      <video id="video-player" controls playsinline preload="metadata"></video>
+    </div>
   </div>
 
   <a-scene
@@ -912,6 +969,24 @@
       document.getElementById('maps-panel-img-wrap').style.display = isMap ? 'block' : 'none';
       document.getElementById('maps-panel-desc-wrap').style.display = isMap ? 'none' : 'block';
       mapsPanel.classList.toggle('info-view', !isMap);
+    }
+
+    function openVideoPlayer() {
+      var b = BUILDINGS[activeIdx];
+      if (!b) return;
+      var src = window.BUILDING_VIDEOS && window.BUILDING_VIDEOS[b.name];
+      if (!src) return;
+      var vid = document.getElementById('video-player');
+      vid.src = src;
+      document.getElementById('video-overlay').classList.add('active');
+      vid.play();
+    }
+
+    function closeVideoPlayer() {
+      var vid = document.getElementById('video-player');
+      vid.pause();
+      vid.src = '';
+      document.getElementById('video-overlay').classList.remove('active');
     }
 
     function updateMapsPlayBtn(playing) {
@@ -1574,6 +1649,8 @@
       document.getElementById('maps-panel-addr-lbl').textContent = b.full_name;
       if (b.img) { mapsImg.src = b.img; mapsImg.style.display = 'block'; }
       else        { mapsImg.style.display = 'none'; }
+      var hasVid = !!(window.BUILDING_VIDEOS && window.BUILDING_VIDEOS[b.name]);
+      document.getElementById('maps-panel-img-wrap').classList.toggle('has-video', hasVid);
       var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
       document.getElementById('maps-panel-desc-text').textContent = desc;
       updateMapsPlayBtn(false);
