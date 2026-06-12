@@ -314,12 +314,14 @@
   // ── Router ──
   function route() {
     var params = new URLSearchParams(location.search);
-    var b = params.get('b');
-    if (b && byName[b]) {
-      showBuilding(b);
-    } else {
-      showGallery();
+    var raw = params.get('b');
+    if (raw) {
+      var key = byName[raw]
+        ? raw
+        : Object.keys(byName).find(function(k) { return k.toLowerCase() === raw.toLowerCase(); });
+      if (key) { showBuilding(key); return; }
     }
+    showGallery();
   }
 
   window.addEventListener('popstate', route);

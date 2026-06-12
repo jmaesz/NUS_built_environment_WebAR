@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/:b(CELC|E1A|E1|E2A|E2|E3A|E3|E4A|E4|E5|E6|E7|E8|EA|EW1A|EW1|IT|SDE1|SDE2|SDE3|SDE4|T-Lab)", "destination": "/campus/?b=:b" },
+    { "source": "/:b(CELC|celc|E1A|e1a|E1|e1|E2A|e2a|E2|e2|E3A|e3a|E3|e3|E4A|e4a|E4|e4|E5|e5|E6|e6|E7|e7|E8|e8|EA|ea|EW1A|ew1a|EW1|ew1|IT|it|SDE1|sde1|SDE2|sde2|SDE3|sde3|SDE4|sde4|T-Lab|t-lab)", "destination": "/campus/?b=:b" },
     { "source": "/((?!assets/|arjs/|solar/|daylight/|videos/|campus/).*)", "destination": "/index.html" }
   ]
 }
