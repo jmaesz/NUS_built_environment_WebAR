@@ -1617,7 +1617,6 @@
       chartPanel.classList.add('visible');
       scanHint.style.opacity = '0';
 
-      mapsPanel.href = b.mapsUrl;
       document.getElementById('maps-panel-top').textContent      = b.name;
       document.getElementById('maps-panel-addr-lbl').textContent = b.full_name;
       if (b.img) { mapsImg.src = b.img; mapsImg.style.display = 'block'; }
@@ -1626,7 +1625,8 @@
       document.getElementById('maps-panel-img-wrap').classList.toggle('has-video', hasVid);
       document.getElementById('btn-mapview').textContent = hasVid ? 'VIDEO' : 'MAP VIEW';
       document.getElementById('maps-panel-cta').style.display = hasVid ? 'none' : 'flex';
-      mapsPanel.href = hasVid ? '#' : b.mapsUrl;
+      if (hasVid) { mapsPanel.removeAttribute('href'); mapsPanel.removeAttribute('target'); }
+      else { mapsPanel.href = b.mapsUrl; mapsPanel.setAttribute('target', '_blank'); }
       var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
       document.getElementById('maps-panel-desc-text').textContent = desc;
       updateMapsPlayBtn(false);
