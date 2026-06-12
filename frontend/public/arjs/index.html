@@ -1651,6 +1651,9 @@
       else        { mapsImg.style.display = 'none'; }
       var hasVid = !!(window.BUILDING_VIDEOS && window.BUILDING_VIDEOS[b.name]);
       document.getElementById('maps-panel-img-wrap').classList.toggle('has-video', hasVid);
+      document.getElementById('btn-mapview').textContent = hasVid ? 'VIDEO' : 'MAP VIEW';
+      document.getElementById('maps-panel-cta').style.display = hasVid ? 'none' : 'flex';
+      mapsPanel.href = hasVid ? '#' : b.mapsUrl;
       var desc = (window.BUILDING_DESCS && window.BUILDING_DESCS[b.name]) || b.full_name;
       document.getElementById('maps-panel-desc-text').textContent = desc;
       updateMapsPlayBtn(false);
