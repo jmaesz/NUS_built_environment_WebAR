@@ -331,7 +331,7 @@
     document.getElementById('gallery-view').style.display = 'block';
     document.getElementById('building-view').style.display = 'none';
     document.title = 'NUS Campus Energy Tour';
-    if (history.state !== 'gallery') history.pushState('gallery', '', '/campus/');
+    history.pushState('gallery', '', '/campus/');
     setNavActive(null);
     stopAllVideos();
     renderGallery();
@@ -343,10 +343,10 @@
     BUILDINGS.forEach(function(b) {
       var card = document.createElement('a');
       card.className = 'building-card';
-      card.href = '/' + b.name;
+      card.href = '/campus/' + b.name;
       card.addEventListener('click', function(e) {
         e.preventDefault();
-        history.pushState({ b: b.name }, '', '/' + b.name);
+        history.pushState({ b: b.name }, '', '/campus/' + b.name);
         showBuilding(b.name);
       });
 
@@ -465,11 +465,11 @@
     BUILDINGS.forEach(function(b) {
       var a = document.createElement('a');
       a.textContent = b.name;
-      a.href = '/' + b.name;
+      a.href = '/campus/' + b.name;
       a.id = 'nav-' + b.name;
       a.addEventListener('click', function(e) {
         e.preventDefault();
-        history.pushState({ b: b.name }, '', '/' + b.name);
+        history.pushState({ b: b.name }, '', '/campus/' + b.name);
         showBuilding(b.name);
       });
       nav.appendChild(a);
