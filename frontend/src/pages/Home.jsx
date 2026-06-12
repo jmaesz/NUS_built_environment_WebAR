@@ -157,6 +157,10 @@ export default function Home() {
               LAUNCH AR
               <span className="cta-arrow">→</span>
             </button>
+            <a className="home-cta" href="/campus/" style={{textDecoration:'none'}}>
+              BUILDING VIDEO TOUR
+              <span className="cta-arrow">→</span>
+            </a>
           </div>
         </div>
       </main>
