@@ -39,6 +39,7 @@
     var name = params.get('name');
     if (name) document.getElementById('building-name').textContent = name;
     if (src)  document.getElementById('vid').src = src;
+    document.getElementById('vid').addEventListener('ended', function() { history.back(); });
   </script>
 </body>
 </html>
